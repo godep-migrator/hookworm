@@ -1,0 +1,6 @@
+#!/bin/bash
+
+cat "$1" | ruby -e '
+  server = ENV["GOPATH"].split(/:/).first + "/bin/hookworm-server"
+  puts $stdin.read.sub(/___USAGE___/, `#{server} -h 2>&1`.chomp)
+'
