@@ -118,12 +118,13 @@ func init() {
 }
 
 type RogueCommitHandler struct {
-	debug           bool
-	emailer         *Emailer
-	fromAddr        string
-	recipients      []string
-	policedBranches []*regexp.Regexp
-	nextHandler     Handler
+	debug                  bool
+	emailer                *Emailer
+	fromAddr               string
+	recipients             []string
+	policedBranches        []*regexp.Regexp
+	policedBranchesStrings []string
+	nextHandler            Handler
 }
 
 type rogueCommitEmailContext struct {
@@ -152,6 +153,11 @@ func NewRogueCommitHandler(cfg *HandlerConfig) *RogueCommitHandler {
 		recipients:      cfg.EmailRcpts,
 		policedBranches: strsToRegexes(cfg.PolicedBranches),
 	}
+
+	for _, re := range handler.policedBranches {
+		handler.policedBranchesStrings = append(handler.policedBranchesStrings, re.String())
+	}
+
 	return handler
 }
 
@@ -227,7 +233,7 @@ func (me *RogueCommitHandler) alert(payload *Payload) error {
 		Repo: fmt.Sprintf("%s/%s", payload.Repository.Owner.Name.String(),
 			payload.Repository.Name.String()),
 		Ref:                 payload.Ref.String(),
-		PolicedBranches:     strings.Join(me.policedBranchesStrings(), ", "),
+		PolicedBranches:     strings.Join(me.policedBranchesStrings, ", "),
 		RepoUrl:             payload.Repository.Url.String(),
 		HeadCommitId:        hc.Id.String(),
 		HeadCommitUrl:       hc.Url.String(),
@@ -247,12 +253,4 @@ func (me *RogueCommitHandler) alert(payload *Payload) error {
 		log.Printf("Email message:\n%v\n", string(emailBuf.Bytes()))
 	}
 	return me.emailer.Send(me.fromAddr, me.recipients, emailBuf.Bytes())
-}
-
-func (me *RogueCommitHandler) policedBranchesStrings() []string {
-	var ret []string
-	for _, re := range me.policedBranches {
-		ret = append(ret, re.String())
-	}
-	return ret
 }
