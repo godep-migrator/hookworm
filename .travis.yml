@@ -1,7 +1,9 @@
 ---
 language: go
-install: cd $TRAVIS_BUILD_DIR && make build
-script: cd $TRAVIS_BUILD_DIR && make test
+go:
+- go1.1
+install: make build
+script: make test
 notifications:
   email:
     recipients:
