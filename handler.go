@@ -39,14 +39,14 @@ func NewHandlerPipeline(cfg *HandlerConfig) Handler {
 	}
 
 	if len(cfg.PolicedBranches) > 0 {
-		elHandler.SetNextHandler(NewSecretSquirrelCommitHandler(cfg))
+		elHandler.SetNextHandler(NewRogueCommitHandler(cfg))
 		if cfg.Debug {
-			log.Printf("Added secret squirrel handler for policed branches %+v\n",
+			log.Printf("Added rogue commit handler for policed branches %+v\n",
 				cfg.PolicedBranches)
 		}
 	} else {
 		if cfg.Debug {
-			log.Println("No secret squirrel handler added")
+			log.Println("No rogue commit handler added")
 		}
 	}
 
