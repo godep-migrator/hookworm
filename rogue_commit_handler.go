@@ -12,11 +12,12 @@ import (
 )
 
 var (
-	rfc2822DateFmt        = "Mon, 02 Jan 2006 15:04:05 -0700"
-	hostname              string
-	secretCommitEmailTmpl = template.Must(template.New("email").Parse(`From: {{.From}}
+	hostname string
+
+	rfc2822DateFmt       = "Mon, 02 Jan 2006 15:04:05 -0700"
+	rogueCommitEmailTmpl = template.Must(template.New("email").Parse(`From: {{.From}}
 To: {{.Recipients}}
-Subject: [hookworm] Secret commit by {{.HeadCommitAuthor}} to {{.Repo}} {{.Ref}} ({{.HeadCommitId}})
+Subject: [hookworm] Rogue commit by {{.HeadCommitAuthor}} to {{.Repo}} {{.Ref}} ({{.HeadCommitId}})
 Date: {{.Date}}
 Message-ID: <{{.MessageId}}@{{.Hostname}}>
 List-ID: {{.Repo}} <hookworm.github.com>
@@ -31,7 +32,7 @@ Mime-Version: 1.0
 Content-Type: text/plain; charset=utf8
 Content-Transfer-Encoding: 7bit
 
-Secret commit detected!
+Rogue commit detected!
 
 Repo      {{.Repo}}
 Ref       {{.Ref}}
@@ -41,6 +42,19 @@ Author    {{.HeadCommitAuthor}}
 Committer {{.HeadCommitCommitter}}
 Timestamp {{.HeadCommitTimestamp}}
 
+-- 
+This email was sent by hookworm:  https://github.com/modcloth-labs/hookworm
+
+A rogue commit is a commit made directly to a branch that has been deemed
+sacred or policed such that only pull requests should be merged into them.
+The configured policed branches are {{.PolicedBranches}}.
+
+If you believe this rogue commit email is an error, you should hunt down the
+party responsible for the hookworm instance registered as a WebHook URL in this
+repo's service hook settings ({{.RepoUrl}}/settings/hooks).
+
+Pretty please submit issues specific to hookworm functionality on github:
+https://github.com/modcloth-labs/hookworm/issues/new
 
 ----==ZOMGBOUNDARAAAYYYYY
 Date: {{.Date}}
@@ -49,7 +63,7 @@ Content-Type: text/html; charset=utf8
 Content-Transfer-Encoding: 7bit
 
 <div>
-  <h1><a href="{{.HeadCommitUrl}}">Secret commit detected!</a></h1>
+  <h1><a href="{{.HeadCommitUrl}}">Rogue commit detected!</a></h1>
 
   <table>
     <thead><th></th><th></th></thead>
@@ -65,6 +79,32 @@ Content-Transfer-Encoding: 7bit
   </table>
 </div>
 
+<hr/>
+<div style="font-size:.8em">
+  <p>
+    This email was sent by
+    <a href="https://github.com/modcloth-labs/hookworm">hookworm</a>.
+  </p>
+
+  <p>
+    A rogue commit is a commit made directly to a branch that has been deemed
+    sacred or policed such that only pull requests should be merged into them.
+    The configured policed branches are <strong>{{.PolicedBranches}}</strong>.
+  </p>
+
+  <p>
+    If you believe this rogue commit email is an error, you should hunt down the
+    party responsible for the hookworm instance registered as a WebHook URL in
+    this repo's <a href="{{.RepoUrl}}/settings/hooks">service hook settings</a>.
+  </p>
+
+  <p>
+    Pretty please submit issues specific to hookworm functionality
+    <a href="https://github.com/modcloth-labs/hookworm/issues/new">on github</a>
+  </p>
+
+</div>
+
 ----==ZOMGBOUNDARAAAYYYYY--
 `))
 )
@@ -77,16 +117,17 @@ func init() {
 	}
 }
 
-type SecretSquirrelCommitHandler struct {
-	debug           bool
-	emailer         *Emailer
-	fromAddr        string
-	recipients      []string
-	policedBranches []*regexp.Regexp
-	nextHandler     Handler
+type RogueCommitHandler struct {
+	debug                  bool
+	emailer                *Emailer
+	fromAddr               string
+	recipients             []string
+	policedBranches        []*regexp.Regexp
+	policedBranchesStrings []string
+	nextHandler            Handler
 }
 
-type secretCommitEmailContext struct {
+type rogueCommitEmailContext struct {
 	From                string
 	Recipients          string
 	Date                string
@@ -94,6 +135,8 @@ type secretCommitEmailContext struct {
 	Hostname            string
 	Repo                string
 	Ref                 string
+	PolicedBranches     string
+	RepoUrl             string
 	HeadCommitId        string
 	HeadCommitUrl       string
 	HeadCommitAuthor    string
@@ -102,18 +145,23 @@ type secretCommitEmailContext struct {
 	HeadCommitTimestamp string
 }
 
-func NewSecretSquirrelCommitHandler(cfg *HandlerConfig) *SecretSquirrelCommitHandler {
-	handler := &SecretSquirrelCommitHandler{
+func NewRogueCommitHandler(cfg *HandlerConfig) *RogueCommitHandler {
+	handler := &RogueCommitHandler{
 		debug:           cfg.Debug,
 		emailer:         NewEmailer(cfg.EmailUri),
 		fromAddr:        cfg.EmailFromAddr,
 		recipients:      cfg.EmailRcpts,
 		policedBranches: strsToRegexes(cfg.PolicedBranches),
 	}
+
+	for _, re := range handler.policedBranches {
+		handler.policedBranchesStrings = append(handler.policedBranchesStrings, re.String())
+	}
+
 	return handler
 }
 
-func (me *SecretSquirrelCommitHandler) HandlePayload(payload *Payload) error {
+func (me *RogueCommitHandler) HandlePayload(payload *Payload) error {
 	if !me.isPolicedBranch(payload.Ref.String()) {
 		if me.debug {
 			log.Printf("%v is not a policed branch, yay!\n", payload.Ref.String())
@@ -149,15 +197,15 @@ func (me *SecretSquirrelCommitHandler) HandlePayload(payload *Payload) error {
 	return nil
 }
 
-func (me *SecretSquirrelCommitHandler) SetNextHandler(handler Handler) {
+func (me *RogueCommitHandler) SetNextHandler(handler Handler) {
 	me.nextHandler = handler
 }
 
-func (me *SecretSquirrelCommitHandler) NextHandler() Handler {
+func (me *RogueCommitHandler) NextHandler() Handler {
 	return me.nextHandler
 }
 
-func (me *SecretSquirrelCommitHandler) isPolicedBranch(ref string) bool {
+func (me *RogueCommitHandler) isPolicedBranch(ref string) bool {
 	sansRefsHeads := strings.Replace(ref, "refs/heads/", "", 1)
 	for _, ref := range me.policedBranches {
 		if ref.MatchString(sansRefsHeads) {
@@ -167,8 +215,8 @@ func (me *SecretSquirrelCommitHandler) isPolicedBranch(ref string) bool {
 	return false
 }
 
-func (me *SecretSquirrelCommitHandler) alert(payload *Payload) error {
-	log.Printf("WARNING secret squirrel commit! %+v, head commit: %+v\n",
+func (me *RogueCommitHandler) alert(payload *Payload) error {
+	log.Printf("WARNING rogue commit! %+v, head commit: %+v\n",
 		payload, payload.HeadCommit)
 	if len(me.recipients) == 0 {
 		log.Println("No email recipients specified, so no emailing!")
@@ -176,7 +224,7 @@ func (me *SecretSquirrelCommitHandler) alert(payload *Payload) error {
 	}
 
 	hc := payload.HeadCommit
-	ctx := &secretCommitEmailContext{
+	ctx := &rogueCommitEmailContext{
 		From:       me.fromAddr,
 		Recipients: strings.Join(me.recipients, ", "),
 		Date:       time.Now().UTC().Format(rfc2822DateFmt),
@@ -185,6 +233,8 @@ func (me *SecretSquirrelCommitHandler) alert(payload *Payload) error {
 		Repo: fmt.Sprintf("%s/%s", payload.Repository.Owner.Name.String(),
 			payload.Repository.Name.String()),
 		Ref:                 payload.Ref.String(),
+		PolicedBranches:     strings.Join(me.policedBranchesStrings, ", "),
+		RepoUrl:             payload.Repository.Url.String(),
 		HeadCommitId:        hc.Id.String(),
 		HeadCommitUrl:       hc.Url.String(),
 		HeadCommitAuthor:    hc.Author.Name.String(),
@@ -194,7 +244,7 @@ func (me *SecretSquirrelCommitHandler) alert(payload *Payload) error {
 	}
 	var emailBuf bytes.Buffer
 
-	err := secretCommitEmailTmpl.Execute(&emailBuf, ctx)
+	err := rogueCommitEmailTmpl.Execute(&emailBuf, ctx)
 	if err != nil {
 		return err
 	}
