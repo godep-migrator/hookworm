@@ -39,14 +39,7 @@ func NewHandlerPipeline(cfg *HandlerConfig) Handler {
 	}
 
 	if len(cfg.PolicedBranches) > 0 {
-		sscHandler := &SecretSquirrelCommitHandler{
-			debug:           cfg.Debug,
-			emailer:         NewEmailer(cfg.EmailUri),
-			fromAddr:        cfg.EmailFromAddr,
-			recipients:      cfg.EmailRcpts,
-			policedBranches: cfg.PolicedBranches,
-		}
-		elHandler.SetNextHandler(sscHandler)
+		elHandler.SetNextHandler(NewSecretSquirrelCommitHandler(cfg))
 		if cfg.Debug {
 			log.Printf("Added secret squirrel handler for policed branches %+v\n",
 				cfg.PolicedBranches)

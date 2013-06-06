@@ -16,7 +16,7 @@ var (
 	emailFlag           = flag.String("e", "smtp://localhost", "Email server address")
 	emailFromFlag       = flag.String("f", "hookworm@localhost", "Email from address")
 	emailRcptsFlag      = flag.String("r", "", "Email recipients (comma-delimited)")
-	policedBranchesFlag = flag.String("b", "", "Policed branches (comma-delimited)")
+	policedBranchesFlag = flag.String("b", "", "Policed branches (comma-delimited regexes)")
 
 	useSyslogFlag = flag.Bool("S", false, "Send all received events to syslog")
 
@@ -32,6 +32,11 @@ type Server struct {
 }
 
 func ServerMain() {
+  flag.Usage = func() {
+    fmt.Printf("Usage: %v [options]\n", progName)
+    flag.PrintDefaults()
+  }
+
 	flag.Parse()
 	if *printVersionFlag {
 		printVersion()

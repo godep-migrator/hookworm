@@ -1,6 +1,7 @@
 package hookworm
 
 import (
+	"regexp"
 	"strings"
 )
 
@@ -15,4 +16,14 @@ func commaSplit(str string) []string {
 	}
 
 	return ret
+}
+
+func strsToRegexes(strs []string) []*regexp.Regexp {
+	var regexps []*regexp.Regexp
+
+	for _, str := range strs {
+		regexps = append(regexps, regexp.MustCompile(str))
+	}
+
+	return regexps
 }

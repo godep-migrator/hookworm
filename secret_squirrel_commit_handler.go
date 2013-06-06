@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"regexp"
 	"strings"
 	"text/template"
 	"time"
@@ -81,7 +82,7 @@ type SecretSquirrelCommitHandler struct {
 	emailer         *Emailer
 	fromAddr        string
 	recipients      []string
-	policedBranches []string
+	policedBranches []*regexp.Regexp
 	nextHandler     Handler
 }
 
@@ -99,6 +100,17 @@ type secretCommitEmailContext struct {
 	HeadCommitCommitter string
 	HeadCommitMessage   string
 	HeadCommitTimestamp string
+}
+
+func NewSecretSquirrelCommitHandler(cfg *HandlerConfig) *SecretSquirrelCommitHandler {
+	handler := &SecretSquirrelCommitHandler{
+		debug:           cfg.Debug,
+		emailer:         NewEmailer(cfg.EmailUri),
+		fromAddr:        cfg.EmailFromAddr,
+		recipients:      cfg.EmailRcpts,
+		policedBranches: strsToRegexes(cfg.PolicedBranches),
+	}
+	return handler
 }
 
 func (me *SecretSquirrelCommitHandler) HandlePayload(payload *Payload) error {
@@ -148,7 +160,7 @@ func (me *SecretSquirrelCommitHandler) NextHandler() Handler {
 func (me *SecretSquirrelCommitHandler) isPolicedBranch(ref string) bool {
 	sansRefsHeads := strings.Replace(ref, "refs/heads/", "", 1)
 	for _, ref := range me.policedBranches {
-		if ref == sansRefsHeads {
+		if ref.MatchString(sansRefsHeads) {
 			return true
 		}
 	}
