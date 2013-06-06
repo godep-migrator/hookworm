@@ -95,7 +95,7 @@ Content-Transfer-Encoding: 7bit
   <p>
     If you believe this rogue commit email is an error, you should hunt down the
     party responsible for the hookworm instance registered as a WebHook URL in
-	this repo's <a href="{{.RepoUrl}}/settings/hooks">service hook settings</a>.
+    this repo's <a href="{{.RepoUrl}}/settings/hooks">service hook settings</a>.
   </p>
 
   <p>
