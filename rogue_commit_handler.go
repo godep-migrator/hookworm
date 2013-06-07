@@ -35,21 +35,22 @@ type RogueCommitHandler struct {
 }
 
 type rogueCommitEmailContext struct {
-	From                string
-	Recipients          string
-	Date                string
-	MessageId           string
-	Hostname            string
-	Repo                string
-	Ref                 string
-	PolicedBranches     string
-	RepoUrl             string
-	HeadCommitId        string
-	HeadCommitUrl       string
-	HeadCommitAuthor    string
-	HeadCommitCommitter string
-	HeadCommitMessage   string
-	HeadCommitTimestamp string
+	From                  string
+	Recipients            string
+	Date                  string
+	MessageId             string
+	Hostname              string
+	Repo                  string
+	Ref                   string
+	PolicedBranches       string
+	RepoUrl               string
+	HeadCommitId          string
+	HeadCommitUrl         string
+	HeadCommitAuthor      string
+	HeadCommitCommitter   string
+	HeadCommitMessageText string
+	HeadCommitMessageHtml string
+	HeadCommitTimestamp   string
 }
 
 func NewRogueCommitHandler(cfg *HandlerConfig) *RogueCommitHandler {
@@ -139,15 +140,16 @@ func (me *RogueCommitHandler) alert(payload *Payload) error {
 		Hostname:   hostname,
 		Repo: fmt.Sprintf("%s/%s", payload.Repository.Owner.Name.String(),
 			payload.Repository.Name.String()),
-		Ref:                 payload.Ref.String(),
-		PolicedBranches:     strings.Join(me.policedBranchesStrings, ", "),
-		RepoUrl:             payload.Repository.Url.String(),
-		HeadCommitId:        hc.Id.String(),
-		HeadCommitUrl:       hc.Url.String(),
-		HeadCommitAuthor:    hc.Author.Name.String(),
-		HeadCommitCommitter: hc.Committer.Name.String(),
-		HeadCommitMessage:   hc.Message.String(),
-		HeadCommitTimestamp: hc.Timestamp.String(),
+		Ref:                   payload.Ref.String(),
+		PolicedBranches:       strings.Join(me.policedBranchesStrings, ", "),
+		RepoUrl:               payload.Repository.Url.String(),
+		HeadCommitId:          hc.Id.String(),
+		HeadCommitUrl:         hc.Url.String(),
+		HeadCommitAuthor:      hc.Author.Name.String(),
+		HeadCommitCommitter:   hc.Committer.Name.String(),
+		HeadCommitMessageText: hc.Message.String(),
+		HeadCommitMessageHtml: hc.Message.Html(),
+		HeadCommitTimestamp:   hc.Timestamp.String(),
 	}
 	var emailBuf bytes.Buffer
 

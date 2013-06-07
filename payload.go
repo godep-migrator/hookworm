@@ -102,7 +102,11 @@ func (me *NullableString) MarshalJSON() ([]byte, error) {
 }
 
 func (me *NullableString) String() string {
-	return string(me.value)
+	return strings.Replace(string(me.value), "\\n", "\n", -1)
+}
+
+func (me *NullableString) Html() string {
+	return strings.Replace(string(me.value), "\\n", "<br/>", -1)
 }
 
 type NullableInt64 struct {

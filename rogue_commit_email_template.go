@@ -27,10 +27,10 @@ Rogue commit detected!
 Repo      {{.Repo}}
 Ref       {{.Ref}}
 Id        {{.HeadCommitUrl}}
-Message   {{.HeadCommitMessage}}
 Author    {{.HeadCommitAuthor}}
 Committer {{.HeadCommitCommitter}}
 Timestamp {{.HeadCommitTimestamp}}
+Message   {{.HeadCommitMessageText}}
 
 -- 
 This email was sent by hookworm:  https://github.com/modcloth-labs/hookworm
@@ -58,13 +58,48 @@ Content-Transfer-Encoding: 7bit
   <table>
     <thead><th></th><th></th></thead>
     <tbody>
-      <tr><td style="text-align:right;"><strong>Repo</strong>:</td><td>{{.Repo}}</td></tr>
-      <tr><td style="text-align:right;"><strong>Ref</strong>:</td><td>{{.Ref}}</td></tr>
-      <tr><td style="text-align:right;"><strong>Id</strong>:</td><td><a href="{{.HeadCommitUrl}}">{{.HeadCommitId}}</a></td></tr>
-      <tr><td style="text-align:right;"><strong>Message</strong>:</td><td>{{.HeadCommitMessage}}</td></tr>
-      <tr><td style="text-align:right;"><strong>Author</strong>:</td><td>{{.HeadCommitAuthor}}</td></tr>
-      <tr><td style="text-align:right;"><strong>Committer</strong>:</td><td>{{.HeadCommitCommitter}}</td></tr>
-      <tr><td style="text-align:right;"><strong>Timestamp</strong>:</td><td>{{.HeadCommitTimestamp}}</td></tr>
+      <tr>
+        <td style="text-align:right;vertical-align:top;">
+          <strong>Repo</strong>:
+        </td>
+        <td>{{.Repo}}</td>
+      </tr>
+      <tr>
+        <td style="text-align:right;vertical-align:top;">
+          <strong>Ref</strong>:
+        </td>
+        <td>{{.Ref}}</td>
+      </tr>
+      <tr>
+        <td style="text-align:right;vertical-align:top;">
+          <strong>Id</strong>:
+        </td>
+        <td><a href="{{.HeadCommitUrl}}">{{.HeadCommitId}}</a></td>
+      </tr>
+      <tr>
+        <td style="text-align:right;vertical-align:top;">
+          <strong>Author</strong>:
+        </td>
+        <td>{{.HeadCommitAuthor}}</td>
+      </tr>
+      <tr>
+        <td style="text-align:right;vertical-align:top;">
+          <strong>Committer</strong>:
+        </td>
+        <td>{{.HeadCommitCommitter}}</td>
+      </tr>
+      <tr>
+        <td style="text-align:right;vertical-align:top;">
+          <strong>Timestamp</strong>:
+        </td>
+        <td>{{.HeadCommitTimestamp}}</td>
+      </tr>
+      <tr>
+        <td style="text-align:right;vertical-align:top;">
+          <strong>Message</strong>:
+        </td>
+        <td>{{.HeadCommitMessageHtml}}</td>
+      </tr>
     </tbody>
   </table>
 </div>
