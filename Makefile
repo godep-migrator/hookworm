@@ -19,6 +19,10 @@ build: deps
 deps:
 	go get $(GOBUILD_VERSION_ARGS) -x $(TARGETS)
 
+clean:
+	find $${GOPATH%%:*}/pkg -regex '.*modcloth-labs/hookworm.*\.a' -exec rm -v {} \;
+	go clean -x $(TARGETS)
+
 README.md: README.md.in $(wildcard *.go)
 	./build-readme $< > $@
 
@@ -26,4 +30,4 @@ serve:
 	$${GOPATH%%:*}/bin/hookworm-server -a $(ADDR) -S
 
 
-.PHONY: all test build deps
+.PHONY: all build clean deps serve test
