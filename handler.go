@@ -11,7 +11,8 @@ type HandlerConfig struct {
 	EmailFromAddr   string
 	EmailRcpts      []string
 	UseSyslog       bool
-	PolicedBranches []string
+	WatchedBranches []string
+	WatchedPaths    []string
 }
 
 type Handler interface {
@@ -38,11 +39,11 @@ func NewHandlerPipeline(cfg *HandlerConfig) Handler {
 		}
 	}
 
-	if len(cfg.PolicedBranches) > 0 {
+	if len(cfg.WatchedBranches) > 0 {
 		elHandler.SetNextHandler(NewRogueCommitHandler(cfg))
 		if cfg.Debug {
-			log.Printf("Added rogue commit handler for policed branches %+v\n",
-				cfg.PolicedBranches)
+			log.Printf("Added rogue commit handler for watched branches %+v\n",
+				cfg.WatchedBranches)
 		}
 	} else {
 		if cfg.Debug {

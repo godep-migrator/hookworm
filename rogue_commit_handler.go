@@ -4,33 +4,20 @@ import (
 	"bytes"
 	"fmt"
 	"log"
-	"os"
 	"regexp"
 	"strings"
 	"time"
 )
-
-var (
-	hostname string
-
-	rfc2822DateFmt = "Mon, 02 Jan 2006 15:04:05 -0700"
-)
-
-func init() {
-	var err error
-	hostname, err = os.Hostname()
-	if err != nil {
-		hostname = "somewhere.local"
-	}
-}
 
 type RogueCommitHandler struct {
 	debug                  bool
 	emailer                *Emailer
 	fromAddr               string
 	recipients             []string
-	policedBranches        []*regexp.Regexp
-	policedBranchesStrings []string
+	watchedBranches        []*regexp.Regexp
+	watchedPaths           []*regexp.Regexp
+	watchedBranchesStrings []string
+	watchedPathsStrings    []string
 	nextHandler            Handler
 }
 
@@ -42,7 +29,8 @@ type rogueCommitEmailContext struct {
 	Hostname              string
 	Repo                  string
 	Ref                   string
-	PolicedBranches       string
+	WatchedBranches       []string
+	WatchedPaths          []string
 	RepoUrl               string
 	HeadCommitId          string
 	HeadCommitUrl         string
@@ -59,37 +47,50 @@ func NewRogueCommitHandler(cfg *HandlerConfig) *RogueCommitHandler {
 		emailer:         NewEmailer(cfg.EmailUri),
 		fromAddr:        cfg.EmailFromAddr,
 		recipients:      cfg.EmailRcpts,
-		policedBranches: strsToRegexes(cfg.PolicedBranches),
+		watchedBranches: strsToRegexes(cfg.WatchedBranches),
+		watchedPaths:    strsToRegexes(cfg.WatchedPaths),
 	}
 
-	for _, re := range handler.policedBranches {
-		handler.policedBranchesStrings = append(handler.policedBranchesStrings, re.String())
+	for _, re := range handler.watchedBranches {
+		handler.watchedBranchesStrings = append(handler.watchedBranchesStrings, re.String())
+	}
+
+	for _, re := range handler.watchedPaths {
+		handler.watchedPathsStrings = append(handler.watchedPathsStrings, re.String())
 	}
 
 	return handler
 }
 
 func (me *RogueCommitHandler) HandlePayload(payload *Payload) error {
-	if !me.isPolicedBranch(payload.Ref.String()) {
+	if !me.isWatchedBranch(payload.Ref.String()) {
 		if me.debug {
-			log.Printf("%v is not a policed branch, yay!\n", payload.Ref.String())
+			log.Printf("%v is not a watched branch, yay!\n", payload.Ref.String())
 		}
 		return nil
 	}
 
 	if me.debug {
-		log.Printf("%v is a policed branch!\n", payload.Ref.String())
+		log.Printf("%v is a watched branch!\n", payload.Ref.String())
 	}
+
+	hcId := payload.HeadCommit.Id.String()
 
 	if payload.IsPullRequestMerge() {
 		if me.debug {
-			log.Printf("%v is a pull request merge, yay!\n", payload.HeadCommit.Id.String())
+			log.Printf("%v is a pull request merge, yay!\n", hcId)
 		}
 		return nil
 	}
 
 	if me.debug {
-		log.Printf("%v is not a pull request merge!\n", payload.HeadCommit.Id.String())
+		log.Printf("%v is not a pull request merge!\n", hcId)
+	}
+
+	if !me.hasWatchedPath(payload.Paths()) {
+		if me.debug {
+			log.Printf("%v does not contain watched paths, yay!\n", hcId)
+		}
 	}
 
 	if err := me.alert(payload); err != nil {
@@ -113,11 +114,22 @@ func (me *RogueCommitHandler) NextHandler() Handler {
 	return me.nextHandler
 }
 
-func (me *RogueCommitHandler) isPolicedBranch(ref string) bool {
+func (me *RogueCommitHandler) isWatchedBranch(ref string) bool {
 	sansRefsHeads := strings.Replace(ref, "refs/heads/", "", 1)
-	for _, ref := range me.policedBranches {
-		if ref.MatchString(sansRefsHeads) {
+	for _, branchRe := range me.watchedBranches {
+		if branchRe.MatchString(sansRefsHeads) {
 			return true
+		}
+	}
+	return false
+}
+
+func (me *RogueCommitHandler) hasWatchedPath(paths []string) bool {
+	for _, pathRe := range me.watchedPaths {
+		for _, path := range paths {
+			if pathRe.MatchString(path) {
+				return true
+			}
 		}
 	}
 	return false
@@ -141,7 +153,8 @@ func (me *RogueCommitHandler) alert(payload *Payload) error {
 		Repo: fmt.Sprintf("%s/%s", payload.Repository.Owner.Name.String(),
 			payload.Repository.Name.String()),
 		Ref:                   payload.Ref.String(),
-		PolicedBranches:       strings.Join(me.policedBranchesStrings, ", "),
+		WatchedBranches:       me.watchedBranchesStrings,
+		WatchedPaths:          me.watchedPathsStrings,
 		RepoUrl:               payload.Repository.Url.String(),
 		HeadCommitId:          hc.Id.String(),
 		HeadCommitUrl:         hc.Url.String(),
