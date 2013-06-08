@@ -11,14 +11,23 @@ require File.expand_path('../.golden/hookworm_server', __FILE__)
 include FileUtils
 
 $servers = {
-  null: HookwormServer.new('-a' => ":#{rand(12100..12109)}"),
-  debug: HookwormServer.new('-a' => ":#{rand(12110..12119)}", '-d' => 1),
+  null: HookwormServer.new(
+    '-a' => ":#{rand(12100..12109)}",
+    '-P' => File.expand_path('../log/hookworm-server-null.pid', __FILE__),
+    start: Time.now.utc,
+  ),
+  debug: HookwormServer.new(
+    '-a' => ":#{rand(12110..12119)}",
+    '-d' => nil,
+    '-P' => File.expand_path('../log/hookworm-server-debug.pid', __FILE__),
+    start: Time.now.utc,
+  )
 }
 
 $servers.each do |name,server|
   describe "#{name} server receiving hook payloads" do
     it 'accepts POSTs at the specified address' do
-
+      post_request(port: server.port, body: payload(:plain)).must_equal 204
     end
   end
 end
@@ -27,6 +36,13 @@ def main(argv = [].freeze)
   at_exit do
     $servers.each do |_,server|
       server.stop
+    end
+  end
+
+  Dir.chdir(File.expand_path('../', __FILE__)) do
+    mkdir_p('./log')
+    $servers.each do |_,runner|
+      runner.start
     end
   end
 

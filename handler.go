@@ -12,6 +12,8 @@ type HandlerConfig struct {
 	EmailRcpts      []string
 	UseSyslog       bool
 	PolicedBranches []string
+	ServerPidFile   string
+	ServerAddress   string
 }
 
 type Handler interface {

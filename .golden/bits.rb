@@ -18,3 +18,25 @@ class MiniTestReporter
 
   alias print puts
 end
+
+def post_request(options = {})
+  port = options.fetch(:port)
+  request = Net::HTTP::Post.new('/')
+  request.content_type = 'application/x-www-form-urlencoded'
+  request.body = options.fetch(:body)
+
+  response = Net::HTTP.start('localhost', port) do |http|
+    http.request(request)
+  end
+
+  Integer(response.code)
+end
+
+def payload(name)
+  filename = {
+    plain: 'payload.json',
+  }.fetch(name)
+  "payload=#{
+    File.read(File.expand_path("../../sampledata/#{filename}", __FILE__))
+  }"
+end
