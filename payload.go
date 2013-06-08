@@ -23,7 +23,6 @@ type Payload struct {
 	HeadCommit *Commit         `json:"head_commit"`
 	Repository *Repository     `json:"repository"`
 	Pusher     *Pusher         `json:"pusher"`
-	paths      []string
 }
 
 func (me *Payload) IsPullRequestMerge() bool {
