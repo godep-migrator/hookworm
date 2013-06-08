@@ -91,6 +91,11 @@ func (me *RogueCommitHandler) HandlePayload(payload *Payload) error {
 		if me.debug {
 			log.Printf("%v does not contain watched paths, yay!\n", hcId)
 		}
+		return nil
+	}
+
+	if me.debug {
+		log.Printf("%v contains watched paths!\n", hcId)
 	}
 
 	if err := me.alert(payload); err != nil {
