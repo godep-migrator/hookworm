@@ -29,6 +29,15 @@ func (me *Payload) IsPullRequestMerge() bool {
 		pullRequestMessageRe.Match([]byte(me.HeadCommit.Message.String()))
 }
 
+func (me *Payload) IsValid() bool {
+	return me.Ref != nil && me.After != nil &&
+		me.Before != nil && me.Created != nil &&
+		me.Deleted != nil && me.Forced != nil &&
+		me.Compare != nil && me.Commits != nil &&
+		me.HeadCommit != nil && me.Repository != nil &&
+		me.Pusher != nil
+}
+
 type Commit struct {
 	Id        *NullableString   `json:"id"`
 	Distinct  *NullableBool     `json:"distinct"`

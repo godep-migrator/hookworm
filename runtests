@@ -8,6 +8,7 @@ require 'net/http'
 require File.expand_path('../.golden/bits', __FILE__)
 require File.expand_path('../.golden/hookworm_server', __FILE__)
 
+include Bits
 include FileUtils
 
 $servers = {
@@ -26,8 +27,16 @@ $servers = {
 
 $servers.each do |name,server|
   describe "#{name} server receiving hook payloads" do
-    it 'accepts POSTs at the specified address' do
-      post_request(port: server.port, body: payload(:plain)).must_equal 204
+    it 'accepts valid POSTs' do
+      post_request(
+        port: server.port, body: payload(:valid)
+      ).code.must_equal '204'
+    end
+
+    it 'rejects invalid POSTs' do
+      post_request(
+        port: server.port, body: payload(:bogus)
+      ).code.must_equal '400'
     end
   end
 end
