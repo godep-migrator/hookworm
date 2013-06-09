@@ -6,30 +6,84 @@ require 'socket'
 require 'json'
 require 'logger'
 
+USAGE = "Usage: #{File.basename($0)} <port> <message-dir> [pidfile]"
+
+class FakeSMTPdHTTPServer
+  attr_reader :server, :port, :smtpd, :log
+
+  def initialize(options = {})
+    @port = options.fetch(:port)
+    @smtpd = options.fetch(:smtpd)
+    @log = Logger.new($stderr)
+  end
+
+  def start
+    @server = Thread.new do
+      httpd = TCPServer.new(port)
+      log.info "FakeSMTPd HTTP server serving on #{port}"
+      log.info "PID=#{$$} Thread=#{Thread.current.inspect}"
+      loop do
+        client = httpd.accept
+        request_line = client.gets
+        log.info request_line.chomp
+        if request_line =~ /^GET \/ /
+          client.puts 'HTTP/1.1 200 OK'
+          client.puts 'Content-type: application/json;charset=utf-8'
+          client.puts
+          client.puts JSON.pretty_generate(
+            message_files: smtpd.message_files_written
+          )
+        else
+          client.puts 'HTTP/1.1 405 Method Not Allowed'
+          client.puts 'Content-type: text/plain;charset=utf-8'
+          client.puts
+          client.puts 'Only GET is supported, eh.'
+        end
+        client.close
+      end
+    end
+  end
+
+  def kill!
+    @server && @server.kill
+  end
+end
+
 class FakeSMTPd
-  attr_reader :port, :server, :message_dir, :log, :pidfile
+  attr_reader :port, :message_dir, :log, :pidfile
 
   def initialize(options = {})
     @port = options.fetch(:port)
     @message_dir = options.fetch(:dir)
     @pidfile = options[:pidfile] || 'fakesmtpd.pid'
     @log = Logger.new($stderr)
+    @message_files_written = []
+  end
+
+  def message_files_written
+    @message_files_written.dup
   end
 
   def start
-    @server = TCPServer.new(port)
-    log.info "FakeSMTPd Serving on #{port}, " <<
-             "writing messages to #{message_dir.inspect}"
-    log.info "PID=#{$$}"
-    File.open(pidfile, 'w') { |f| f.puts($$) }
+    @server = Thread.new do
+      smtpd = TCPServer.new(port)
+      log.info "FakeSMTPd Serving on #{port}, " <<
+               "writing messages to #{message_dir.inspect}"
+      log.info "PID=#{$$}, Thread=#{Thread.current.inspect}"
+      File.open(pidfile, 'w') { |f| f.puts($$) }
 
-    loop do
-      begin
-        serve(server.accept)
-      rescue => e
-        log.error "WAT: #{e.class.name} #{e.message}"
+      loop do
+        begin
+          serve(smtpd.accept)
+        rescue => e
+          log.error "WAT: #{e.class.name} #{e.message}"
+        end
       end
     end
+  end
+
+  def kill!
+    @server && @server.kill
   end
 
   def serve(client)
@@ -103,15 +157,36 @@ class FakeSMTPd
         body: body,
       )
     end
+    @message_files_written << outfile
+    outfile
   end
 end
 
 def main(argv = [].freeze)
-  FakeSMTPd.new(
-    port: argv.fetch(0),
+  if argv.include?('-h') || argv.include?('--help')
+    puts USAGE
+    exit 0
+  end
+  unless argv.length > 2
+    abort USAGE
+  end
+  @smtpd = FakeSMTPd.new(
+    port: Integer(argv.fetch(0)),
     dir: argv.fetch(1),
     pidfile: argv[2]
-  ).start
+  )
+  @httpd = FakeSMTPdHTTPServer.new(
+    port: Integer(argv.fetch(0)) + 1,
+    smtpd: @smtpd,
+  )
+
+  @httpd.start
+  @smtpd.start
+  loop { sleep 1 }
+rescue => e
+  @httpd && @httpd.kill!
+  @smtpd && @smtpd.kill!
+  raise e
 end
 
 if __FILE__ == $0
