@@ -7,11 +7,12 @@ require 'json'
 require 'logger'
 
 class FakeSMTPd
-  attr_reader :port, :server, :message_dir, :log
+  attr_reader :port, :server, :message_dir, :log, :pidfile
 
   def initialize(options = {})
     @port = options.fetch(:port)
     @message_dir = options.fetch(:dir)
+    @pidfile = options[:pidfile] || 'fakesmtpd.pid'
     @log = Logger.new($stderr)
   end
 
@@ -19,6 +20,9 @@ class FakeSMTPd
     @server = TCPServer.new(port)
     log.info "FakeSMTPd Serving on #{port}, " <<
              "writing messages to #{message_dir.inspect}"
+    log.info "PID=#{$$}"
+    File.open(pidfile, 'w') { |f| f.puts($$) }
+
     loop do
       begin
         serve(server.accept)
@@ -103,7 +107,11 @@ class FakeSMTPd
 end
 
 def main(argv = [].freeze)
-  FakeSMTPd.new(port: argv.fetch(0), dir: argv.fetch(1)).start
+  FakeSMTPd.new(
+    port: argv.fetch(0),
+    dir: argv.fetch(1),
+    pidfile: argv[2]
+  ).start
 end
 
 if __FILE__ == $0

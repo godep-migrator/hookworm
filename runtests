@@ -5,19 +5,26 @@ require 'fileutils'
 require 'minitest/spec'
 require 'net/http'
 
-require File.expand_path('../.golden/bits', __FILE__)
-require File.expand_path('../.golden/hookworm_server', __FILE__)
+require_relative '.golden/bits'
+require_relative '.golden/hookworm_server_runner'
+require_relative '.golden/fakesmtpd_runner'
 
 include Bits
 include FileUtils
 
+$fakesmtpd_server = FakeSMTPdRunner.new(
+  port: "#{rand(13100..13109)}",
+  dir: File.expand_path('../log/emails', __FILE__),
+  pidfile: File.expand_path('../log/fakesmtpd.pid', __FILE__)
+)
+
 $servers = {
-  null: HookwormServer.new(
+  null: HookwormServerRunner.new(
     '-a' => ":#{rand(12100..12109)}",
     '-P' => File.expand_path('../log/hookworm-server-null.pid', __FILE__),
     start: Time.now.utc,
   ),
-  debug: HookwormServer.new(
+  debug: HookwormServerRunner.new(
     '-a' => ":#{rand(12110..12119)}",
     '-d' => nil,
     '-P' => File.expand_path('../log/hookworm-server-debug.pid', __FILE__),
@@ -43,6 +50,7 @@ end
 
 def main(argv = [].freeze)
   at_exit do
+    $fakesmtpd_server.stop
     $servers.each do |_,server|
       server.stop
     end
@@ -50,6 +58,7 @@ def main(argv = [].freeze)
 
   Dir.chdir(File.expand_path('../', __FILE__)) do
     mkdir_p('./log')
+    $fakesmtpd_server.start
     $servers.each do |_,runner|
       runner.start
     end
