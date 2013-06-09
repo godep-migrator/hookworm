@@ -1,11 +1,14 @@
 require 'net/http'
 
-GOLD = "\033\[33;1m"
+YELLOW = "\033\[33m"
 RESET = "\033\[0m"
 GREEN = "\033\[32m"
 RED = "\033\[31m"
+MAGENTA = "\033\[35m"
 BRIGHT_GREEN = "\033\[32;1m"
 BRIGHT_RED = "\033\[31;1m"
+BRIGHT_MAGENTA = "\033\[35;1m"
+BRIGHT_YELLOW = "\033\[33;1m"
 
 class MiniTestReporter
   def puts(*args)
@@ -17,7 +20,8 @@ end
 
 module Bits
   def announce!(something)
-    $stderr.puts "#{GOLD}golden#{RESET}: #{GREEN}#{something}#{RESET}"
+    $stderr.puts "#{MAGENTA}runtests#{RESET}: " <<
+                 "#{YELLOW}#{something}#{RESET}"
   end
 
   def post_request(options = {})
