@@ -25,14 +25,17 @@ module Bits
   end
 
   def post_request(options = {})
-    port = options.fetch(:port)
-    request = Net::HTTP::Post.new('/')
+    request = Net::HTTP::Post.new(options[:path] || '/')
     request.content_type = 'application/x-www-form-urlencoded'
     request.body = options.fetch(:body)
+    perform_request(request, options.fetch(:port))
+  end
 
-    Net::HTTP.start('localhost', port) do |http|
-      http.request(request)
-    end
+  def get_request(options = {})
+    perform_request(
+      Net::HTTP::Get.new(options[:path] || '/'),
+      options.fetch(:port)
+    )
   end
 
   def payload(name)
@@ -41,5 +44,13 @@ module Bits
 
   def payload_file(name)
     File.expand_path("../../sampledata/#{name.to_s}.json", __FILE__)
+  end
+
+  private
+
+  def perform_request(request, port)
+    Net::HTTP.start('localhost', port) do |http|
+      http.request(request)
+    end
   end
 end

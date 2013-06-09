@@ -3,10 +3,13 @@ require_relative 'server_runner_methods'
 class FakeSMTPdRunner
   include ServerRunnerMethods
 
+  attr_reader :http_port
+
   def initialize(options = {})
     @start_time = Time.now.utc
     @start = @start_time.strftime('%Y%m%d%H%M%S')
-    @port = options.fetch(:port)
+    @port = Integer(options.fetch(:port))
+    @http_port = port + 1
     @dir = options.fetch(:dir)
     @pidfile = options[:pidfile] || 'fakesmtpd.pid'
     @logfile = options[:logfile] ||
