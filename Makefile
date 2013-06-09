@@ -8,7 +8,7 @@ GOBUILD_VERSION_ARGS := -ldflags "-X $(VERSION_VAR) $(REPO_VERSION)"
 ADDR := :9988
 
 
-all: test README.md
+all: test golden README.md
 
 test: build
 	go test $(GOBUILD_VERSION_ARGS) -x -v $(TARGETS)
@@ -22,6 +22,9 @@ deps:
 clean:
 	find $${GOPATH%%:*}/pkg -regex '.*modcloth-labs/hookworm.*\.a' -exec rm -v {} \;
 	go clean -x $(TARGETS)
+
+golden:
+	./runtests -v
 
 README.md: README.md.in $(wildcard *.go)
 	./build-readme $< > $@

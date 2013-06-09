@@ -21,6 +21,7 @@ var (
 
 	useSyslogFlag = flag.Bool("S", false, "Send all received events to syslog")
 
+	pidFileFlag      = flag.String("P", "", "PID file (only written if flag given)")
 	printVersionFlag = flag.Bool("v", false, "Print version and exit")
 	debugFlag        = flag.Bool("d", false, "Show debug output")
 
@@ -54,9 +55,11 @@ func ServerMain() {
 		UseSyslog:       *useSyslogFlag,
 		WatchedBranches: commaSplit(*watchedBranchesFlag),
 		WatchedPaths:    commaSplit(*watchedPathsFlag),
+		ServerPidFile:   *pidFileFlag,
+		ServerAddress:   *addrFlag,
 	}
 
-	if *debugFlag {
+	if cfg.Debug {
 		log.Printf("Using handler config: %+v\n", cfg)
 	}
 	server := NewServer(cfg)
@@ -65,8 +68,21 @@ func ServerMain() {
 	}
 
 	http.Handle("/", server)
-	log.Printf("Listening on %v\n", *addrFlag)
-	log.Fatal(http.ListenAndServe(*addrFlag, nil))
+	log.Printf("Listening on %v\n", cfg.ServerAddress)
+
+	if len(cfg.ServerPidFile) > 0 {
+		pidFile, err := os.Create(cfg.ServerPidFile)
+		if err != nil {
+			log.Fatal("Failed to open PID file:", err)
+		}
+		fmt.Fprintf(pidFile, "%d\n", os.Getpid())
+		err = pidFile.Close()
+		if err != nil {
+			log.Fatal("Failed to close PID file:", err)
+		}
+	}
+
+	log.Fatal(http.ListenAndServe(cfg.ServerAddress, nil))
 }
 
 func NewServer(cfg *HandlerConfig) *Server {
@@ -98,6 +114,13 @@ func (me *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		log.Println("Failed to unmarshal payload: ", err)
 		if me.debug {
 			log.Println("Raw payload: ", rawPayload)
+		}
+		return
+	}
+
+	if !payload.IsValid() {
+		if me.debug {
+			log.Println("Invalid payload!")
 		}
 		return
 	}

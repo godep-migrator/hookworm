@@ -13,6 +13,8 @@ type HandlerConfig struct {
 	UseSyslog       bool
 	WatchedBranches []string
 	WatchedPaths    []string
+	ServerPidFile   string
+	ServerAddress   string
 }
 
 type Handler interface {
