@@ -1,4 +1,8 @@
+require_relative 'bits'
+
 class HookwormServer
+  include Bits
+
   attr_reader :server_binary, :addr, :port, :start_time, :pidfile, :logfile
   attr_reader :startup_sleep, :server_pid, :options
 

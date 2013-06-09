@@ -116,6 +116,13 @@ func (me *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if !payload.IsValid() {
+		if me.debug {
+			log.Println("Invalid payload!")
+		}
+		return
+	}
+
 	status = http.StatusNoContent
 
 	if me.pipeline == nil {
