@@ -11,7 +11,7 @@ class HookwormServerRunner
     @port = Integer(addr.gsub(/.*:/, ''))
     @server_binary = "#{ENV['GOPATH'].split(/:/).first}/bin/hookworm-server"
     @logfile = File.expand_path(
-      "../../log/hookworm-server-#{start}-#{port}.log",
+      "../../log/hookworm-server-#{port}-#{start}.log",
       __FILE__
     )
     @pidfile = options['-P'] || "hookworm-server-#{port}.pid"
