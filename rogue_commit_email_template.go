@@ -40,14 +40,12 @@ that only pull requests should be merged into them.
 
 The configured watched branches are:
 
-{{range .WatchedBranches}}
-  - {{.}}
+{{range .WatchedBranches}} - {{.}}
 {{end}}
 
 The configured watched paths are:
 
-{{range .WatchedPaths}}
-  - {{.}}
+{{range .WatchedPaths}} - {{.}}
 {{end}}
 
 
@@ -133,8 +131,7 @@ Content-Transfer-Encoding: 7bit
   </p>
 
   <ul>
-    {{range .WatchedBranches}}
-    <li><strong>{{.}}</strong></li>
+    {{range .WatchedBranches}}<li><strong>{{.}}</strong></li>
     {{end}}
   </ul>
 
@@ -143,8 +140,7 @@ Content-Transfer-Encoding: 7bit
   </p>
 
   <ul>
-    {{range .WatchedPaths}}
-    <li><strong>{{.}}</strong></li>
+    {{range .WatchedPaths}}<li><strong>{{.}}</strong></li>
     {{end}}
   </ul>
 
