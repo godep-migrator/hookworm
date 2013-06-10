@@ -48,6 +48,7 @@ $servers = {
     '-d' => nil,
     '-P' => File.expand_path('../log/hookworm-server-debug.pid', __FILE__),
     '-b' => '^master$,^develop$',
+    '-p' => '.*',
     '-e' => "smtp://localhost:#{$fakesmtpd_server.port}",
     '-f' => 'hookworm-runtests@testing.local',
     '-r' => 'hookworm-self@testing.local',

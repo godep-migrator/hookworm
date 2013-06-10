@@ -34,7 +34,7 @@ class HookwormServerRunner
         cmd << k
         next
       end
-      cmd << k << v
+      cmd << k << "'#{v}'"
     end
     cmd << ">> #{logfile} 2>&1"
     cmd.join(' ')

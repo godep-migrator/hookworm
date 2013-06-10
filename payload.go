@@ -70,10 +70,8 @@ type Commit struct {
 }
 
 func (me *Commit) Paths() []string {
-	var (
-		paths    map[string]bool
-		pathKeys []string
-	)
+	var pathKeys []string
+	paths := make(map[string]bool)
 
 	for _, pathList := range [][]*NullableString{me.Added, me.Removed, me.Modified} {
 		for _, path := range pathList {
