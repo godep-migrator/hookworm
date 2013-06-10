@@ -13,7 +13,7 @@ import (
 var (
 	addrFlag = flag.String("a", ":9988", "Server address")
 
-	emailFlag           = flag.String("e", "smtp://localhost", "Email server address")
+	emailFlag           = flag.String("e", "smtp://localhost:25", "Email server address")
 	emailFromFlag       = flag.String("f", "hookworm@localhost", "Email from address")
 	emailRcptsFlag      = flag.String("r", "", "Email recipients (comma-delimited)")
 	policedBranchesFlag = flag.String("b", "", "Policed branches (comma-delimited regexes)")

@@ -4,23 +4,53 @@
 require 'fileutils'
 require 'minitest/spec'
 require 'net/http'
+require 'json'
 
-require File.expand_path('../.golden/bits', __FILE__)
-require File.expand_path('../.golden/hookworm_server', __FILE__)
+require 'mail'
+
+require_relative '.golden/bits'
+require_relative '.golden/hookworm_server_runner'
+require_relative '.golden/fakesmtpd_runner'
 
 include Bits
 include FileUtils
 
+def current_mail_messages
+  JSON.parse(
+    get_request(port: $fakesmtpd_server.http_port).body
+  ).fetch('message_files')
+end
+
+def last_message
+  filename = current_mail_messages.last
+  return Mail.new if !filename
+  return Mail.new(JSON.parse(File.read(filename))['body'].join("\n"))
+end
+
+def last_message_header(header_name)
+  last_message[header_name].to_s
+end
+
+$fakesmtpd_server = FakeSMTPdRunner.new(
+  port: "#{rand(13100..13109)}",
+  dir: File.expand_path('../log/emails', __FILE__),
+  pidfile: File.expand_path('../log/fakesmtpd.pid', __FILE__)
+)
+
 $servers = {
-  null: HookwormServer.new(
+  null: HookwormServerRunner.new(
     '-a' => ":#{rand(12100..12109)}",
     '-P' => File.expand_path('../log/hookworm-server-null.pid', __FILE__),
     start: Time.now.utc,
   ),
-  debug: HookwormServer.new(
+  debug: HookwormServerRunner.new(
     '-a' => ":#{rand(12110..12119)}",
     '-d' => nil,
     '-P' => File.expand_path('../log/hookworm-server-debug.pid', __FILE__),
+    '-b' => '^master$,^develop$',
+    '-e' => "smtp://localhost:#{$fakesmtpd_server.port}",
+    '-f' => 'hookworm-runtests@testing.local',
+    '-r' => 'hookworm-self@testing.local',
     start: Time.now.utc,
   )
 }
@@ -41,8 +71,49 @@ $servers.each do |name,server|
   end
 end
 
+describe 'when receiving a payload for a watched branch' do
+  before do
+    pre_request_messages = current_mail_messages
+    post_request(port: $servers[:debug].port, body: payload(:rogue))
+    @sent_messages = current_mail_messages - pre_request_messages
+  end
+
+  it 'sends a rogue commit email' do
+    @sent_messages.wont_be_empty
+  end
+end
+
+describe 'rogue commit emails' do
+  before do
+    @rogue_response ||= post_request(
+      port: $servers[:debug].port, body: payload(:rogue)
+    )
+  end
+
+  it 'are multipart' do
+    last_message.multipart?.must_equal true
+  end
+
+  it 'are sent to the specified recipients' do
+    last_message_header('To').must_equal 'hookworm-self@testing.local'
+  end
+
+  it 'are sent from the specified sender' do
+    last_message_header('From').must_equal 'hookworm-runtests@testing.local'
+  end
+
+  it 'have a subject starting with [hookworm]' do
+    last_message_header('Subject').must_match(/^\s*\[hookworm\]/)
+  end
+
+  it 'have a subject with the commit author name' do
+    last_message_header('Subject').must_match(/Dan Buch/)
+  end
+end
+
 def main(argv = [].freeze)
   at_exit do
+    $fakesmtpd_server.stop
     $servers.each do |_,server|
       server.stop
     end
@@ -50,13 +121,14 @@ def main(argv = [].freeze)
 
   Dir.chdir(File.expand_path('../', __FILE__)) do
     mkdir_p('./log')
+    $fakesmtpd_server.start
     $servers.each do |_,runner|
       runner.start
     end
   end
 
   MiniTest::Unit.output = MiniTestReporter.new
-  exit_code = MiniTest::Unit.new.run(argv)
+  exit_code = MiniTest::Unit.new.run(argv) || 1
 
   if exit_code == 0
     $stderr.puts BRIGHT_GREEN
@@ -86,6 +158,10 @@ def main(argv = [].freeze)
     $servers.each { |_,server| server.dump_log }
   end
 
+  if ENV['HOLD_ON_A_SEC']
+    print 'Holding on a sec... [Enter] '
+    gets
+  end
   exit exit_code
 end
 
