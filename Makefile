@@ -18,8 +18,10 @@ build: deps
 
 deps:
 	go get $(GOBUILD_VERSION_ARGS) -x $(TARGETS)
+	ruby -rmail/version -e 'Mail::VERSION' || gem install mail --no-ri --no-rdoc
 
 clean:
+	rm -rf ./log
 	find $${GOPATH%%:*}/pkg -regex '.*modcloth-labs/hookworm.*\.a' -exec rm -v {} \;
 	go clean -x $(TARGETS)
 
