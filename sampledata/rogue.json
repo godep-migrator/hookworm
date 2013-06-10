@@ -1,0 +1,152 @@
+{
+  "ref": "refs/heads/master",
+  "after": "d0afb08e931361f179a7e0fd29daec7ca1663233",
+  "before": "926ed297f149354424c1968924bf944c5b69a7ec",
+  "created": false,
+  "deleted": false,
+  "forced": false,
+  "compare": "https://github.com/modcloth-labs/hookworm/compare/926ed297f149...d0afb08e9313",
+  "commits": [
+    {
+      "id": "7afdcae33a1903e52d0290e738b868d944ce3f60",
+      "distinct": true,
+      "message": "Merge from modcloth-labs/payload-parsing-and-emailing\n\nPayload parsing and emailing",
+      "timestamp": "2013-06-01T19:28:39-07:00",
+      "url": "https://github.com/modcloth-labs/hookworm/commit/7afdcae33a1903e52d0290e738b868d944ce3f60",
+      "author": {
+        "name": "Dan Buch",
+        "email": "daniel.buch@gmail.com",
+        "username": "meatballhat"
+      },
+      "committer": {
+        "name": "Dan Buch",
+        "email": "daniel.buch@gmail.com",
+        "username": "meatballhat"
+      },
+      "added": [
+        "emailer.go",
+        "example-payload.json",
+        "payload.go"
+      ],
+      "removed": [
+
+      ],
+      "modified": [
+        "Makefile",
+        "server.go"
+      ]
+    },
+    {
+      "id": "323fa5bebc49cbeac869a242682a56c83d4566cc",
+      "distinct": true,
+      "message": "Handling JSON nulls all over the place\n\nwhich I may end up reverting in favor of the {}interface + type\nassertion approach.",
+      "timestamp": "2013-06-02T09:42:59-07:00",
+      "url": "https://github.com/modcloth-labs/hookworm/commit/323fa5bebc49cbeac869a242682a56c83d4566cc",
+      "author": {
+        "name": "Dan Buch",
+        "email": "d.buch@modcloth.com",
+        "username": "meatballhat"
+      },
+      "committer": {
+        "name": "Dan Buch",
+        "email": "d.buch@modcloth.com",
+        "username": "meatballhat"
+      },
+      "added": [
+        "sampledata/payload-with-nulls.json",
+        "sampledata/payload.json"
+      ],
+      "removed": [
+        "example-payload.json"
+      ],
+      "modified": [
+        "payload.go",
+        "server.go"
+      ]
+    },
+    {
+      "id": "d0afb08e931361f179a7e0fd29daec7ca1663233",
+      "distinct": true,
+      "message": "Merge pull request #2 from modcloth-labs/payload-parsing-and-emailing\n\nHandling JSON nulls all over the place",
+      "timestamp": "2013-06-02T09:47:08-07:00",
+      "url": "https://github.com/modcloth-labs/hookworm/commit/d0afb08e931361f179a7e0fd29daec7ca1663233",
+      "author": {
+        "name": "Dan Buch",
+        "email": "daniel.buch@gmail.com",
+        "username": "meatballhat"
+      },
+      "committer": {
+        "name": "Dan Buch",
+        "email": "daniel.buch@gmail.com",
+        "username": "meatballhat"
+      },
+      "added": [
+        "sampledata/payload-with-nulls.json",
+        "sampledata/payload.json"
+      ],
+      "removed": [
+        "example-payload.json"
+      ],
+      "modified": [
+        "payload.go",
+        "server.go"
+      ]
+    }
+  ],
+  "head_commit": {
+    "id": "d0afb08e931361f179a7e0fd29daec7ca1663233",
+    "distinct": true,
+    "message": "Merge from modcloth-labs/payload-parsing-and-emailing\n\nPayload parsing and emailing",
+    "timestamp": "2013-06-02T09:47:08-07:00",
+    "url": "https://github.com/modcloth-labs/hookworm/commit/d0afb08e931361f179a7e0fd29daec7ca1663233",
+    "author": {
+      "name": "Dan Buch",
+      "email": "daniel.buch@gmail.com",
+      "username": "meatballhat"
+    },
+    "committer": {
+      "name": "Dan Buch",
+      "email": "daniel.buch@gmail.com",
+      "username": "meatballhat"
+    },
+    "added": [
+      "sampledata/payload-with-nulls.json",
+      "sampledata/payload.json"
+    ],
+    "removed": [
+      "example-payload.json"
+    ],
+    "modified": [
+      "payload.go",
+      "server.go"
+    ]
+  },
+  "repository": {
+    "id": 10417548,
+    "name": "hookworm",
+    "url": "https://github.com/modcloth-labs/hookworm",
+    "description": "github hook receiving thingydoo",
+    "watchers": 0,
+    "stargazers": 0,
+    "forks": 0,
+    "fork": false,
+    "size": 208,
+    "owner": {
+      "name": "modcloth-labs",
+      "email": null
+    },
+    "private": false,
+    "open_issues": 0,
+    "has_issues": true,
+    "has_downloads": true,
+    "has_wiki": true,
+    "language": "Go",
+    "created_at": 1370060266,
+    "pushed_at": 1370191630,
+    "master_branch": "master",
+    "organization": "modcloth-labs"
+  },
+  "pusher": {
+    "name": "none"
+  }
+}

@@ -10,7 +10,7 @@ Usage: hookworm-server [options]
   -a=":9988": Server address
   -b="": Watched branches (comma-delimited regexes)
   -d=false: Show debug output
-  -e="smtp://localhost": Email server address
+  -e="smtp://localhost:25": Email server address
   -f="hookworm@localhost": Email from address
   -p="": Watched paths (comma-delimited regexes)
   -r="": Email recipients (comma-delimited)

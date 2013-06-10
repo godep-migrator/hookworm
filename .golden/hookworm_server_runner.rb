@@ -1,10 +1,7 @@
-require_relative 'bits'
+require_relative 'server_runner_methods'
 
-class HookwormServer
-  include Bits
-
-  attr_reader :server_binary, :addr, :port, :start_time, :pidfile, :logfile
-  attr_reader :startup_sleep, :server_pid, :options
+class HookwormServerRunner
+  include ServerRunnerMethods
 
   def initialize(options = {})
     @options = options
@@ -26,11 +23,8 @@ class HookwormServer
     end
   end
 
-  def start
-    announce! "Starting hookworm server with address #{addr}"
-    @server_pid = Process.spawn(command)
-    sleep startup_sleep
-    server_pid
+  def description
+    "hookworm server with address #{addr}"
   end
 
   def command
@@ -44,24 +38,5 @@ class HookwormServer
     end
     cmd << ">> #{logfile} 2>&1"
     cmd.join(' ')
-  end
-
-  def stop
-    real_pid = Integer(File.read(pidfile).chomp) rescue nil
-    if server_pid && real_pid
-      announce! "Stopping hookworm server with address #{addr} " <<
-                "(shell PID=#{server_pid}, server PID=#{real_pid})"
-
-      [real_pid, server_pid].each do |pid|
-        Process.kill(:TERM, pid) rescue nil
-      end
-    end
-  end
-
-  def dump_log
-    announce! "Dumping #{logfile}"
-    File.read(logfile).split($/).each do |line|
-      announce! "--> #{line}"
-    end
   end
 end
