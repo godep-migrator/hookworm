@@ -35,9 +35,19 @@ Message   {{.HeadCommitMessageText}}
 -- 
 This email was sent by hookworm:  https://github.com/modcloth-labs/hookworm
 
-A rogue commit is a commit made directly to a branch that has been deemed
-sacred or policed such that only pull requests should be merged into them.
-The configured policed branches are {{.PolicedBranches}}.
+A rogue commit is a commit made directly to a branch that is being watched such
+that only pull requests should be merged into them.
+
+The configured watched branches are:
+
+{{range .WatchedBranches}} - {{.}}
+{{end}}
+
+The configured watched paths are:
+
+{{range .WatchedPaths}} - {{.}}
+{{end}}
+
 
 If you believe this rogue commit email is an error, you should hunt down the
 party responsible for the hookworm instance registered as a WebHook URL in this
@@ -112,10 +122,27 @@ Content-Transfer-Encoding: 7bit
   </p>
 
   <p>
-    A rogue commit is a commit made directly to a branch that has been deemed
-    sacred or policed such that only pull requests should be merged into them.
-    The configured policed branches are <strong>{{.PolicedBranches}}</strong>.
+    A rogue commit is a commit made directly to a branch that is being watched such
+    that only pull requests should be merged into them.
   </p>
+
+  <p>
+    The configured watched branches are:
+  </p>
+
+  <ul>
+    {{range .WatchedBranches}}<li><strong>{{.}}</strong></li>
+    {{end}}
+  </ul>
+
+  <p>
+    The configured watched paths are:
+  </p>
+
+  <ul>
+    {{range .WatchedPaths}}<li><strong>{{.}}</strong></li>
+    {{end}}
+  </ul>
 
   <p>
     If you believe this rogue commit email is an error, you should hunt down the

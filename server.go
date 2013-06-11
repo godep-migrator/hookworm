@@ -16,7 +16,8 @@ var (
 	emailFlag           = flag.String("e", "smtp://localhost:25", "Email server address")
 	emailFromFlag       = flag.String("f", "hookworm@localhost", "Email from address")
 	emailRcptsFlag      = flag.String("r", "", "Email recipients (comma-delimited)")
-	policedBranchesFlag = flag.String("b", "", "Policed branches (comma-delimited regexes)")
+	watchedBranchesFlag = flag.String("b", "", "Watched branches (comma-delimited regexes)")
+	watchedPathsFlag    = flag.String("p", "", "Watched paths (comma-delimited regexes)")
 
 	useSyslogFlag = flag.Bool("S", false, "Send all received events to syslog")
 
@@ -52,7 +53,8 @@ func ServerMain() {
 		EmailFromAddr:   *emailFromFlag,
 		EmailRcpts:      commaSplit(*emailRcptsFlag),
 		UseSyslog:       *useSyslogFlag,
-		PolicedBranches: commaSplit(*policedBranchesFlag),
+		WatchedBranches: commaSplit(*watchedBranchesFlag),
+		WatchedPaths:    commaSplit(*watchedPathsFlag),
 		ServerPidFile:   *pidFileFlag,
 		ServerAddress:   *addrFlag,
 	}

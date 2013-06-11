@@ -1,9 +1,24 @@
 package hookworm
 
 import (
+	"os"
 	"regexp"
 	"strings"
 )
+
+var (
+	hostname string
+
+	rfc2822DateFmt = "Mon, 02 Jan 2006 15:04:05 -0700"
+)
+
+func init() {
+	var err error
+	hostname, err = os.Hostname()
+	if err != nil {
+		hostname = "somewhere.local"
+	}
+}
 
 func commaSplit(str string) []string {
 	var ret []string

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"regexp"
+	"sort"
 	"strconv"
 	"strings"
 )
@@ -29,6 +30,29 @@ func (me *Payload) IsPullRequestMerge() bool {
 		pullRequestMessageRe.Match([]byte(me.HeadCommit.Message.String()))
 }
 
+func (me *Payload) Paths() []string {
+	var (
+		paths   []string
+		commits []*Commit
+	)
+
+	for _, commit := range me.Commits {
+		commits = append(commits, commit)
+	}
+
+	commits = append(commits, me.HeadCommit)
+
+	for i, commit := range commits {
+		if me.IsPullRequestMerge() && i == 0 {
+			continue
+		}
+		for _, path := range commit.Paths() {
+			paths = append(paths, path)
+		}
+	}
+	return paths
+}
+
 func (me *Payload) IsValid() bool {
 	return me.Ref != nil && me.After != nil &&
 		me.Before != nil && me.Created != nil &&
@@ -49,6 +73,24 @@ type Commit struct {
 	Added     []*NullableString `json:"added"`
 	Removed   []*NullableString `json:"removed"`
 	Modified  []*NullableString `json:"modified"`
+}
+
+func (me *Commit) Paths() []string {
+	var paths []string
+	pathSet := make(map[string]bool)
+
+	for _, pathList := range [][]*NullableString{me.Added, me.Removed, me.Modified} {
+		for _, path := range pathList {
+			pathSet[path.String()] = true
+		}
+	}
+
+	for path, _ := range pathSet {
+		paths = append(paths, path)
+	}
+
+	sort.Strings(paths)
+	return paths
 }
 
 type Repository struct {

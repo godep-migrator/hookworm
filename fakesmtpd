@@ -97,7 +97,7 @@ class FakeSMTPd
       end
 
       def to_s
-        @client_id ||= Time.now.utc.strftime('%Y%m%d%H%M%S%L')
+        @client_id ||= Time.now.utc.strftime('%Y%m%d%H%M%S%N')
         "<smtp client #{@client_id}>"
       end
     end

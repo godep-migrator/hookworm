@@ -11,8 +11,10 @@ module ServerRunnerMethods
     if dir
       FileUtils.mkdir_p(dir)
     end
+    process_command = command
     announce! "Starting #{description}"
-    @server_pid = Process.spawn(command)
+    announce! "  ---> #{process_command}"
+    @server_pid = Process.spawn(process_command)
     sleep startup_sleep
     server_pid
   end
