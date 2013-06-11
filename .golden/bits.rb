@@ -38,6 +38,13 @@ module Bits
     )
   end
 
+  def delete_request(options = {})
+    perform_request(
+      Net::HTTP::Delete.new(options[:path] || '/'),
+      options.fetch(:port)
+    )
+  end
+
   def payload(name)
     "payload=#{URI.escape(File.read(payload_file(name)))}"
   end

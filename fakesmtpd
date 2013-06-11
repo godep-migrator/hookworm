@@ -5,8 +5,11 @@
 require 'socket'
 require 'json'
 require 'logger'
+require 'thread'
 
 USAGE = "Usage: #{File.basename($0)} <port> <message-dir> [pidfile]"
+
+$sem = Mutex.new
 
 class FakeSMTPdHTTPServer
   attr_reader :server, :port, :smtpd, :log
@@ -26,18 +29,26 @@ class FakeSMTPdHTTPServer
         client = httpd.accept
         request_line = client.gets
         log.info request_line.chomp
-        if request_line =~ /^GET \/ /
+        if request_line =~ /^GET \/messages /
           client.puts 'HTTP/1.1 200 OK'
           client.puts 'Content-type: application/json;charset=utf-8'
           client.puts
-          client.puts JSON.pretty_generate(
-            message_files: smtpd.message_files_written
-          )
+          $sem.synchronize do
+            client.puts JSON.pretty_generate(
+              message_files: smtpd.message_files_written
+            )
+          end
+        elsif request_line =~ /^DELETE \/messages /
+          $sem.synchronize do
+            smtpd.message_files_written.clear
+          end
+          client.puts 'HTTP/1.1 204 No Content'
+          client.puts
         else
           client.puts 'HTTP/1.1 405 Method Not Allowed'
           client.puts 'Content-type: text/plain;charset=utf-8'
           client.puts
-          client.puts 'Only GET is supported, eh.'
+          client.puts 'Only "(GET|DELETE) /messages" is supported, eh.'
         end
         client.close
       end
@@ -50,7 +61,7 @@ class FakeSMTPdHTTPServer
 end
 
 class FakeSMTPd
-  attr_reader :port, :message_dir, :log, :pidfile
+  attr_reader :port, :message_dir, :log, :pidfile, :message_files_written
 
   def initialize(options = {})
     @port = options.fetch(:port)
@@ -58,10 +69,6 @@ class FakeSMTPd
     @pidfile = options[:pidfile] || 'fakesmtpd.pid'
     @log = Logger.new($stderr)
     @message_files_written = []
-  end
-
-  def message_files_written
-    @message_files_written.dup
   end
 
   def start
@@ -157,7 +164,9 @@ class FakeSMTPd
         body: body,
       )
     end
-    @message_files_written << outfile
+    $sem.synchronize do
+      message_files_written << outfile
+    end
     outfile
   end
 end
