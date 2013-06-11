@@ -44,8 +44,9 @@ func NewHandlerPipeline(cfg *HandlerConfig) Handler {
 	if len(cfg.WatchedBranches) > 0 {
 		elHandler.SetNextHandler(NewRogueCommitHandler(cfg))
 		if cfg.Debug {
-			log.Printf("Added rogue commit handler for watched branches %+v\n",
-				cfg.WatchedBranches)
+			log.Printf("Added rogue commit handler "+
+				"for watched branches %+v, watched paths %+v\n",
+				cfg.WatchedBranches, cfg.WatchedPaths)
 		}
 	} else {
 		if cfg.Debug {

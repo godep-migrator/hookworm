@@ -35,14 +35,20 @@ func (me *Payload) Paths() []string {
 		paths   []string
 		commits []*Commit
 	)
-	commits = append(commits, me.Commits...)
+
+	for _, commit := range me.Commits {
+		commits = append(commits, commit)
+	}
+
 	commits = append(commits, me.HeadCommit)
 
-	for i, commit := range me.Commits {
+	for i, commit := range commits {
 		if me.IsPullRequestMerge() && i == 0 {
 			continue
 		}
-		paths = append(paths, commit.Paths()...)
+		for _, path := range commit.Paths() {
+			paths = append(paths, path)
+		}
 	}
 	return paths
 }
@@ -70,21 +76,21 @@ type Commit struct {
 }
 
 func (me *Commit) Paths() []string {
-	var pathKeys []string
-	paths := make(map[string]bool)
+	var paths []string
+	pathSet := make(map[string]bool)
 
 	for _, pathList := range [][]*NullableString{me.Added, me.Removed, me.Modified} {
 		for _, path := range pathList {
-			paths[path.String()] = true
+			pathSet[path.String()] = true
 		}
 	}
 
-	for path, _ := range paths {
-		pathKeys = append(pathKeys, path)
+	for path, _ := range pathSet {
+		paths = append(paths, path)
 	}
 
-	sort.Strings(pathKeys)
-	return pathKeys
+	sort.Strings(paths)
+	return paths
 }
 
 type Repository struct {
