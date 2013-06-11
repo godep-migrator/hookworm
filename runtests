@@ -17,8 +17,12 @@ include FileUtils
 
 def current_mail_messages
   JSON.parse(
-    get_request(port: $fakesmtpd_server.http_port).body
+    get_request(path: '/messages', port: $fakesmtpd_server.http_port).body
   ).fetch('message_files')
+end
+
+def clear_mail_messages
+  delete_request(path: '/messages', port: $fakesmtpd_server.http_port)
 end
 
 def post_payload(port, payload_name)
@@ -149,6 +153,8 @@ def main(argv = [].freeze)
       runner.start
     end
   end
+
+  clear_mail_messages
 
   MiniTest::Unit.output = MiniTestReporter.new
   exit_code = MiniTest::Unit.new.run(argv) || 1
