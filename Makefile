@@ -26,7 +26,7 @@ clean:
 	go clean -x $(TARGETS)
 
 golden:
-	./runtests -v
+	./runtests -v 2>&1 | tee runtests.log
 
 README.md: README.md.in $(wildcard *.go)
 	./build-readme $< > $@
