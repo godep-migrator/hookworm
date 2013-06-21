@@ -58,8 +58,7 @@ func (me *Payload) IsValid() bool {
 		me.Before != nil && me.Created != nil &&
 		me.Deleted != nil && me.Forced != nil &&
 		me.Compare != nil && me.Commits != nil &&
-		me.HeadCommit != nil && me.Repository != nil &&
-		me.Pusher != nil
+		me.Repository != nil && me.Pusher != nil
 }
 
 type Commit struct {

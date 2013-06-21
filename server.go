@@ -109,12 +109,13 @@ func (me *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	payload := &Payload{}
+	if me.debug {
+		log.Println("Raw payload: ", rawPayload)
+	}
+
 	err := json.Unmarshal([]byte(rawPayload), payload)
 	if err != nil {
 		log.Println("Failed to unmarshal payload: ", err)
-		if me.debug {
-			log.Println("Raw payload: ", rawPayload)
-		}
 		return
 	}
 
