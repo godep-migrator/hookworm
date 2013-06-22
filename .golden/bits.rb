@@ -50,7 +50,7 @@ module Bits
   end
 
   def payload_file(name)
-    File.expand_path("../../sampledata/#{name.to_s}.json", __FILE__)
+    File.expand_path("../../sampledata/payloads/#{name.to_s}.json", __FILE__)
   end
 
   private
