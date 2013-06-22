@@ -131,7 +131,7 @@ type Owner struct {
 }
 
 type NullableString struct {
-	value  string
+	Value  string
 	isNull bool
 }
 
@@ -140,7 +140,7 @@ func (me *NullableString) UnmarshalJSON(raw []byte) error {
 		me.isNull = true
 		return nil
 	}
-	me.value = strings.TrimRight(strings.TrimLeft(string(raw), "\""), "\"")
+	me.Value = strings.TrimRight(strings.TrimLeft(string(raw), "\""), "\"")
 	return nil
 }
 
@@ -148,19 +148,25 @@ func (me *NullableString) MarshalJSON() ([]byte, error) {
 	if me.isNull {
 		return []byte("null"), nil
 	}
-	return []byte(fmt.Sprintf("%q", me.value)), nil
+	return []byte(fmt.Sprintf("%q", me.Value)), nil
 }
 
 func (me *NullableString) String() string {
-	return strings.Replace(string(me.value), "\\n", "\n", -1)
+	str := string(me.Value)
+	str = strings.Replace(str, "\\n", "\n", -1)
+	str = strings.Replace(str, "\\t", "\t", -1)
+	return str
 }
 
 func (me *NullableString) Html() string {
-	return strings.Replace(string(me.value), "\\n", "<br/>", -1)
+	str := string(me.Value)
+	str = strings.Replace(str, "\\n", "<br/>", -1)
+	str = strings.Replace(str, "\\t", "    ", -1)
+	return str
 }
 
 type NullableInt64 struct {
-	value  int64
+	Value  int64
 	isNull bool
 }
 
@@ -174,7 +180,7 @@ func (me *NullableInt64) UnmarshalJSON(raw []byte) error {
 		me.isNull = true
 		return err
 	}
-	me.value = value
+	me.Value = value
 	return nil
 }
 
@@ -182,15 +188,15 @@ func (me *NullableInt64) MarshalJSON() ([]byte, error) {
 	if me.isNull {
 		return []byte("null"), nil
 	}
-	return []byte(strconv.FormatInt(me.value, 10)), nil
+	return []byte(strconv.FormatInt(me.Value, 10)), nil
 }
 
 func (me *NullableInt64) String() string {
-	return strconv.FormatInt(me.value, 10)
+	return strconv.FormatInt(me.Value, 10)
 }
 
 type NullableBool struct {
-	value  bool
+	Value  bool
 	isNull bool
 }
 
@@ -204,7 +210,7 @@ func (me *NullableBool) UnmarshalJSON(raw []byte) error {
 		me.isNull = true
 		return err
 	}
-	me.value = value
+	me.Value = value
 	return nil
 }
 
@@ -212,9 +218,9 @@ func (me *NullableBool) MarshalJSON() ([]byte, error) {
 	if me.isNull {
 		return []byte("null"), nil
 	}
-	return []byte(strconv.FormatBool(me.value)), nil
+	return []byte(strconv.FormatBool(me.Value)), nil
 }
 
 func (me *NullableBool) String() string {
-	return strconv.FormatBool(me.value)
+	return strconv.FormatBool(me.Value)
 }
