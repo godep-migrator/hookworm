@@ -64,3 +64,10 @@ func TestPayloadDetectsPullRequests(t *testing.T) {
 		t.Fail()
 	}
 }
+
+func TestPayloadDetectsNonPullRequest(t *testing.T) {
+	payload := getPayload("valid")
+	if payload.IsPullRequestMerge() {
+		t.Fail()
+	}
+}
