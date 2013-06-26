@@ -58,6 +58,20 @@ func TestNullableStringHtmlHasEscapedTabs(t *testing.T) {
 	}
 }
 
+func TestNullableStringTextHasEscapedNewlines(t *testing.T) {
+	s := &NullableString{Value: "foo\\nbar"}
+	if s.String() != "foo\nbar" {
+		t.Fail()
+	}
+}
+
+func TestNullableStringHtmlHasEscapedNewlines(t *testing.T) {
+	s := &NullableString{Value: "foo\\nbar"}
+	if s.Html() != "foo<br/>bar" {
+		t.Fail()
+	}
+}
+
 func TestPayloadDetectsPullRequests(t *testing.T) {
 	payload := getPayload("pull_request")
 	if !payload.IsPullRequestMerge() {
