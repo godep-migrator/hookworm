@@ -8,11 +8,14 @@ import (
 	"net/url"
 )
 
+// Emailer encapsulates emailing functionality which mostly means it wraps
+// goodies from net/smtp
 type Emailer struct {
 	serverUri *url.URL
 	auth      smtp.Auth
 }
 
+// NewEmailer creates an Emailer from an smtp server uri
 func NewEmailer(serverUri string) *Emailer {
 	parsedUri, err := url.Parse(serverUri)
 	if err != nil {
@@ -31,12 +34,15 @@ func NewEmailer(serverUri string) *Emailer {
 	return &Emailer{serverUri: parsedUri, auth: auth}
 }
 
+// Send wraps sending via InsecureSendMail, using this Emailer's server uri
+// host and auth
 func (me *Emailer) Send(from string, to []string, msg []byte) error {
 	return InsecureSendMail(me.serverUri.Host, me.auth, from, to, msg)
 }
 
-// Patched version of net/smtp.SendMail that sets InsecureSkipVerify on the TLS
-// config so that self-signed mail certs don't cause x509 errors.
+// InsecureSendMail is a patched version of net/smtp.SendMail that sets
+// InsecureSkipVerify on the TLS config so that self-signed mail certs don't
+// cause x509 errors.
 func InsecureSendMail(addr string, a smtp.Auth, from string, to []string, msg []byte) error {
 	config := &tls.Config{}
 	c, err := smtp.Dial(addr)
