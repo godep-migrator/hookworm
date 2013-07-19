@@ -18,7 +18,7 @@ type HandlerConfig struct {
 }
 
 type Handler interface {
-	HandlePayload(*Payload) error
+	HandleGithubPayload(*GithubPayload) error
 	SetNextHandler(Handler)
 	NextHandler() Handler
 }

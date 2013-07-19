@@ -12,9 +12,9 @@ import (
 var pullRequestMessageRe = regexp.MustCompile("Merge pull request #[0-9]+ from.*")
 
 /*
-	TODO Rename this to `GithubPayload` (rename file github_payload.go)
+	TODO Rename this to `GithubGithubPayload` (rename file github_payload.go)
 */
-type Payload struct {
+type GithubPayload struct {
 	Ref        *NullableString `json:"ref"`
 	After      *NullableString `json:"after"`
 	Before     *NullableString `json:"before"`
@@ -29,18 +29,18 @@ type Payload struct {
 }
 
 /*
-	TODO assign this at `GithubPayload` parse time
+	TODO assign this at `GithubGithubPayload` parse time
 	so that we can serialize the payload as JSON for each ShellHandler instance
 */
-func (me *Payload) IsPullRequestMerge() bool {
+func (me *GithubPayload) IsPullRequestMerge() bool {
 	return len(me.Commits) > 1 &&
 		pullRequestMessageRe.Match([]byte(me.HeadCommit.Message.String()))
 }
 
 /*
-	TODO assign this at `GithubPayload` parse time
+	TODO assign this at `GithubGithubPayload` parse time
 */
-func (me *Payload) Paths() []string {
+func (me *GithubPayload) Paths() []string {
 	var (
 		paths   []string
 		commits []*Commit
@@ -64,9 +64,9 @@ func (me *Payload) Paths() []string {
 }
 
 /*
-	TODO assign this at `GithubPayload` parse time
+	TODO assign this at `GithubGithubPayload` parse time
 */
-func (me *Payload) IsValid() bool {
+func (me *GithubPayload) IsValid() bool {
 	return me.Ref != nil && me.After != nil &&
 		me.Before != nil && me.Created != nil &&
 		me.Deleted != nil && me.Forced != nil &&

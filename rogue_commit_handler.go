@@ -62,7 +62,7 @@ func NewRogueCommitHandler(cfg *HandlerConfig) *RogueCommitHandler {
 	return handler
 }
 
-func (me *RogueCommitHandler) HandlePayload(payload *Payload) error {
+func (me *RogueCommitHandler) HandleGithubPayload(payload *GithubPayload) error {
 	if !me.isWatchedBranch(payload.Ref.String()) {
 		if me.debug {
 			log.Printf("%v is not a watched branch, yay!\n", payload.Ref.String())
@@ -140,7 +140,7 @@ func (me *RogueCommitHandler) hasWatchedPath(paths []string) bool {
 	return false
 }
 
-func (me *RogueCommitHandler) alert(payload *Payload) error {
+func (me *RogueCommitHandler) alert(payload *GithubPayload) error {
 	log.Printf("WARNING rogue commit! %+v, head commit: %+v\n",
 		payload, payload.HeadCommit)
 	if len(me.recipients) == 0 {

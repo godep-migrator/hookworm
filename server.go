@@ -121,7 +121,7 @@ func (me *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		TODO OR make this a 'runtime mode' configuration so that a hookworm
 		TODO server can only be in one mode per process.
 	*/
-	payload := &Payload{}
+	payload := &GithubPayload{}
 	if me.debug {
 		log.Println("Raw payload: ", rawPayload)
 	}
@@ -149,7 +149,7 @@ func (me *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = me.pipeline.HandlePayload(payload)
+	err = me.pipeline.HandleGithubPayload(payload)
 	if err != nil {
 		status = http.StatusInternalServerError
 		return
