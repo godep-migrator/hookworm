@@ -12,7 +12,7 @@ import (
 var pullRequestMessageRe = regexp.MustCompile("Merge pull request #[0-9]+ from.*")
 
 /*
-	TODO Rename this to `GithubGithubPayload` (rename file github_payload.go)
+	TODO Rename this to `GithubPayload` (rename file github_payload.go)
 */
 type GithubPayload struct {
 	Ref        *NullableString `json:"ref"`

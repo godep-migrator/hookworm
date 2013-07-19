@@ -6,5 +6,5 @@ hookworm authors
  - Michael Fields
  - Olek Poplavsky
  - Jake Ritorto
- - Robbie McKinstr
+ - Robbie McKinstry
 
