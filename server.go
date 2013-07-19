@@ -19,6 +19,11 @@ var (
 	watchedBranchesFlag = flag.String("b", "", "Watched branches (comma-delimited regexes)")
 	watchedPathsFlag    = flag.String("p", "", "Watched paths (comma-delimited regexes)")
 
+	/*
+		TODO populate this on the HandlerConfig, etc.
+		wormDirFlag = flag.String("W", "", "Worm directory that contains handler executables")
+	*/
+
 	useSyslogFlag = flag.Bool("S", false, "Send all received events to syslog")
 
 	pidFileFlag      = flag.String("P", "", "PID file (only written if flag given)")
@@ -102,12 +107,20 @@ func (me *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			r.Method, r.URL.Path, r.Proto, status)
 	}()
 
+	/*
+		TODO extract payload extract and parse
+	*/
 	rawPayload := r.FormValue("payload")
 	if len(rawPayload) < 1 {
 		log.Println("Empty payload!")
 		return
 	}
 
+	/*
+		TODO detect github vs. travis webhook request?  Somehow?
+		TODO OR make this a 'runtime mode' configuration so that a hookworm
+		TODO server can only be in one mode per process.
+	*/
 	payload := &Payload{}
 	if me.debug {
 		log.Println("Raw payload: ", rawPayload)
@@ -118,6 +131,10 @@ func (me *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		log.Println("Failed to unmarshal payload: ", err)
 		return
 	}
+
+	/*
+		TODO right here is "parse time" for payloads
+	*/
 
 	if !payload.IsValid() {
 		if me.debug {

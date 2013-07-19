@@ -11,6 +11,9 @@ import (
 
 var pullRequestMessageRe = regexp.MustCompile("Merge pull request #[0-9]+ from.*")
 
+/*
+	TODO Rename this to `GithubPayload` (rename file github_payload.go)
+*/
 type Payload struct {
 	Ref        *NullableString `json:"ref"`
 	After      *NullableString `json:"after"`
@@ -25,11 +28,18 @@ type Payload struct {
 	Pusher     *Pusher         `json:"pusher"`
 }
 
+/*
+	TODO assign this at `GithubPayload` parse time
+	so that we can serialize the payload as JSON for each ShellHandler instance
+*/
 func (me *Payload) IsPullRequestMerge() bool {
 	return len(me.Commits) > 1 &&
 		pullRequestMessageRe.Match([]byte(me.HeadCommit.Message.String()))
 }
 
+/*
+	TODO assign this at `GithubPayload` parse time
+*/
 func (me *Payload) Paths() []string {
 	var (
 		paths   []string
@@ -53,6 +63,9 @@ func (me *Payload) Paths() []string {
 	return paths
 }
 
+/*
+	TODO assign this at `GithubPayload` parse time
+*/
 func (me *Payload) IsValid() bool {
 	return me.Ref != nil && me.After != nil &&
 		me.Before != nil && me.Created != nil &&

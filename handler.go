@@ -25,6 +25,27 @@ type Handler interface {
 
 func NewHandlerPipeline(cfg *HandlerConfig) Handler {
 	var err error
+
+	//var pipeline Handler
+
+	/*
+		TODO rework pipeline construction to use ShellHandler for most biz logic
+		if worm dir does not exist, then
+			yell about it and exit
+		else, for each file in worm dir
+			if file is executable, then
+				execute it with a single positional param of "configure"
+				passing the JSON-serialized HandlerConfig on STDIN
+					if configure call exits 0, then
+						create a ShellHandler instance with the executable name
+						add the ShellHandler instance to the pipeline
+						log it
+	*/
+
+	/*
+		TODO construction of EventLogHandler may stay the same
+		since it's about parsing payloads and logging such
+	*/
 	elHandler := &EventLogHandler{debug: cfg.Debug}
 
 	if cfg.UseSyslog {
@@ -40,7 +61,12 @@ func NewHandlerPipeline(cfg *HandlerConfig) Handler {
 			log.Println("No syslog logger added to event handler")
 		}
 	}
+	// end part that will likely stay the same
 
+	/*
+		TODO move the rogue commit handler to a script
+		that ships with the repository in the default "worm dir"
+	*/
 	if len(cfg.WatchedBranches) > 0 {
 		elHandler.SetNextHandler(NewRogueCommitHandler(cfg))
 		if cfg.Debug {

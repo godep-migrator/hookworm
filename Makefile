@@ -34,5 +34,8 @@ README.md: README.md.in $(wildcard *.go)
 serve:
 	$${GOPATH%%:*}/bin/hookworm-server -a $(ADDR) -S
 
+todo:
+	@grep -R TODO . | grep -v '^./Makefile'
 
-.PHONY: all build clean deps serve test
+
+.PHONY: all build clean deps serve test todo
