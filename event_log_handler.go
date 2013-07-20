@@ -11,7 +11,7 @@ type EventLogHandler struct {
 	debug       bool
 }
 
-func (me *EventLogHandler) HandlePayload(payload *Payload) error {
+func (me *EventLogHandler) HandleGithubPayload(payload *GithubPayload) error {
 	asJsonBytes, err := json.MarshalIndent(payload, "", "  ")
 	if err != nil {
 		log.Println("Failed to re-serialize payload:", err)
@@ -30,7 +30,7 @@ func (me *EventLogHandler) HandlePayload(payload *Payload) error {
 	}
 
 	if nxt := me.NextHandler(); nxt != nil {
-		return nxt.HandlePayload(payload)
+		return nxt.HandleGithubPayload(payload)
 	}
 
 	return nil
