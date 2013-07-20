@@ -21,8 +21,8 @@ func init() {
 	here = path.Dir(filename)
 }
 
-func getPayload(name string) *Payload {
-	payload := &Payload{}
+func getGithubPayload(name string) *GithubPayload {
+	payload := &GithubPayload{}
 
 	filename := path.Join(here, "sampledata", "payloads",
 		fmt.Sprintf("%s.json", name))
@@ -72,15 +72,15 @@ func TestNullableStringHtmlHasEscapedNewlines(t *testing.T) {
 	}
 }
 
-func TestPayloadDetectsPullRequests(t *testing.T) {
-	payload := getPayload("pull_request")
+func TestGithubPayloadDetectsPullRequests(t *testing.T) {
+	payload := getGithubPayload("pull_request")
 	if !payload.IsPullRequestMerge() {
 		t.Fail()
 	}
 }
 
-func TestPayloadDetectsNonPullRequest(t *testing.T) {
-	payload := getPayload("valid")
+func TestGithubPayloadDetectsNonPullRequest(t *testing.T) {
+	payload := getGithubPayload("valid")
 	if payload.IsPullRequestMerge() {
 		t.Fail()
 	}
