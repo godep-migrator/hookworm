@@ -138,6 +138,12 @@ describe 'rogue commit emails' do
   end
 end
 
+describe 'when receiving a payload for a pull request merges' do
+  describe 'without signoff' do
+	it 'sends a rogue pull request email'
+  end
+end
+
 def main(argv = [].freeze)
   at_exit do
     $fakesmtpd_server.stop
