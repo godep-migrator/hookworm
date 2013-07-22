@@ -15,6 +15,7 @@ type HandlerConfig struct {
 	WatchedPaths    []string
 	ServerPidFile   string
 	ServerAddress   string
+  WormDir         string
 }
 
 type Handler interface {

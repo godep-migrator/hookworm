@@ -18,11 +18,7 @@ var (
 	emailRcptsFlag      = flag.String("r", "", "Email recipients (comma-delimited)")
 	watchedBranchesFlag = flag.String("b", "", "Watched branches (comma-delimited regexes)")
 	watchedPathsFlag    = flag.String("p", "", "Watched paths (comma-delimited regexes)")
-
-	/*
-		TODO populate this on the HandlerConfig, etc.
-		wormDirFlag = flag.String("W", "", "Worm directory that contains handler executables")
-	*/
+	wormDirFlag         = flag.String("W", "worm_dir", "Worm directory that contains handler executables")
 
 	useSyslogFlag = flag.Bool("S", false, "Send all received events to syslog")
 
@@ -62,6 +58,7 @@ func ServerMain() {
 		WatchedPaths:    commaSplit(*watchedPathsFlag),
 		ServerPidFile:   *pidFileFlag,
 		ServerAddress:   *addrFlag,
+    WormDir:         *wormDirFlag,
 	}
 
 	if cfg.Debug {
