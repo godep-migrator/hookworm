@@ -1,9 +1,11 @@
 package main
 
 import (
+	"os"
+
 	"github.com/modcloth-labs/hookworm"
 )
 
 func main() {
-	hookworm.ServerMain()
+	os.Exit(hookworm.ServerMain())
 }

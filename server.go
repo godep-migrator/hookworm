@@ -18,7 +18,8 @@ var (
 	emailRcptsFlag      = flag.String("r", "", "Email recipients (comma-delimited)")
 	watchedBranchesFlag = flag.String("b", "", "Watched branches (comma-delimited regexes)")
 	watchedPathsFlag    = flag.String("p", "", "Watched paths (comma-delimited regexes)")
-	wormDirFlag         = flag.String("W", "worm_dir", "Worm directory that contains handler executables")
+	wormDirFlag         = flag.String("W", "", "Worm directory that contains handler executables")
+	workingDirFlag      = flag.String("D", "", "Working directory (scratch pad)")
 
 	useSyslogFlag = flag.Bool("S", false, "Send all received events to syslog")
 
@@ -29,12 +30,16 @@ var (
 	logTimeFmt = "2/Jan/2006:15:04:05 -0700" // "%d/%b/%Y:%H:%M:%S %z"
 )
 
+// Server implements ServeHTTP, parsing payloads and handing them off to the
+// handler pipeline
 type Server struct {
 	pipeline Handler
 	debug    bool
 }
 
-func ServerMain() {
+// ServerMain is the `main` entry point used by the `hookworm-server`
+// executable
+func ServerMain() int {
 	flag.Usage = func() {
 		fmt.Printf("Usage: %v [options]\n", progName)
 		flag.PrintDefaults()
@@ -43,10 +48,20 @@ func ServerMain() {
 	flag.Parse()
 	if *printVersionFlag {
 		printVersion()
-		return
-	} else {
-		log.Println("Starting", progVersion())
+		return 0
 	}
+
+	log.Println("Starting", progVersion())
+
+	workingDir, err := getWorkingDir(*workingDirFlag)
+	if err != nil {
+		log.Printf("ERROR: %v\n", err)
+		return 1
+	}
+
+	log.Println("Using working directory", workingDir)
+
+	defer os.RemoveAll(workingDir)
 
 	cfg := &HandlerConfig{
 		Debug:           *debugFlag,
@@ -58,7 +73,8 @@ func ServerMain() {
 		WatchedPaths:    commaSplit(*watchedPathsFlag),
 		ServerPidFile:   *pidFileFlag,
 		ServerAddress:   *addrFlag,
-    WormDir:         *wormDirFlag,
+		WormDir:         *wormDirFlag,
+		WorkingDir:      workingDir,
 	}
 
 	if cfg.Debug {
@@ -85,8 +101,10 @@ func ServerMain() {
 	}
 
 	log.Fatal(http.ListenAndServe(cfg.ServerAddress, nil))
+	return 0 // <-- never reached, but necessary to appease compiler
 }
 
+// NewServer builds a Server instance given a HandlerConfig
 func NewServer(cfg *HandlerConfig) *Server {
 	return &Server{
 		pipeline: NewHandlerPipeline(cfg),
