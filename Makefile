@@ -8,7 +8,7 @@ GOBUILD_VERSION_ARGS := -ldflags "-X $(VERSION_VAR) $(REPO_VERSION)"
 ADDR := :9988
 
 
-all: test golden README.md
+all: clean test golden README.md
 
 test: build
 	go test $(GOBUILD_VERSION_ARGS) -x -v $(TARGETS)
