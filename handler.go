@@ -5,25 +5,30 @@ import (
 	"log/syslog"
 )
 
+// HandlerConfig contains the bag of configuration poo used by all handlers
 type HandlerConfig struct {
-	Debug           bool
-	EmailUri        string
-	EmailFromAddr   string
-	EmailRcpts      []string
-	UseSyslog       bool
-	WatchedBranches []string
-	WatchedPaths    []string
-	ServerPidFile   string
-	ServerAddress   string
-  WormDir         string
+	Debug           bool     `json:"debug"`
+	EmailUri        string   `json:"email_uri"`
+	EmailFromAddr   string   `json:"email_from_addr"`
+	EmailRcpts      []string `json:"email_recipients"`
+	UseSyslog       bool     `json:"syslog"`
+	WatchedBranches []string `json:"watched_branches"`
+	WatchedPaths    []string `json:"watched_paths"`
+	ServerPidFile   string   `json:"server_pid_file"`
+	ServerAddress   string   `json:"server_address"`
+	WormDir         string   `json:"worm_dir"`
+	WorkingDir      string   `json:"working_dir"`
 }
 
+// Handler is the interface each pipeline handler must fulfill
 type Handler interface {
 	HandleGithubPayload(*GithubPayload) error
 	SetNextHandler(Handler)
 	NextHandler() Handler
 }
 
+// NewHandlerPipeline constructs a linked-list-like pipeline of handlers,
+// each responsible for passing control to the next if deemed appropriate.
 func NewHandlerPipeline(cfg *HandlerConfig) Handler {
 	var err error
 
@@ -43,10 +48,6 @@ func NewHandlerPipeline(cfg *HandlerConfig) Handler {
 						log it
 	*/
 
-	/*
-		TODO construction of EventLogHandler may stay the same
-		since it's about parsing payloads and logging such
-	*/
 	elHandler := &EventLogHandler{debug: cfg.Debug}
 
 	if cfg.UseSyslog {

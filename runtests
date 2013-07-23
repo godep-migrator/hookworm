@@ -51,6 +51,9 @@ $servers = {
   null: HookwormServerRunner.new(
     '-a' => ":#{rand(12100..12109)}",
     '-P' => File.expand_path('../log/hookworm-server-null.pid', __FILE__),
+    '-D' => File.expand_path(
+      "../log/hookworm-null-#{Time.now.utc.to_i}-#{$$}", __FILE__
+    ),
     start: Time.now.utc,
   ),
   debug: HookwormServerRunner.new(
@@ -62,11 +65,16 @@ $servers = {
     '-e' => "smtp://localhost:#{$fakesmtpd_server.port}",
     '-f' => 'hookworm-runtests@testing.local',
     '-r' => 'hookworm-self@testing.local',
+    '-D' => File.expand_path(
+      "../log/hookworm-debug-#{Time.now.utc.to_i}-#{$$}", __FILE__
+    ),
     start: Time.now.utc,
   )
 }
 
 $servers.each do |name,server|
+  mkdir_p(server.options['-D'])
+
   describe "#{name} server receiving hook payloads" do
     it 'accepts valid POSTs' do
       post_payload(server.port, :valid).first.code.must_equal '204'
@@ -161,6 +169,10 @@ def main(argv = [].freeze)
   end
 
   clear_mail_messages
+
+  Dir.glob("#{File.expand_path('../test', __FILE__)}/**/*_test.rb").each do |f|
+    require f
+  end
 
   MiniTest::Unit.output = MiniTestReporter.new
   exit_code = MiniTest::Unit.new.run(argv) || 1

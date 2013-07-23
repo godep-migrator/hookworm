@@ -1,4 +1,5 @@
 require 'net/http'
+require 'json'
 
 YELLOW = "\033\[33m"
 RESET = "\033\[0m"
@@ -46,7 +47,15 @@ module Bits
   end
 
   def payload(name)
-    "payload=#{URI.escape(File.read(payload_file(name)))}"
+    "payload=#{URI.escape(payload_string(name))}"
+  end
+
+  def payload_hash(name)
+    JSON.parse(payload_string(name), symbolize_names: true)
+  end
+
+  def payload_string(name)
+    File.read(payload_file(name))
   end
 
   def payload_file(name)

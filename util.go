@@ -1,7 +1,10 @@
 package hookworm
 
 import (
+	"fmt"
+	"io/ioutil"
 	"os"
+	"path/filepath"
 	"regexp"
 	"strings"
 )
@@ -41,4 +44,23 @@ func strsToRegexes(strs []string) []*regexp.Regexp {
 	}
 
 	return regexps
+}
+
+func getWorkingDir(workingDir string) (string, error) {
+	if len(workingDir) > 0 {
+		fd, err := os.Create(filepath.Join(workingDir, ".write-test"))
+		defer func() {
+			if fd != nil {
+				fd.Close()
+			}
+		}()
+
+		if err != nil {
+			return "", err
+		}
+
+		return workingDir, nil
+	}
+
+	return ioutil.TempDir("", fmt.Sprintf("hookworm-%d-", os.Getpid()))
 }
