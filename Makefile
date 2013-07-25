@@ -23,7 +23,7 @@ deps:
 clean:
 	rm -rf ./log
 	find $${GOPATH%%:*}/pkg -regex '.*modcloth-labs/hookworm.*\.a' -exec rm -v {} \;
-	go clean -x $(TARGETS)
+	go clean -x $(TARGETS) || true
 
 golden:
 	./runtests -v 2>&1 | tee runtests.log
