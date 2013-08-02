@@ -3,6 +3,7 @@ package hookworm
 import (
 	"log"
 	"log/syslog"
+	//"os"
 )
 
 // HandlerConfig contains the bag of configuration poo used by all handlers
@@ -30,22 +31,25 @@ type Handler interface {
 // NewHandlerPipeline constructs a linked-list-like pipeline of handlers,
 // each responsible for passing control to the next if deemed appropriate.
 func NewHandlerPipeline(cfg *HandlerConfig) Handler {
-	var err error
 
-	//var pipeline Handler
-
+	var (
+		err error
+		//	pipeline   Handler
+		//collection []string
+		//directory  *os.File
+	)
 	/*
-		TODO rework pipeline construction to use ShellHandler for most biz logic
-		if worm dir does not exist, then
-			yell about it and exit
-		else, for each file in worm dir
-			if file is executable, then
-				execute it with a single positional param of "configure"
-				passing the JSON-serialized HandlerConfig on STDIN
-					if configure call exits 0, then
-						create a ShellHandler instance with the executable name
-						add the ShellHandler instance to the pipeline
-						log it
+		pipeline = NewFakeHandler()
+
+		directory, err = os.Open(cfg.WormDir)
+		collection, err = directory.Readdirnames(-1)
+
+		for _, name := range collection {
+			n := NewShellHandler(name, cfg)
+			n.SetNextHandler(pipeline.NextHandler())
+			pipeline.SetNextHandler(n)
+		}
+
 	*/
 
 	elHandler := &EventLogHandler{debug: cfg.Debug}
