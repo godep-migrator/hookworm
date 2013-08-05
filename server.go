@@ -18,7 +18,7 @@ var (
 	emailRcptsFlag      = flag.String("r", "", "Email recipients (comma-delimited)")
 	watchedBranchesFlag = flag.String("b", "", "Watched branches (comma-delimited regexes)")
 	watchedPathsFlag    = flag.String("p", "", "Watched paths (comma-delimited regexes)")
-	wormDirFlag         = flag.String("W", "", "Worm directory that contains handler executables")
+	wormDirFlag         = flag.String("W", "worm.d", "Worm directory that contains handler executables")
 	workingDirFlag      = flag.String("D", "", "Working directory (scratch pad)")
 
 	useSyslogFlag = flag.Bool("S", false, "Send all received events to syslog")

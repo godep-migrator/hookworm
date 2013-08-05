@@ -3,7 +3,7 @@ package hookworm
 import (
 	"log"
 	"log/syslog"
-	//"os"
+	"os"
 )
 
 // HandlerConfig contains the bag of configuration poo used by all handlers
@@ -33,24 +33,30 @@ type Handler interface {
 func NewHandlerPipeline(cfg *HandlerConfig) Handler {
 
 	var (
-		err error
-		//	pipeline   Handler
-		//collection []string
-		//directory  *os.File
+		err        error
+		pipeline   Handler
+		collection []string
+		directory  *os.File
 	)
-	/*
-		pipeline = NewFakeHandler()
 
-		directory, err = os.Open(cfg.WormDir)
-		collection, err = directory.Readdirnames(-1)
+	pipeline = NewFakeHandler()
 
-		for _, name := range collection {
-			n := NewShellHandler(name, cfg)
-			n.SetNextHandler(pipeline.NextHandler())
-			pipeline.SetNextHandler(n)
-		}
+	if directory, err = os.Open(cfg.WormDir); err != nil {
+		log.Println(err)
+		log.Println("The worm dir was not able to be opened.")
+		log.Println("This should be the abs path to the worm dir:" + cfg.WormDir)
+	}
 
-	*/
+	if collection, err = directory.Readdirnames(-1); err != nil {
+		log.Println(err)
+		log.Println("Could not read the file names from the directory.")
+	}
+
+	for _, name := range collection {
+		n := NewShellHandler(name, cfg)
+		n.SetNextHandler(pipeline.NextHandler())
+		pipeline.SetNextHandler(n)
+	}
 
 	elHandler := &EventLogHandler{debug: cfg.Debug}
 
