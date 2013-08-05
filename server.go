@@ -80,6 +80,11 @@ func ServerMain() int {
 	if cfg.Debug {
 		log.Printf("Using handler config: %+v\n", cfg)
 	}
+
+	if err := os.Chdir(cfg.WorkingDir); err != nil {
+		log.Fatalf("Failed to move into working directory %v\n", cfg.WorkingDir)
+	}
+
 	server := NewServer(cfg)
 	if server == nil {
 		log.Fatal("No server?  No worky!")
@@ -161,7 +166,14 @@ func (me *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	status = http.StatusNoContent
 
 	if me.pipeline == nil {
+		if me.debug {
+			log.Println("No pipeline present, so doing nothing.")
+		}
 		return
+	}
+
+	if me.debug {
+		log.Printf("Sending payload down pipeline: %+v", payload)
 	}
 
 	err = me.pipeline.HandleGithubPayload(payload)

@@ -3,74 +3,68 @@ package hookworm
 import (
 	"encoding/json"
 	"log"
-	"strings"
+	"path"
 )
 
-type ShellHandler struct {
-	command    Command
-	config     *HandlerConfig
-	ConfigJSON string
-	next       Handler
+type shellHandler struct {
+	command shellCommand
+	cfg     *HandlerConfig
+	next    Handler
 }
 
 var (
-	ExtensionToInterpretter = make(map[string]string)
+	interpreterMap = map[string]string{
+		".go": "go run",
+		".js": "node",
+		".py": "python",
+		".pl": "perl",
+		".rb": "ruby",
+		".sh": "bash",
+	}
 )
 
-func init() {
-	ExtensionToInterpretter[".rb"] = "ruby"
-	ExtensionToInterpretter[".py"] = "python"
-	ExtensionToInterpretter[".sh"] = "bash"
-	ExtensionToInterpretter[".go"] = "go run"
-}
+func newShellHandler(filePath string, cfg *HandlerConfig) (*shellHandler, error) {
+	handler := &shellHandler{}
 
-// assumed to be executable at this point
-func NewShellHandler(filePath string, cfg *HandlerConfig) *ShellHandler {
-	result := &ShellHandler{}
+	fileExtention := path.Ext(filePath)
 
-	fileExtention := getFileExtension(filePath)
+	handler.cfg = cfg
 
-	result.config = cfg
-	result.configureSelf()
-
-	s := ExtensionToInterpretter[fileExtention]
-	result.command = NewCommand(s, filePath)
-
-	return result
-}
-
-func (me ShellHandler) configureSelf() {
-
-	marshalled_json, err := json.Marshal(me.config)
-	if err != nil {
-		log.Println("error in marshahlling the json")
+	if interpreter, ok := interpreterMap[fileExtention]; ok {
+		handler.command = newShellCommand(interpreter, filePath)
 	}
-	me.ConfigJSON = string(marshalled_json)
+
+	if err := handler.configure(); err != nil {
+		return nil, err
+	}
+
+	return handler, nil
 }
 
-func (me ShellHandler) Execute() {
-	me.command.RunAndWait()
+func (me *shellHandler) configure() error {
+	configJSON, err := json.Marshal(me.cfg)
+	if err != nil {
+		log.Printf("Error JSON-marshalling config: %v", err)
+	}
+
+	return me.command.configure(configJSON)
 }
 
-func (me ShellHandler) HandleGithubPayload(payload *GithubPayload) error {
-	me.Execute()
-	return nil
+func (me *shellHandler) HandleGithubPayload(payload *GithubPayload) error {
+	payloadJSON, err := json.Marshal(payload)
+	if err != nil {
+		return err
+	}
+	if me.cfg.Debug {
+		log.Printf("Sending github payload to %+v\n", me)
+	}
+	return me.command.handleGithubPayload(payloadJSON)
 }
 
-func (me ShellHandler) SetNextHandler(n Handler) {
+func (me *shellHandler) SetNextHandler(n Handler) {
 	me.next = n
 }
 
-func (me ShellHandler) NextHandler() Handler {
+func (me *shellHandler) NextHandler() Handler {
 	return me.next
-}
-
-func getFileExtension(filePath string) string {
-	var result string
-
-	index := strings.LastIndex(filePath, ".")
-	result = filePath[index:]
-
-	return result
-
 }

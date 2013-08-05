@@ -2,8 +2,8 @@ package hookworm
 
 import (
 	"log"
-	//	"log/syslog"
 	"os"
+	"path"
 )
 
 // HandlerConfig contains the bag of configuration poo used by all handlers
@@ -31,7 +31,6 @@ type Handler interface {
 // NewHandlerPipeline constructs a linked-list-like pipeline of handlers,
 // each responsible for passing control to the next if deemed appropriate.
 func NewHandlerPipeline(cfg *HandlerConfig) Handler {
-
 	var (
 		err        error
 		pipeline   Handler
@@ -53,12 +52,20 @@ func NewHandlerPipeline(cfg *HandlerConfig) Handler {
 	}
 
 	for _, name := range collection {
-		n := NewShellHandler(name, cfg)
-		n.SetNextHandler(pipeline.NextHandler())
-		pipeline.SetNextHandler(n)
+		fullpath := path.Join(cfg.WormDir, name)
+		sh, err := newShellHandler(fullpath, cfg)
+		if err != nil {
+			log.Printf("Failed to build shell handler for %v, skipping.: %v",
+				fullpath, err)
+			continue
+		}
+		if cfg.Debug {
+			log.Printf("Adding shell handler for %v\n", fullpath)
+		}
+		sh.SetNextHandler(pipeline.NextHandler())
+		pipeline.SetNextHandler(sh)
 	}
 
-	//////////////// comment out
 	/*
 	     elHandler := &EventLogHandler{debug: cfg.Debug}
 
@@ -75,16 +82,14 @@ func NewHandlerPipeline(cfg *HandlerConfig) Handler {
 	   			log.Println("No syslog logger added to event handler")
 	   		}
 	   	}
+	*/
 
-	   	////////////////////// comment out
-	   	// end part that will likely stay the same
-
-	   	/*
-	   		TODO move the rogue commit handler to a script
-	   		that ships with the repository in the default "worm dir"
+	/*
+		TODO move the rogue commit handler to a script
+		that ships with the repository in the default "worm dir"
 	*/
 	if len(cfg.WatchedBranches) > 0 {
-		pipeline.SetNextHandler(NewRogueCommitHandler(cfg)) /// change name ot pipeline
+		pipeline.SetNextHandler(NewRogueCommitHandler(cfg))
 		if cfg.Debug {
 			log.Printf("Added rogue commit handler "+
 				"for watched branches %+v, watched paths %+v\n",
@@ -96,5 +101,5 @@ func NewHandlerPipeline(cfg *HandlerConfig) Handler {
 		}
 	}
 
-	return (pipeline)
+	return pipeline
 }

@@ -1,19 +1,30 @@
 package hookworm
 
-type FakeHandler struct {
+import (
+	"log"
+)
+
+type fakeHandler struct {
 	next Handler
 }
 
-func NewFakeHandler() FakeHandler { return FakeHandler{} }
+func NewFakeHandler() *fakeHandler {
+	return &fakeHandler{}
+}
 
-func (me FakeHandler) HandleGithubPayload(payload *GithubPayload) error {
+func (me *fakeHandler) HandleGithubPayload(payload *GithubPayload) error {
+	if me.next != nil {
+		return me.next.HandleGithubPayload(payload)
+	} else {
+		log.Printf("WARNING: no next handler? %+v", me)
+	}
 	return nil
 }
 
-func (me FakeHandler) NextHandler() Handler {
+func (me *fakeHandler) NextHandler() Handler {
 	return me.next
 }
 
-func (me FakeHandler) SetNextHandler(nextHandler Handler) {
+func (me *fakeHandler) SetNextHandler(nextHandler Handler) {
 	me.next = nextHandler
 }
