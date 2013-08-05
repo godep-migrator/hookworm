@@ -68,6 +68,7 @@ $servers = {
     '-D' => File.expand_path(
       "../log/hookworm-debug-#{Time.now.utc.to_i}-#{$$}", __FILE__
     ),
+    '-W' => File.expand_path('../worm.d', __FILE__),
     start: Time.now.utc,
   )
 }

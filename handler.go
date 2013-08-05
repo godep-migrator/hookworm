@@ -2,7 +2,7 @@ package hookworm
 
 import (
 	"log"
-	"log/syslog"
+	//	"log/syslog"
 	"os"
 )
 
@@ -58,29 +58,33 @@ func NewHandlerPipeline(cfg *HandlerConfig) Handler {
 		pipeline.SetNextHandler(n)
 	}
 
-	elHandler := &EventLogHandler{debug: cfg.Debug}
-
-	if cfg.UseSyslog {
-		elHandler.sysLogger, err = syslog.NewLogger(syslog.LOG_INFO, log.LstdFlags)
-		if err != nil {
-			log.Panicln("Failed to initialize syslogger!", err)
-		}
-		if cfg.Debug {
-			log.Println("Added syslog logger to event handler")
-		}
-	} else {
-		if cfg.Debug {
-			log.Println("No syslog logger added to event handler")
-		}
-	}
-	// end part that will likely stay the same
-
+	//////////////// comment out
 	/*
-		TODO move the rogue commit handler to a script
-		that ships with the repository in the default "worm dir"
+	     elHandler := &EventLogHandler{debug: cfg.Debug}
+
+	   	if cfg.UseSyslog {
+	   		elHandler.sysLogger, err = syslog.NewLogger(syslog.LOG_INFO, log.LstdFlags)
+	   		if err != nil {
+	   			log.Panicln("Failed to initialize syslogger!", err)
+	   		}
+	   		if cfg.Debug {
+	   			log.Println("Added syslog logger to event handler")
+	   		}
+	   	} else {
+	   		if cfg.Debug {
+	   			log.Println("No syslog logger added to event handler")
+	   		}
+	   	}
+
+	   	////////////////////// comment out
+	   	// end part that will likely stay the same
+
+	   	/*
+	   		TODO move the rogue commit handler to a script
+	   		that ships with the repository in the default "worm dir"
 	*/
 	if len(cfg.WatchedBranches) > 0 {
-		elHandler.SetNextHandler(NewRogueCommitHandler(cfg))
+		pipeline.SetNextHandler(NewRogueCommitHandler(cfg)) /// change name ot pipeline
 		if cfg.Debug {
 			log.Printf("Added rogue commit handler "+
 				"for watched branches %+v, watched paths %+v\n",
@@ -92,5 +96,5 @@ func NewHandlerPipeline(cfg *HandlerConfig) Handler {
 		}
 	}
 
-	return (Handler)(elHandler)
+	return (pipeline)
 }
