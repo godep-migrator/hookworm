@@ -1,5 +1,6 @@
 TARGETS := hookworm
 VERSION_VAR := hookworm.VersionString
+REV_VAR := hookworm.RevString
 REPO_VERSION := $(shell git describe --always --dirty --tags)
 GOBUILD_VERSION_ARGS := -ldflags "-X $(VERSION_VAR) $(REPO_VERSION)"
 
