@@ -1,8 +1,11 @@
 TARGETS := hookworm
 VERSION_VAR := hookworm.VersionString
-REV_VAR := hookworm.RevString
 REPO_VERSION := $(shell git describe --always --dirty --tags)
-GOBUILD_VERSION_ARGS := -ldflags "-X $(VERSION_VAR) $(REPO_VERSION)"
+
+REV_VAR := hookworm.RevisionString
+REPO_REV := $(shell git rev-parse --sq HEAD)
+
+GOBUILD_VERSION_ARGS := -ldflags "-X $(VERSION_VAR) $(REPO_VERSION) -X $(REV_VAR) $(REPO_REV)"
 
 ADDR := :9988
 
@@ -13,7 +16,7 @@ test: build
 
 build: deps
 	go install $(GOBUILD_VERSION_ARGS) -x $(TARGETS)
-	go build -o $${GOPATH%%:*}/bin/hookworm-server ./hookworm-server
+	go build -o $${GOPATH%%:*}/bin/hookworm-server $(GOBUILD_VERSION_ARGS) ./hookworm-server
 
 deps: gvm_check
 	if [ ! -L $${GOPATH%%:*}/src/hookworm ] ; then gvm linkthis ; fi
