@@ -8,7 +8,7 @@ Usage: hookworm-server [options]
   -D="": Working directory (scratch pad)
   -P="": PID file (only written if flag given)
   -S=false: Send all received events to syslog
-  -W="worm.d": Worm directory that contains handler executables
+  -W="": Worm directory that contains handler executables
   -a=":9988": Server address
   -b="": Watched branches (comma-delimited regexes)
   -d=false: Show debug output

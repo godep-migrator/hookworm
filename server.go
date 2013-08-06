@@ -18,7 +18,7 @@ var (
 	emailRcptsFlag      = flag.String("r", "", "Email recipients (comma-delimited)")
 	watchedBranchesFlag = flag.String("b", "", "Watched branches (comma-delimited regexes)")
 	watchedPathsFlag    = flag.String("p", "", "Watched paths (comma-delimited regexes)")
-	wormDirFlag         = flag.String("W", "worm.d", "Worm directory that contains handler executables")
+	wormDirFlag         = flag.String("W", "", "Worm directory that contains handler executables")
 	workingDirFlag      = flag.String("D", "", "Working directory (scratch pad)")
 
 	useSyslogFlag = flag.Bool("S", false, "Send all received events to syslog")
@@ -85,9 +85,9 @@ func ServerMain() int {
 		log.Fatalf("Failed to move into working directory %v\n", cfg.WorkingDir)
 	}
 
-	server := NewServer(cfg)
-	if server == nil {
-		log.Fatal("No server?  No worky!")
+	server, err := NewServer(cfg)
+	if err != nil {
+		log.Fatal(err)
 	}
 
 	http.Handle("/", server)
@@ -110,11 +110,17 @@ func ServerMain() int {
 }
 
 // NewServer builds a Server instance given a HandlerConfig
-func NewServer(cfg *HandlerConfig) *Server {
-	return &Server{
-		pipeline: NewHandlerPipeline(cfg),
+func NewServer(cfg *HandlerConfig) (*Server, error) {
+	pipeline, err := NewHandlerPipeline(cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	server := &Server{
+		pipeline: pipeline,
 		debug:    cfg.Debug,
 	}
+	return server, nil
 }
 
 func (me *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {

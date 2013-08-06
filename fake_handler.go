@@ -8,16 +8,16 @@ type fakeHandler struct {
 	next Handler
 }
 
-func NewFakeHandler() *fakeHandler {
+func newFakeHandler() *fakeHandler {
 	return &fakeHandler{}
 }
 
 func (me *fakeHandler) HandleGithubPayload(payload *GithubPayload) error {
 	if me.next != nil {
 		return me.next.HandleGithubPayload(payload)
-	} else {
-		log.Printf("WARNING: no next handler? %+v", me)
 	}
+
+	log.Printf("WARNING: no next handler? %+v", me)
 	return nil
 }
 

@@ -30,59 +30,20 @@ type Handler interface {
 
 // NewHandlerPipeline constructs a linked-list-like pipeline of handlers,
 // each responsible for passing control to the next if deemed appropriate.
-func NewHandlerPipeline(cfg *HandlerConfig) Handler {
+func NewHandlerPipeline(cfg *HandlerConfig) (Handler, error) {
 	var (
-		err        error
-		pipeline   Handler
-		collection []string
-		directory  *os.File
+		err      error
+		pipeline Handler
 	)
 
-	pipeline = NewFakeHandler()
+	pipeline = newFakeHandler()
 
-	if directory, err = os.Open(cfg.WormDir); err != nil {
-		log.Println(err)
-		log.Println("The worm dir was not able to be opened.")
-		log.Println("This should be the abs path to the worm dir:" + cfg.WormDir)
-	}
-
-	if collection, err = directory.Readdirnames(-1); err != nil {
-		log.Println(err)
-		log.Println("Could not read the file names from the directory.")
-	}
-
-	for _, name := range collection {
-		fullpath := path.Join(cfg.WormDir, name)
-		sh, err := newShellHandler(fullpath, cfg)
+	if len(cfg.WormDir) > 0 {
+		err = loadShellHandlersFromWormDir(pipeline, cfg)
 		if err != nil {
-			log.Printf("Failed to build shell handler for %v, skipping.: %v",
-				fullpath, err)
-			continue
+			return nil, err
 		}
-		if cfg.Debug {
-			log.Printf("Adding shell handler for %v\n", fullpath)
-		}
-		sh.SetNextHandler(pipeline.NextHandler())
-		pipeline.SetNextHandler(sh)
 	}
-
-	/*
-	     elHandler := &EventLogHandler{debug: cfg.Debug}
-
-	   	if cfg.UseSyslog {
-	   		elHandler.sysLogger, err = syslog.NewLogger(syslog.LOG_INFO, log.LstdFlags)
-	   		if err != nil {
-	   			log.Panicln("Failed to initialize syslogger!", err)
-	   		}
-	   		if cfg.Debug {
-	   			log.Println("Added syslog logger to event handler")
-	   		}
-	   	} else {
-	   		if cfg.Debug {
-	   			log.Println("No syslog logger added to event handler")
-	   		}
-	   	}
-	*/
 
 	/*
 		TODO move the rogue commit handler to a script
@@ -101,5 +62,46 @@ func NewHandlerPipeline(cfg *HandlerConfig) Handler {
 		}
 	}
 
-	return pipeline
+	return pipeline, nil
+}
+
+func loadShellHandlersFromWormDir(pipeline Handler, cfg *HandlerConfig) error {
+	var (
+		err        error
+		collection []string
+		directory  *os.File
+	)
+
+	if directory, err = os.Open(cfg.WormDir); err != nil {
+		log.Println(err)
+		log.Println("The worm dir was not able to be opened.")
+		log.Println("This should be the abs path to the worm dir:" + cfg.WormDir)
+		return err
+	}
+
+	if collection, err = directory.Readdirnames(-1); err != nil {
+		log.Println(err)
+		log.Println("Could not read the file names from the directory.")
+		return err
+	}
+
+	for _, name := range collection {
+		fullpath := path.Join(cfg.WormDir, name)
+		sh, err := newShellHandler(fullpath, cfg)
+
+		if err != nil {
+			log.Printf("Failed to build shell handler for %v, skipping.: %v",
+				fullpath, err)
+			continue
+		}
+
+		if cfg.Debug {
+			log.Printf("Adding shell handler for %v\n", fullpath)
+		}
+
+		sh.SetNextHandler(pipeline.NextHandler())
+		pipeline.SetNextHandler(sh)
+	}
+
+	return nil
 }

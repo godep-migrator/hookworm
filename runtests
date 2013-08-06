@@ -175,8 +175,12 @@ def main(argv = [].freeze)
     require f
   end
 
-  MiniTest::Unit.output = MiniTestReporter.new
-  exit_code = MiniTest::Unit.new.run(argv) || 1
+  exit_code = 1
+
+  Dir.chdir(File.expand_path('../log', __FILE__)) do
+    MiniTest::Unit.output = MiniTestReporter.new
+    exit_code = MiniTest::Unit.new.run(argv) || 1
+  end
 
   if exit_code == 0
     $stderr.puts BRIGHT_GREEN
