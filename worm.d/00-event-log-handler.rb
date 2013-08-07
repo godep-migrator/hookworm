@@ -21,6 +21,7 @@ class EventLogHandler
     File.open(cfg_file, 'w') do |f|
       f.puts JSON.pretty_generate(@cfg)
     end
+    log.info "Configured!  Wrote config to #{cfg_file}"
   end
 
   def cfg
@@ -28,12 +29,7 @@ class EventLogHandler
   end
 
   def cfg_file
-    if cfg[:working_dir]
-      File.join(cfg[:working_dir], "#{File.basename($0)}.cfg.json")
-    else
-      $stderr.puts "WARNING: no working dir set in config, so using $PWD"
-      File.join(Dir.pwd, "#{File.basename($0)}.cfg.json")
-    end
+    File.join(Dir.pwd, "#{File.basename($0)}.cfg.json")
   end
 
   def handle(type = 'github')

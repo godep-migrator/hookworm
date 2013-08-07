@@ -87,9 +87,14 @@ func ServerMain() int {
 	if cfg.Debug {
 		log.Printf("Using handler config: %+v\n", cfg)
 	}
-	server := NewServer(cfg)
-	if server == nil {
-		log.Fatal("No server?  No worky!")
+
+	if err := os.Chdir(cfg.WorkingDir); err != nil {
+		log.Fatalf("Failed to move into working directory %v\n", cfg.WorkingDir)
+	}
+
+	server, err := NewServer(cfg)
+	if err != nil {
+		log.Fatal(err)
 	}
 
 	http.Handle("/", server)
@@ -112,11 +117,17 @@ func ServerMain() int {
 }
 
 // NewServer builds a Server instance given a HandlerConfig
-func NewServer(cfg *HandlerConfig) *Server {
-	return &Server{
-		pipeline: NewHandlerPipeline(cfg),
+func NewServer(cfg *HandlerConfig) (*Server, error) {
+	pipeline, err := NewHandlerPipeline(cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	server := &Server{
+		pipeline: pipeline,
 		debug:    cfg.Debug,
 	}
+	return server, nil
 }
 
 func (me *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -168,7 +179,14 @@ func (me *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	status = http.StatusNoContent
 
 	if me.pipeline == nil {
+		if me.debug {
+			log.Println("No pipeline present, so doing nothing.")
+		}
 		return
+	}
+
+	if me.debug {
+		log.Printf("Sending payload down pipeline: %+v", payload)
 	}
 
 	err = me.pipeline.HandleGithubPayload(payload)
