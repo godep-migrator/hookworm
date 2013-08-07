@@ -4,13 +4,13 @@ require 'minitest/autorun'
 require 'stringio'
 require 'tmpdir'
 require '.golden/bits'
-require 'worm.d/00-event-log-handler'
+require 'worm.d/00-hookworm-logger'
 
-describe EventLogHandler do
+describe HookwormLogger do
   include Bits
 
   def handler
-    EventLogHandler.new
+    HookwormLogger.new
   end
 
   def handler_config(fizz, working_dir)
