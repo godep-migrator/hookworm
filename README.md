@@ -16,5 +16,6 @@ Usage: hookworm-server [options]
   -f="hookworm@localhost": Email from address
   -p="": Watched paths (comma-delimited regexes)
   -r="": Email recipients (comma-delimited)
-  -v=false: Print version and exit
+  -rev=false: Print revision and exit
+  -version=false: Print version and exit
 ```

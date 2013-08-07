@@ -23,9 +23,10 @@ var (
 
 	useSyslogFlag = flag.Bool("S", false, "Send all received events to syslog")
 
-	pidFileFlag      = flag.String("P", "", "PID file (only written if flag given)")
-	printVersionFlag = flag.Bool("v", false, "Print version and exit")
-	debugFlag        = flag.Bool("d", false, "Show debug output")
+	pidFileFlag       = flag.String("P", "", "PID file (only written if flag given)")
+	debugFlag         = flag.Bool("d", false, "Show debug output")
+	printRevisionFlag = flag.Bool("rev", false, "Print revision and exit")
+	printVersionFlag  = flag.Bool("version", false, "Print version and exit")
 
 	logTimeFmt = "2/Jan/2006:15:04:05 -0700" // "%d/%b/%Y:%H:%M:%S %z"
 )
@@ -48,6 +49,11 @@ func ServerMain() int {
 	flag.Parse()
 	if *printVersionFlag {
 		printVersion()
+		return 0
+	}
+
+	if *printRevisionFlag {
+		printRevision()
 		return 0
 	}
 

@@ -7,8 +7,9 @@ import (
 )
 
 var (
-	VersionString string
-	progName      string
+	VersionString  string
+	RevisionString string
+	progName       string
 )
 
 func init() {
@@ -17,6 +18,13 @@ func init() {
 
 func printVersion() {
 	fmt.Println(progVersion())
+}
+
+func printRevision() {
+	if RevisionString == "" {
+		RevisionString = "<unknown>"
+	}
+	fmt.Println(RevisionString)
 }
 
 func progVersion() string {

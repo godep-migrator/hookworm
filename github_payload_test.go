@@ -9,7 +9,7 @@ import (
 	"runtime"
 	"testing"
 
-	. "github.com/modcloth-labs/hookworm"
+	. "hookworm"
 )
 
 var (
