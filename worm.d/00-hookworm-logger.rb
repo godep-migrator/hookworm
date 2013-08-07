@@ -4,7 +4,7 @@ require 'json'
 require 'logger'
 require 'syslog'
 
-class EventLogHandler
+class HookwormLogger
   def run!(*argv)
     action = argv.first
     if %(configure handle).include?(action)
@@ -67,5 +67,5 @@ class EventLogHandler
 end
 
 if $0 == __FILE__
-  EventLogHandler.new.run!(ARGV.first)
+  HookwormLogger.new.run!(ARGV.first)
 end
