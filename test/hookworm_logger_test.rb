@@ -34,7 +34,7 @@ describe HookwormLogger do
 
   describe 'when given an invalid command' do
     it 'explodes' do
-      proc { handler.run!('fribble') }.must_raise NoMethodError
+      proc { handler.run!(%w(fribble)) }.must_raise SystemExit
     end
   end
 
@@ -45,7 +45,7 @@ describe HookwormLogger do
     end
 
     it 'writes JSON from stdin to a config file' do
-      @handler.run!('configure')
+      @handler.run!(%w(configure))
       JSON.parse(File.read(@handler.send(:cfg_file)))['fizz'].must_equal @fizz
     end
   end
@@ -57,7 +57,7 @@ describe HookwormLogger do
       @github_payload = payload_hash('pull_request')
       @github_payload[:repository].merge!({id: @fizz})
       $stdin = StringIO.new(JSON.dump(@handler_config))
-      @handler.run!('configure')
+      @handler.run!(%w(configure))
       $stdin = StringIO.new(JSON.dump(@github_payload))
       $stderr = StringIO.new
       @log = Logger.new($stderr)
@@ -71,7 +71,7 @@ describe HookwormLogger do
     end
 
     it 'logs if the payload is a pull request merge' do
-      @handler.run!('handle', 'github')
+      @handler.run!(%w(handle github))
       $stderr.seek(0)
       $stderr.read.must_match(/Pull request merge\? true/)
     end
