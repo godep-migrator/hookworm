@@ -36,7 +36,7 @@ func NewHandlerPipeline(cfg *HandlerConfig) (Handler, error) {
 		pipeline Handler
 	)
 
-	pipeline = newFakeHandler()
+	pipeline = newTopHandler()
 
 	if len(cfg.WormDir) > 0 {
 		err = loadShellHandlersFromWormDir(pipeline, cfg)
