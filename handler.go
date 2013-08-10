@@ -73,15 +73,13 @@ func loadShellHandlersFromWormDir(pipeline Handler, cfg *HandlerConfig) error {
 	)
 
 	if directory, err = os.Open(cfg.WormDir); err != nil {
-		log.Println(err)
-		log.Println("The worm dir was not able to be opened.")
-		log.Println("This should be the abs path to the worm dir:" + cfg.WormDir)
+		log.Printf("The worm dir was not able to be opened: %v", err)
+		log.Printf("This should be the abs path to the worm dir: %v", cfg.WormDir)
 		return err
 	}
 
 	if collection, err = directory.Readdirnames(-1); err != nil {
-		log.Println(err)
-		log.Println("Could not read the file names from the directory.")
+		log.Printf("Could not read the file names from the directory: %v", err)
 		return err
 	}
 
