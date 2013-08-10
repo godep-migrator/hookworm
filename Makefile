@@ -18,7 +18,7 @@ build: deps
 	go install $(GOBUILD_VERSION_ARGS) -x $(TARGETS)
 	go build -o $${GOPATH%%:*}/bin/hookworm-server $(GOBUILD_VERSION_ARGS) ./hookworm-server
 
-deps: gvm_check
+deps:
 	if [ ! -L $${GOPATH%%:*}/src/hookworm ] ; then gvm linkthis ; fi
 	ruby -rmail/version -e 'Mail::VERSION' 2>/dev/null || gem install mail --no-ri --no-rdoc
 
@@ -39,9 +39,6 @@ serve:
 	$${GOPATH%%:*}/bin/hookworm-server -a $(ADDR) -S
 
 todo:
-	@grep -R TODO . | grep -v '^./Makefile'
-
-gvm_check:
-	which gvm
+	@grep -n -R TODO . | grep -v -E '^(./Makefile|./.git)'
 
 .PHONY: all build clean deps serve test todo golden
