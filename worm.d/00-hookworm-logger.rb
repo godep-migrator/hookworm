@@ -5,12 +5,12 @@ require 'logger'
 require 'syslog'
 
 class HookwormLogger
-  def run!(*argv)
+  def run!(argv)
     action = argv.first
     if %(configure handle).include?(action)
       send(*argv)
     else
-      raise NoMethodError.new(action)
+      abort("I don't know how to #{action.inspect}")
     end
   end
 
@@ -32,9 +32,9 @@ class HookwormLogger
     File.join(Dir.pwd, "#{File.basename($0)}.cfg.json")
   end
 
-  def handle(type = 'github')
+  def handle(type)
     if type != 'github'
-      raise RuntimeError("Unknown payload type #{type.inspect}")
+      abort("Unknown payload type #{type.inspect}")
     end
 
     payload = JSON.parse($stdin.read, symbolize_names: true)
@@ -67,5 +67,5 @@ class HookwormLogger
 end
 
 if $0 == __FILE__
-  HookwormLogger.new.run!(ARGV.first)
+  HookwormLogger.new.run!(ARGV)
 end
