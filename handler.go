@@ -18,6 +18,7 @@ type HandlerConfig struct {
 	ServerPidFile   string   `json:"server_pid_file"`
 	ServerAddress   string   `json:"server_address"`
 	WormDir         string   `json:"worm_dir"`
+	WormTimeout     int      `json:"worm_timeout"`
 	WorkingDir      string   `json:"working_dir"`
 }
 
