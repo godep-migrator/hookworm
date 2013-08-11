@@ -6,14 +6,20 @@ require 'minitest/spec'
 require 'net/http'
 require 'json'
 
+require 'fakesmtpd'
 require 'mail'
 
 require_relative '.golden/bits'
 require_relative '.golden/hookworm_server_runner'
-require_relative '.golden/fakesmtpd_runner'
 
 include Bits
 include FileUtils
+
+class CustomFakeSMTPdRunner < FakeSMTPd::Runner
+  def command
+    super << " >> #{File.expand_path('../log/fakesmtpd.log', __FILE__)} 2>&1"
+  end
+end
 
 def current_mail_messages
   JSON.parse(
@@ -41,7 +47,7 @@ def last_message_header(header_name)
   last_message[header_name].to_s
 end
 
-$fakesmtpd_server = FakeSMTPdRunner.new(
+$fakesmtpd_server = CustomFakeSMTPdRunner.new(
   port: "#{rand(13100..13109)}",
   dir: File.expand_path('../log/emails', __FILE__),
   pidfile: File.expand_path('../log/fakesmtpd.pid', __FILE__)
