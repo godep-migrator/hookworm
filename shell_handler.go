@@ -31,7 +31,7 @@ func newShellHandler(filePath string, cfg *HandlerConfig) (*shellHandler, error)
 	handler.cfg = cfg
 
 	if interpreter, ok := interpreterMap[fileExtention]; ok {
-		handler.command = newShellCommand(interpreter, filePath)
+		handler.command = newShellCommand(interpreter, filePath, cfg.WormTimeout)
 	}
 
 	if err := handler.configure(); err != nil {

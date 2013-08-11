@@ -19,6 +19,7 @@ var (
 	watchedBranchesFlag = flag.String("b", "", "Watched branches (comma-delimited regexes)")
 	watchedPathsFlag    = flag.String("p", "", "Watched paths (comma-delimited regexes)")
 	wormDirFlag         = flag.String("W", "", "Worm directory that contains handler executables")
+	wormTimeoutFlag     = flag.Int("T", 30, "Timeout for handler executables (in seconds)")
 	workingDirFlag      = flag.String("D", "", "Working directory (scratch pad)")
 
 	useSyslogFlag = flag.Bool("S", false, "Send all received events to syslog")
@@ -80,6 +81,7 @@ func ServerMain() int {
 		ServerPidFile:   *pidFileFlag,
 		ServerAddress:   *addrFlag,
 		WormDir:         *wormDirFlag,
+		WormTimeout:     *wormTimeoutFlag,
 		WorkingDir:      workingDir,
 	}
 
