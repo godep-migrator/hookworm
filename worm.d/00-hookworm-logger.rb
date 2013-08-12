@@ -17,7 +17,7 @@ class HookwormLogger
   private
 
   def configure
-    @cfg = JSON.parse($stdin.read, symbolize_names: true)
+    @cfg = JSON.parse(input_stream.read, symbolize_names: true)
     File.open(cfg_file, 'w') do |f|
       f.puts JSON.pretty_generate(@cfg)
     end
@@ -37,7 +37,7 @@ class HookwormLogger
       abort("Unknown payload type #{type.inspect}")
     end
 
-    payload = JSON.parse($stdin.read, symbolize_names: true)
+    payload = JSON.parse(input_stream.read, symbolize_names: true)
     re_serialized_payload = JSON.pretty_generate(payload)
 
     log.info "Pull request merge? #{payload[:is_pr_merge]}"
@@ -62,7 +62,15 @@ class HookwormLogger
   end
 
   def log
-    @log ||= Logger.new($stderr)
+    @log ||= Logger.new(log_stream)
+  end
+
+  def input_stream
+    $hookworm_stdin || $stdin
+  end
+
+  def log_stream
+    $hookworm_stderr || $stderr
   end
 end
 

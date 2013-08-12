@@ -22,8 +22,8 @@ deps:
 	if [ ! -L $${GOPATH%%:*}/src/hookworm ] ; then gvm linkthis ; fi
 	gem query --local | grep -Eq '^mail\b.*\b2\.5\.4\b'  || \
 	  gem install mail -v 2.5.4 --no-ri --no-rdoc
-	gem query --local | grep -Eq '^fakesmtpd\b.*\b0\.1\.0\b'  || \
-	  gem install fakesmtpd -v 0.1.0 --no-ri --no-rdoc
+	gem query --local | grep -Eq '^fakesmtpd\b.*\b0\.2\.0\b'  || \
+	  gem install fakesmtpd -v 0.2.0 --no-ri --no-rdoc
 
 clean:
 	rm -rf ./log

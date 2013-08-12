@@ -41,7 +41,7 @@ describe HookwormLogger do
   describe 'when configuring' do
     before do
       @handler = handler
-      $stdin = StringIO.new(JSON.dump(@handler_config))
+      $hookworm_stdin = StringIO.new(JSON.dump(@handler_config))
     end
 
     it 'writes JSON from stdin to a config file' do
@@ -52,28 +52,21 @@ describe HookwormLogger do
 
   describe 'when handling github payloads' do
     before do
-      @old_stderr = $stderr
       @handler = handler
       @github_payload = payload_hash('pull_request')
       @github_payload[:repository].merge!({id: @fizz})
-      $stdin = StringIO.new(JSON.dump(@handler_config))
+      $hookworm_stdin = StringIO.new(JSON.dump(@handler_config))
       @handler.run!(%w(configure))
-      $stdin = StringIO.new(JSON.dump(@github_payload))
-      $stderr = StringIO.new
-      @log = Logger.new($stderr)
+      $hookworm_stdin = StringIO.new(JSON.dump(@github_payload))
+      $hookworm_stderr = StringIO.new
+      @log = Logger.new($hookworm_stderr)
       @handler.instance_variable_set(:@log, @log)
-    end
-
-    after do
-      if @old_stderr
-        $stderr = @old_stderr
-      end
     end
 
     it 'logs if the payload is a pull request merge' do
       @handler.run!(%w(handle github))
-      $stderr.seek(0)
-      $stderr.read.must_match(/Pull request merge\? true/)
+      $hookworm_stderr.seek(0)
+      $hookworm_stderr.read.must_match(/Pull request merge\? true/)
     end
   end
 end
