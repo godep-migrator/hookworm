@@ -36,7 +36,7 @@ golden:
 	./runtests -v 2>&1 | tee runtests.log
 
 README.md: README.md.in $(wildcard *.go)
-	./build-readme $< > $@
+	./build-readme < $< > $@
 
 serve:
 	$${GOPATH%%:*}/bin/hookworm-server -a $(ADDR) -S
