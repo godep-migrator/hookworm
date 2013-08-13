@@ -1,24 +1,36 @@
-#!/bin/python
+#!/bin/python/
 import smtplib
 from os import getlogin
 from socket import getfqdn
 import sys
 
-watched_branches = []
+watched_branches = [] # can be made into an object or something, should be passed around and not global
+payload = {}          # ^^
 
 def main():
 
-    user = getlogin()
-    machine = getfqdn()
-    message = 'Rogue commit!'
+    global payload
+    payload = Payload()
+    message = get_message()
 
-    sender = user + "@" + machine
-#   sendEmail(user, target, message)
+    sender = get_sender(message)
+    receivers = get_receivers()
 
+    sendEmail(sender, receivers, message)
 
+'''
+serialized the json passed to the command line as a map
+'''
 def Payload():
     data = sys.argv[1]
     return json.loads(data)
+
+'''
+Reaches into 'message' and pulls out the name of the receivers
+Or, just gets them from the payload
+'''
+def get_sender(message):
+    payload["Recipients"]
 
 
 '''
@@ -57,13 +69,10 @@ def is_watched_branch(payload, watchedBranches):
 '''
 Wrapper for the smtp protocol
 '''
-def sendEmail(sender, receiver, message):
-    message  = get_message()
-
-
+def sendEmail(sender, receivers, message):
     try:
         smtpObj = smtplib.SMTP('localhost')
-        smtpObj.sendmail(senderBender, receivers, message)
+        smtpObj.sendmail(sender, receivers, message)
         print "Successfully sent email"
 
     except SMTPException:
@@ -81,6 +90,7 @@ def get_message():
 
 '''
 This is just the raw template
+This needs to be actual python-style templating
 '''
 def __template_string():
     """To: ${Recipients}
