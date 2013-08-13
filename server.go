@@ -141,20 +141,34 @@ func (me *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			r.Method, r.URL.Path, r.Proto, status)
 	}()
 
+	if r.Method != "POST" {
+		status = http.StatusMethodNotAllowed
+		return
+	}
+
+	switch r.URL.Path {
+	case "/":
+		// assume github, since they don't do paths
+		status = me.handleGithubPayload(w, r)
+	case "/travis":
+		status = me.handleTravisPayload(w, r)
+	default:
+		status = http.StatusNotFound
+	}
+}
+
+func (me *Server) handleGithubPayload(w http.ResponseWriter, r *http.Request) int {
+	status := http.StatusNoContent
+
 	/*
 		TODO extract payload extract and parse
 	*/
 	rawPayload := r.FormValue("payload")
 	if len(rawPayload) < 1 {
 		log.Println("Empty payload!")
-		return
+		return http.StatusBadRequest
 	}
 
-	/*
-		TODO detect github vs. travis webhook request?  Somehow?
-		TODO OR make this a 'runtime mode' configuration so that a hookworm
-		TODO server can only be in one mode per process.
-	*/
 	payload := &GithubPayload{}
 	if me.debug {
 		log.Println("Raw payload: ", rawPayload)
@@ -163,7 +177,7 @@ func (me *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	err := json.Unmarshal([]byte(rawPayload), payload)
 	if err != nil {
 		log.Println("Failed to unmarshal payload: ", err)
-		return
+		return http.StatusBadRequest
 	}
 
 	/*
@@ -174,16 +188,14 @@ func (me *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		if me.debug {
 			log.Println("Invalid payload!")
 		}
-		return
+		return http.StatusBadRequest
 	}
-
-	status = http.StatusNoContent
 
 	if me.pipeline == nil {
 		if me.debug {
 			log.Println("No pipeline present, so doing nothing.")
 		}
-		return
+		return status
 	}
 
 	if me.debug {
@@ -193,6 +205,11 @@ func (me *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	err = me.pipeline.HandleGithubPayload(payload)
 	if err != nil {
 		status = http.StatusInternalServerError
-		return
 	}
+
+	return status
+}
+
+func (me *Server) handleTravisPayload(w http.ResponseWriter, r *http.Request) int {
+	return http.StatusNotFound
 }

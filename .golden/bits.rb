@@ -46,20 +46,20 @@ module Bits
     )
   end
 
-  def payload(name)
-    "payload=#{URI.escape(payload_string(name))}"
+  def github_payload(name)
+    "payload=#{URI.escape(github_payload_string(name))}"
   end
 
-  def payload_hash(name)
-    JSON.parse(payload_string(name), symbolize_names: true)
+  def github_payload_hash(name)
+    JSON.parse(github_payload_string(name), symbolize_names: true)
   end
 
-  def payload_string(name)
-    File.read(payload_file(name))
+  def github_payload_string(name)
+    File.read(github_payload_file(name))
   end
 
-  def payload_file(name)
-    File.expand_path("../../sampledata/payloads/#{name.to_s}.json", __FILE__)
+  def github_payload_file(name)
+    File.expand_path("../../sampledata/github-payloads/#{name.to_s}.json", __FILE__)
   end
 
   private

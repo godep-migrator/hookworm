@@ -25,9 +25,9 @@ def clear_mail_messages
   delete_request(path: '/messages', port: $fakesmtpd_server.http_port)
 end
 
-def post_payload(port, payload_name)
+def post_github_payload(port, payload_name)
   pre_request_messages = current_mail_messages
-  response = post_request(port: port, body: payload(payload_name))
+  response = post_request(port: port, body: github_payload(payload_name))
   [response, current_mail_messages - pre_request_messages]
 end
 
@@ -81,18 +81,18 @@ $servers.each do |name,server|
 
   describe "#{name} server receiving hook payloads" do
     it 'accepts valid POSTs' do
-      post_payload(server.port, :valid).first.code.must_equal '204'
+      post_github_payload(server.port, :valid).first.code.must_equal '204'
     end
 
     it 'rejects invalid POSTs' do
-      post_payload(server.port, :bogus).first.code.must_equal '400'
+      post_github_payload(server.port, :bogus).first.code.must_equal '400'
     end
   end
 end
 
 describe 'when receiving a payload for a watched branch' do
   before do
-    @sent_messages = post_payload($servers[:debug].port, :rogue).last
+    @sent_messages = post_github_payload($servers[:debug].port, :rogue).last
   end
 
   it 'sends a rogue commit email' do
@@ -102,7 +102,7 @@ end
 
 describe 'when receiving a payload for an unwatched branch' do
   before do
-    @sent_messages = post_payload(
+    @sent_messages = post_github_payload(
       $servers[:debug].port, :rogue_unwatched_branch
     ).last
   end
@@ -114,7 +114,7 @@ end
 
 describe 'when receiving a payload for an unwatched path' do
   before do
-    @sent_messages = post_payload(
+    @sent_messages = post_github_payload(
       $servers[:debug].port, :rogue_unwatched_path
     ).last
   end
@@ -126,7 +126,7 @@ end
 
 describe 'rogue commit emails' do
   before do
-    @rogue_response ||= post_payload($servers[:debug].port, :rogue).first
+    @rogue_response ||= post_github_payload($servers[:debug].port, :rogue).first
   end
 
   it 'are multipart' do

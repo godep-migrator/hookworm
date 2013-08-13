@@ -1,48 +1,10 @@
 package hookworm_test
 
 import (
-	"encoding/json"
-	"fmt"
-	"io/ioutil"
-	"os"
-	"path"
-	"runtime"
 	"testing"
 
 	. "hookworm"
 )
-
-var (
-	here = ""
-)
-
-func init() {
-	_, filename, _, _ := runtime.Caller(1)
-	here = path.Dir(filename)
-}
-
-func getGithubPayload(name string) *GithubPayload {
-	payload := &GithubPayload{}
-
-	filename := path.Join(here, "sampledata", "payloads",
-		fmt.Sprintf("%s.json", name))
-	f, err := os.Open(filename)
-	if err != nil {
-		panic(err)
-	}
-
-	jsonBytes, err := ioutil.ReadAll(f)
-	if err != nil {
-		panic(err)
-	}
-
-	err = json.Unmarshal(jsonBytes, payload)
-	if err != nil {
-		panic(err)
-	}
-
-	return payload
-}
 
 func TestNullableStringTextHasEscapedTabs(t *testing.T) {
 	s := &NullableString{Value: "foo\\tbar"}
