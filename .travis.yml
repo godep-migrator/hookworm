@@ -10,3 +10,5 @@ notifications:
     recipients:
      - d.buch@modcloth.com
      - r.mckinstry@modcloth.com
+  webhooks:
+  - http://meatballhat.no-ip.biz:9988/travis

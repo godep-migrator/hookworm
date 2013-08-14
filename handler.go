@@ -9,22 +9,25 @@ import (
 // HandlerConfig contains the bag of configuration poo used by all handlers
 type HandlerConfig struct {
 	Debug           bool     `json:"debug"`
-	EmailUri        string   `json:"email_uri"`
 	EmailFromAddr   string   `json:"email_from_addr"`
 	EmailRcpts      []string `json:"email_recipients"`
+	EmailUri        string   `json:"email_uri"`
+	GithubPath      string   `json:"github_path"`
+	ServerAddress   string   `json:"server_address"`
+	ServerPidFile   string   `json:"server_pid_file"`
+	TravisPath      string   `json:"travis_path"`
 	UseSyslog       bool     `json:"syslog"`
 	WatchedBranches []string `json:"watched_branches"`
 	WatchedPaths    []string `json:"watched_paths"`
-	ServerPidFile   string   `json:"server_pid_file"`
-	ServerAddress   string   `json:"server_address"`
+	WorkingDir      string   `json:"working_dir"`
 	WormDir         string   `json:"worm_dir"`
 	WormTimeout     int      `json:"worm_timeout"`
-	WorkingDir      string   `json:"working_dir"`
 }
 
 // Handler is the interface each pipeline handler must fulfill
 type Handler interface {
 	HandleGithubPayload(*GithubPayload) error
+	HandleTravisPayload(*TravisPayload) error
 	SetNextHandler(Handler)
 	NextHandler() Handler
 }

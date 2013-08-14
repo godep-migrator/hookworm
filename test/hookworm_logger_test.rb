@@ -53,7 +53,7 @@ describe HookwormLogger do
   describe 'when handling github payloads' do
     before do
       @handler = handler
-      @github_payload = payload_hash('pull_request')
+      @github_payload = github_payload_hash('pull_request')
       @github_payload[:repository].merge!({id: @fizz})
       $hookworm_stdin = StringIO.new(JSON.dump(@handler_config))
       @handler.run!(%w(configure))

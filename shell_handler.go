@@ -61,6 +61,17 @@ func (me *shellHandler) HandleGithubPayload(payload *GithubPayload) error {
 	return me.command.handleGithubPayload(payloadJSON)
 }
 
+func (me *shellHandler) HandleTravisPayload(payload *TravisPayload) error {
+	payloadJSON, err := json.Marshal(payload)
+	if err != nil {
+		return err
+	}
+	if me.cfg.Debug {
+		log.Printf("Sending travis payload to %+v\n", me)
+	}
+	return me.command.handleTravisPayload(payloadJSON)
+}
+
 func (me *shellHandler) SetNextHandler(n Handler) {
 	me.next = n
 }

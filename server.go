@@ -24,6 +24,9 @@ var (
 
 	useSyslogFlag = flag.Bool("S", false, "Send all received events to syslog")
 
+	githubPathFlag = flag.String("github.path", "/github", "Path to handle Github payloads")
+	travisPathFlag = flag.String("travis.path", "/travis", "Path to handle Travis payloads")
+
 	pidFileFlag       = flag.String("P", "", "PID file (only written if flag given)")
 	debugFlag         = flag.Bool("d", false, "Show debug output")
 	printRevisionFlag = flag.Bool("rev", false, "Print revision and exit")
@@ -35,8 +38,10 @@ var (
 // Server implements ServeHTTP, parsing payloads and handing them off to the
 // handler pipeline
 type Server struct {
-	pipeline Handler
-	debug    bool
+	pipeline   Handler
+	debug      bool
+	githubPath string
+	travisPath string
 }
 
 // ServerMain is the `main` entry point used by the `hookworm-server`
@@ -72,17 +77,19 @@ func ServerMain() int {
 
 	cfg := &HandlerConfig{
 		Debug:           *debugFlag,
-		EmailUri:        *emailFlag,
 		EmailFromAddr:   *emailFromFlag,
 		EmailRcpts:      commaSplit(*emailRcptsFlag),
+		EmailUri:        *emailFlag,
+		GithubPath:      *githubPathFlag,
+		ServerAddress:   *addrFlag,
+		ServerPidFile:   *pidFileFlag,
+		TravisPath:      *travisPathFlag,
 		UseSyslog:       *useSyslogFlag,
 		WatchedBranches: commaSplit(*watchedBranchesFlag),
 		WatchedPaths:    commaSplit(*watchedPathsFlag),
-		ServerPidFile:   *pidFileFlag,
-		ServerAddress:   *addrFlag,
+		WorkingDir:      workingDir,
 		WormDir:         *wormDirFlag,
 		WormTimeout:     *wormTimeoutFlag,
-		WorkingDir:      workingDir,
 	}
 
 	if cfg.Debug {
@@ -125,8 +132,10 @@ func NewServer(cfg *HandlerConfig) (*Server, error) {
 	}
 
 	server := &Server{
-		pipeline: pipeline,
-		debug:    cfg.Debug,
+		pipeline:   pipeline,
+		debug:      cfg.Debug,
+		githubPath: cfg.GithubPath,
+		travisPath: cfg.TravisPath,
 	}
 	return server, nil
 }
@@ -141,20 +150,30 @@ func (me *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			r.Method, r.URL.Path, r.Proto, status)
 	}()
 
-	/*
-		TODO extract payload extract and parse
-	*/
-	rawPayload := r.FormValue("payload")
-	if len(rawPayload) < 1 {
-		log.Println("Empty payload!")
+	if r.Method != "POST" {
+		status = http.StatusMethodNotAllowed
 		return
 	}
 
-	/*
-		TODO detect github vs. travis webhook request?  Somehow?
-		TODO OR make this a 'runtime mode' configuration so that a hookworm
-		TODO server can only be in one mode per process.
-	*/
+	switch r.URL.Path {
+	case me.githubPath:
+		status = me.handleGithubPayload(w, r)
+	case me.travisPath:
+		status = me.handleTravisPayload(w, r)
+	default:
+		status = http.StatusNotFound
+	}
+}
+
+func (me *Server) handleGithubPayload(w http.ResponseWriter, r *http.Request) int {
+	status := http.StatusNoContent
+
+	rawPayload := r.FormValue("payload")
+	if len(rawPayload) < 1 {
+		log.Println("Empty payload!")
+		return http.StatusBadRequest
+	}
+
 	payload := &GithubPayload{}
 	if me.debug {
 		log.Println("Raw payload: ", rawPayload)
@@ -163,7 +182,7 @@ func (me *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	err := json.Unmarshal([]byte(rawPayload), payload)
 	if err != nil {
 		log.Println("Failed to unmarshal payload: ", err)
-		return
+		return http.StatusBadRequest
 	}
 
 	/*
@@ -174,16 +193,14 @@ func (me *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		if me.debug {
 			log.Println("Invalid payload!")
 		}
-		return
+		return http.StatusBadRequest
 	}
-
-	status = http.StatusNoContent
 
 	if me.pipeline == nil {
 		if me.debug {
 			log.Println("No pipeline present, so doing nothing.")
 		}
-		return
+		return status
 	}
 
 	if me.debug {
@@ -193,6 +210,44 @@ func (me *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	err = me.pipeline.HandleGithubPayload(payload)
 	if err != nil {
 		status = http.StatusInternalServerError
-		return
 	}
+
+	return status
+}
+
+func (me *Server) handleTravisPayload(w http.ResponseWriter, r *http.Request) int {
+	rawPayload := r.FormValue("payload")
+	if len(rawPayload) < 1 {
+		log.Println("Empty payload!")
+		return http.StatusBadRequest
+	}
+
+	payload := &TravisPayload{}
+	if me.debug {
+		log.Println("Raw payload: ", rawPayload)
+	}
+
+	err := json.Unmarshal([]byte(rawPayload), payload)
+	if err != nil {
+		log.Println("Failed to unmarshal payload: ", err)
+		return http.StatusBadRequest
+	}
+
+	if me.pipeline == nil {
+		if me.debug {
+			log.Println("No pipeline present, so doing nothing.")
+		}
+		return http.StatusNoContent
+	}
+
+	if me.debug {
+		log.Printf("Sending payload down pipeline: %+v", payload)
+	}
+
+	err = me.pipeline.HandleTravisPayload(payload)
+	if err != nil {
+		return http.StatusInternalServerError
+	}
+
+	return http.StatusNotFound
 }
