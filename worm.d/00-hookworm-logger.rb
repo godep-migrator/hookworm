@@ -33,14 +33,38 @@ class HookwormLogger
   end
 
   def handle(type)
-    if type != 'github'
-      abort("Unknown payload type #{type.inspect}")
-    end
+    send(:"handle_#{type}")
+  end
 
+  def handle_github
     payload = JSON.parse(input_stream.read, symbolize_names: true)
     re_serialized_payload = JSON.pretty_generate(payload)
 
     log.info "Pull request merge? #{payload[:is_pr_merge]}"
+    if cfg[:debug]
+      log.info "payload=#{payload.inspect}"
+      log.info "payload json=#{re_serialized_payload.inspect}"
+    end
+
+    if cfg[:syslog]
+      Syslog.open($0, Syslog::LOG_PID | Syslog::LOG_CONS) do |syslog|
+        syslog.info(re_serialized_payload)
+      end
+    end
+
+    return 0
+  rescue => e
+    log.error "#{e.class.name} #{e.message}"
+    if cfg[:debug]
+      log.error e.backtrace.join("\n")
+    end
+    return 1
+  end
+
+  def handle_travis
+    payload = JSON.parse(input_stream.read, symbolize_names: true)
+    re_serialized_payload = JSON.pretty_generate(payload)
+
     if cfg[:debug]
       log.info "payload=#{payload.inspect}"
       log.info "payload json=#{re_serialized_payload.inspect}"

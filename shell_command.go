@@ -29,6 +29,10 @@ func (me *shellCommand) handleGithubPayload(payloadJSON []byte) error {
 	return me.runCmd(payloadJSON, "handle", "github")
 }
 
+func (me *shellCommand) handleTravisPayload(payloadJSON []byte) error {
+	return me.runCmd(payloadJSON, "handle", "travis")
+}
+
 func (me *shellCommand) runCmd(stdin []byte, argv ...string) error {
 	var cmd *exec.Cmd
 

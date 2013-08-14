@@ -27,7 +27,7 @@ end
 
 def post_github_payload(port, payload_name)
   pre_request_messages = current_mail_messages
-  response = post_request(port: port, body: github_payload(payload_name))
+  response = post_request(port: port, body: github_payload(payload_name), path: '/github')
   [response, current_mail_messages - pre_request_messages]
 end
 

@@ -21,6 +21,15 @@ func (me *topHandler) HandleGithubPayload(payload *GithubPayload) error {
 	return nil
 }
 
+func (me *topHandler) HandleTravisPayload(payload *TravisPayload) error {
+	if me.next != nil {
+		return me.next.HandleTravisPayload(payload)
+	}
+
+	log.Printf("WARNING: no next handler? %+v", me)
+	return nil
+}
+
 func (me *topHandler) NextHandler() Handler {
 	return me.next
 }

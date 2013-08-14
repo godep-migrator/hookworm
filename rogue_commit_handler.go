@@ -111,6 +111,10 @@ func (me *RogueCommitHandler) HandleGithubPayload(payload *GithubPayload) error 
 	return nil
 }
 
+func (me *RogueCommitHandler) HandleTravisPayload(*TravisPayload) error {
+	return nil
+}
+
 func (me *RogueCommitHandler) SetNextHandler(handler Handler) {
 	me.nextHandler = handler
 }
