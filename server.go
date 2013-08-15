@@ -36,6 +36,45 @@ var (
 	logTimeFmt = "2/Jan/2006:15:04:05 -0700" // "%d/%b/%Y:%H:%M:%S %z"
 )
 
+const (
+	boomExplosionsJSON = `{"error":"BOOM EXPLOSIENS"}`
+	testFormHTML       = `
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <title>Hookworm test page</title>
+    <style type="text/css">
+      body {
+        font-family: sans-serif;
+      }
+    </style>
+  </head>
+  <body>
+    <article>
+      <h1>Hookworm test page</h1>
+      <section id="github_test">
+        <h2>github test</h2>
+        <form name="github" action="/github" method="post">
+          <textarea name="payload" cols="80" rows="20"
+		    placeholder="github payload JSON here"></textarea>
+          <input type="submit" value="POST" />
+        </form>
+      </section>
+      <section id="travis_test">
+        <h2>travis test</h2>
+        <form name="travis" action="/travis" method="post">
+          <textarea name="payload" cols="80" rows="20"
+		    placeholder="travis payload JSON here"></textarea>
+          <input type="submit" value="POST" />
+        </form>
+      </section>
+    </article>
+  </body>
+</html>
+`
+)
+
 // Server implements ServeHTTP, parsing payloads and handing them off to the
 // handler pipeline
 type Server struct {
@@ -153,49 +192,82 @@ func NewServer(cfg *HandlerConfig) (*Server, error) {
 
 func (me *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	status := http.StatusBadRequest
+	body := ""
+	contentType := "application/json; charset=utf-8"
 
 	defer func() {
+		w.Header().Set("Content-Type", contentType)
 		w.WriteHeader(status)
+		fmt.Fprintf(w, "%s", body)
 		fmt.Fprintf(os.Stderr, "%s - - [%s] \"%s %s %s\" %d -\n",
 			r.RemoteAddr, time.Now().UTC().Format(logTimeFmt),
 			r.Method, r.URL.Path, r.Proto, status)
 	}()
 
-	if r.Method != "POST" {
-		status = http.StatusMethodNotAllowed
-		return
-	}
-
 	switch r.URL.Path {
 	case me.githubPath:
-		status = me.handleGithubPayload(w, r)
+		log.Printf("Handling github request at %s", r.URL.Path)
+		if r.Method != "POST" {
+			status = http.StatusMethodNotAllowed
+			return
+		}
+		status, body = me.handleGithubPayload(w, r)
+		return
 	case me.travisPath:
-		status = me.handleTravisPayload(w, r)
+		log.Printf("Handling travis request at %s", r.URL.Path)
+		if r.Method != "POST" {
+			status = http.StatusMethodNotAllowed
+			return
+		}
+		status, body = me.handleTravisPayload(w, r)
+		return
+	case "/blank":
+		log.Printf("Handling blank request at %s", r.URL.Path)
+		status = http.StatusNoContent
+		contentType = "text/plain; charset=utf-8"
+		return
+	case "/":
+		log.Printf("Handling test page request at %s", r.URL.Path)
+		status = http.StatusOK
+		body = testFormHTML
+		contentType = "text/html; charset=utf-8"
+		return
 	default:
+		log.Printf("Handling 404 at %s", r.URL.Path)
 		status = http.StatusNotFound
+		contentType = "text/plain; charset=utf-8"
+		body = "Nothing here.\n"
 	}
 }
 
-func (me *Server) handleGithubPayload(w http.ResponseWriter, r *http.Request) int {
+func (me *Server) handleGithubPayload(w http.ResponseWriter, r *http.Request) (int, string) {
 	payload := &GithubPayload{}
 	err := me.extractPayload(payload, r)
 	if err != nil {
 		log.Printf("Error extracting payload: %v\n", err)
-		return http.StatusBadRequest
+		errJSON, err := json.Marshal(err)
+		if err != nil {
+			return http.StatusBadRequest, string(errJSON)
+		}
+		return http.StatusBadRequest, boomExplosionsJSON
 	}
 
 	if !payload.IsValid() {
 		if me.debug {
 			log.Println("Invalid payload!")
 		}
-		return http.StatusBadRequest
+		errJSON, err := json.Marshal(fmt.Errorf("Invalid payload!"))
+		if err != nil {
+			return http.StatusBadRequest, string(errJSON)
+		}
+		return http.StatusBadRequest, boomExplosionsJSON
 	}
 
 	if me.pipeline == nil {
 		if me.debug {
 			log.Println("No pipeline present, so doing nothing.")
 		}
-		return http.StatusNoContent
+		return http.StatusNoContent, ""
 	}
 
 	if me.debug {
@@ -204,25 +276,34 @@ func (me *Server) handleGithubPayload(w http.ResponseWriter, r *http.Request) in
 
 	err = me.pipeline.HandleGithubPayload(payload)
 	if err != nil {
-		return http.StatusInternalServerError
+		errJSON, err := json.Marshal(err)
+		if err != nil {
+			return http.StatusInternalServerError, string(errJSON)
+		}
+		return http.StatusInternalServerError, boomExplosionsJSON
 	}
 
-	return http.StatusNoContent
+	return http.StatusNoContent, ""
 }
 
-func (me *Server) handleTravisPayload(w http.ResponseWriter, r *http.Request) int {
+func (me *Server) handleTravisPayload(w http.ResponseWriter, r *http.Request) (int, string) {
 	payload := &TravisPayload{}
 	err := me.extractPayload(payload, r)
 	if err != nil {
 		log.Printf("Error extracting payload: %v\n", err)
-		return http.StatusBadRequest
+
+		errJSON, err := json.Marshal(err)
+		if err != nil {
+			return http.StatusInternalServerError, string(errJSON)
+		}
+		return http.StatusInternalServerError, boomExplosionsJSON
 	}
 
 	if me.pipeline == nil {
 		if me.debug {
 			log.Println("No pipeline present, so doing nothing.")
 		}
-		return http.StatusNoContent
+		return http.StatusNoContent, ""
 	}
 
 	if me.debug {
@@ -231,10 +312,14 @@ func (me *Server) handleTravisPayload(w http.ResponseWriter, r *http.Request) in
 
 	err = me.pipeline.HandleTravisPayload(payload)
 	if err != nil {
-		return http.StatusInternalServerError
+		errJSON, err := json.Marshal(err)
+		if err != nil {
+			return http.StatusInternalServerError, string(errJSON)
+		}
+		return http.StatusInternalServerError, boomExplosionsJSON
 	}
 
-	return http.StatusNoContent
+	return http.StatusNoContent, ""
 }
 
 func (me *Server) extractPayload(payload Payload, r *http.Request) error {
