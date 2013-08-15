@@ -1,22 +1,25 @@
 TARGETS := hookworm
+
 VERSION_VAR := hookworm.VersionString
 REPO_VERSION := $(shell git describe --always --dirty --tags)
 
 REV_VAR := hookworm.RevisionString
 REPO_REV := $(shell git rev-parse --sq HEAD)
 
-GOBUILD_VERSION_ARGS := -ldflags "-X $(VERSION_VAR) $(REPO_VERSION) -X $(REV_VAR) $(REPO_REV)"
+GO_TAG_ARGS ?= -tags full
+TAGS_VAR := hookworm.BuildTags
+GOBUILD_LDFLAGS := -ldflags "-X $(VERSION_VAR) $(REPO_VERSION) -X $(REV_VAR) $(REPO_REV) -X $(TAGS_VAR) '$(GO_TAG_ARGS)' "
 
 ADDR := :9988
 
 all: clean test golden README.md
 
 test: build
-	go test $(GOBUILD_VERSION_ARGS) -x -v $(TARGETS)
+	go test $(GOBUILD_LDFLAGS) $(GO_TAG_ARGS) -x -v $(TARGETS)
 
 build: deps
-	go install $(GOBUILD_VERSION_ARGS) -x $(TARGETS)
-	go build -o $${GOPATH%%:*}/bin/hookworm-server $(GOBUILD_VERSION_ARGS) ./hookworm-server
+	go install $(GOBUILD_LDFLAGS) $(GO_TAG_ARGS) -x $(TARGETS)
+	go build -o $${GOPATH%%:*}/bin/hookworm-server $(GOBUILD_LDFLAGS) $(GO_TAG_ARGS) ./hookworm-server
 
 deps:
 	if [ ! -L $${GOPATH%%:*}/src/hookworm ] ; then gvm linkthis ; fi

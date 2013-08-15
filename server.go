@@ -15,14 +15,15 @@ var (
 	wormTimeoutFlag = flag.Int("T", 30, "Timeout for handler executables (in seconds)")
 	workingDirFlag  = flag.String("D", "", "Working directory (scratch pad)")
 	wormDirFlag     = flag.String("W", "", "Worm directory that contains handler executables")
+	pidFileFlag     = flag.String("P", "", "PID file (only written if flag given)")
+	debugFlag       = flag.Bool("d", false, "Show debug output")
 
 	githubPathFlag = flag.String("github.path", "/github", "Path to handle Github payloads")
 	travisPathFlag = flag.String("travis.path", "/travis", "Path to handle Travis payloads")
 
-	pidFileFlag       = flag.String("P", "", "PID file (only written if flag given)")
-	debugFlag         = flag.Bool("d", false, "Show debug output")
-	printRevisionFlag = flag.Bool("rev", false, "Print revision and exit")
-	printVersionFlag  = flag.Bool("version", false, "Print version and exit")
+	printRevisionFlag       = flag.Bool("rev", false, "Print revision and exit")
+	printVersionFlag        = flag.Bool("version", false, "Print version and exit")
+	printVersionRevTagsFlag = flag.Bool("version+", false, "Print version, revision, and build tags")
 
 	// TODO remove these once the python rogue handler is ready
 	emailFlag           = flag.String("e", "smtp://localhost:25", "Email server address")
@@ -60,6 +61,11 @@ func ServerMain() int {
 
 	if *printRevisionFlag {
 		printRevision()
+		return 0
+	}
+
+	if *printVersionRevTagsFlag {
+		printVersionRevTags()
 		return 0
 	}
 

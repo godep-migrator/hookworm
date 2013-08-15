@@ -20,4 +20,5 @@ Usage: hookworm-server [options] [key=value...]
   -rev=false: Print revision and exit
   -travis.path="/travis": Path to handle Travis payloads
   -version=false: Print version and exit
+  -version+=false: Print version, revision, and build tags
 ```
