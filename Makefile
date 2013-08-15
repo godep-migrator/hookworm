@@ -38,7 +38,7 @@ clean:
 golden:
 	./runtests -v 2>&1 | tee runtests.log
 
-README.md: README.md.in $(wildcard *.go)
+README.md: README.in.md $(wildcard *.go)
 	./build-readme < $< > $@
 
 serve:
