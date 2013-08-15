@@ -1,27 +1,83 @@
 package hookworm
 
 import (
+	"encoding/json"
+	"fmt"
 	"log"
 	"os"
 	"path"
+	"strings"
 )
+
+type wormFlagMap struct {
+	values map[string]interface{}
+}
+
+func newWormFlagMap() *wormFlagMap {
+	return &wormFlagMap{
+		values: make(map[string]interface{}),
+	}
+}
+
+func (me *wormFlagMap) String() string {
+	s := ""
+	for k, v := range me.values {
+		s += fmt.Sprintf("%s=%v;", k, v)
+	}
+	return s
+}
+
+func (me *wormFlagMap) Set(value string) error {
+	pairs := strings.Split(value, ";")
+
+	for _, pair := range pairs {
+		parts := strings.SplitN(pair, "=", 2)
+		if len(parts) == 2 {
+			k := parts[0]
+			v := parts[1]
+			switch strings.ToLower(v) {
+			case "true", "yes", "on":
+				me.values[k] = true
+			case "false", "no", "off":
+				me.values[k] = false
+			default:
+				me.values[k] = v
+			}
+		} else {
+			me.values[parts[0]] = true
+		}
+	}
+
+	return nil
+}
+
+func (me *wormFlagMap) MarshalJSON() ([]byte, error) {
+	return json.Marshal(me.values)
+}
+
+func (me *wormFlagMap) UnmarshalJSON(raw []byte) error {
+	return json.Unmarshal(raw, &me.values)
+}
 
 // HandlerConfig contains the bag of configuration poo used by all handlers
 type HandlerConfig struct {
-	Debug           bool     `json:"debug"`
+	Debug         bool         `json:"debug"`
+	GithubPath    string       `json:"github_path"`
+	ServerAddress string       `json:"server_address"`
+	ServerPidFile string       `json:"server_pid_file"`
+	TravisPath    string       `json:"travis_path"`
+	WorkingDir    string       `json:"working_dir"`
+	WormDir       string       `json:"worm_dir"`
+	WormTimeout   int          `json:"worm_timeout"`
+	WormFlags     *wormFlagMap `json:"worm_flags"`
+
+	// TODO remove these once the python rogue handler is ready
 	EmailFromAddr   string   `json:"email_from_addr"`
 	EmailRcpts      []string `json:"email_recipients"`
 	EmailUri        string   `json:"email_uri"`
-	GithubPath      string   `json:"github_path"`
-	ServerAddress   string   `json:"server_address"`
-	ServerPidFile   string   `json:"server_pid_file"`
-	TravisPath      string   `json:"travis_path"`
-	UseSyslog       bool     `json:"syslog"`
 	WatchedBranches []string `json:"watched_branches"`
 	WatchedPaths    []string `json:"watched_paths"`
-	WorkingDir      string   `json:"working_dir"`
-	WormDir         string   `json:"worm_dir"`
-	WormTimeout     int      `json:"worm_timeout"`
+	// END TODO
 }
 
 // Handler is the interface each pipeline handler must fulfill

@@ -11,18 +11,10 @@ import (
 )
 
 var (
-	addrFlag = flag.String("a", ":9988", "Server address")
-
-	emailFlag           = flag.String("e", "smtp://localhost:25", "Email server address")
-	emailFromFlag       = flag.String("f", "hookworm@localhost", "Email from address")
-	emailRcptsFlag      = flag.String("r", "", "Email recipients (comma-delimited)")
-	watchedBranchesFlag = flag.String("b", "", "Watched branches (comma-delimited regexes)")
-	watchedPathsFlag    = flag.String("p", "", "Watched paths (comma-delimited regexes)")
-	wormDirFlag         = flag.String("W", "", "Worm directory that contains handler executables")
-	wormTimeoutFlag     = flag.Int("T", 30, "Timeout for handler executables (in seconds)")
-	workingDirFlag      = flag.String("D", "", "Working directory (scratch pad)")
-
-	useSyslogFlag = flag.Bool("S", false, "Send all received events to syslog")
+	addrFlag        = flag.String("a", ":9988", "Server address")
+	wormTimeoutFlag = flag.Int("T", 30, "Timeout for handler executables (in seconds)")
+	workingDirFlag  = flag.String("D", "", "Working directory (scratch pad)")
+	wormDirFlag     = flag.String("W", "", "Worm directory that contains handler executables")
 
 	githubPathFlag = flag.String("github.path", "/github", "Path to handle Github payloads")
 	travisPathFlag = flag.String("travis.path", "/travis", "Path to handle Travis payloads")
@@ -31,6 +23,14 @@ var (
 	debugFlag         = flag.Bool("d", false, "Show debug output")
 	printRevisionFlag = flag.Bool("rev", false, "Print revision and exit")
 	printVersionFlag  = flag.Bool("version", false, "Print version and exit")
+
+	// TODO remove these once the python rogue handler is ready
+	emailFlag           = flag.String("e", "smtp://localhost:25", "Email server address")
+	emailFromFlag       = flag.String("f", "hookworm@localhost", "Email from address")
+	emailRcptsFlag      = flag.String("r", "", "Email recipients (comma-delimited)")
+	watchedBranchesFlag = flag.String("b", "", "Watched branches (comma-delimited regexes)")
+	watchedPathsFlag    = flag.String("p", "", "Watched paths (comma-delimited regexes)")
+	// END TODO
 
 	logTimeFmt = "2/Jan/2006:15:04:05 -0700" // "%d/%b/%Y:%H:%M:%S %z"
 )
@@ -48,7 +48,7 @@ type Server struct {
 // executable
 func ServerMain() int {
 	flag.Usage = func() {
-		fmt.Printf("Usage: %v [options]\n", progName)
+		fmt.Printf("Usage: %v [options] [key=value...]\n", progName)
 		flag.PrintDefaults()
 	}
 
@@ -64,6 +64,11 @@ func ServerMain() int {
 	}
 
 	log.Println("Starting", progVersion())
+
+	wormFlags := newWormFlagMap()
+	for i := 0; i < flag.NArg(); i++ {
+		wormFlags.Set(flag.Arg(i))
+	}
 
 	workingDir, err := getWorkingDir(*workingDirFlag)
 	if err != nil {
@@ -84,12 +89,12 @@ func ServerMain() int {
 		ServerAddress:   *addrFlag,
 		ServerPidFile:   *pidFileFlag,
 		TravisPath:      *travisPathFlag,
-		UseSyslog:       *useSyslogFlag,
 		WatchedBranches: commaSplit(*watchedBranchesFlag),
 		WatchedPaths:    commaSplit(*watchedPathsFlag),
 		WorkingDir:      workingDir,
 		WormDir:         *wormDirFlag,
 		WormTimeout:     *wormTimeoutFlag,
+		WormFlags:       wormFlags,
 	}
 
 	if cfg.Debug {

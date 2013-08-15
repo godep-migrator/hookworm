@@ -4,10 +4,9 @@ hookworm
 github hook receiving thingydoo
 
 ```
-Usage: hookworm-server [options]
+Usage: hookworm-server [options] [key=value...]
   -D="": Working directory (scratch pad)
   -P="": PID file (only written if flag given)
-  -S=false: Send all received events to syslog
   -T=30: Timeout for handler executables (in seconds)
   -W="": Worm directory that contains handler executables
   -a=":9988": Server address
