@@ -7,13 +7,23 @@ import (
 )
 
 var (
-	VersionString  string
+	// VersionString is the git description set via ldflags
+	VersionString string
+	// RevisionString is the git revision set via ldflags
 	RevisionString string
-	progName       string
+	// BuildTags are the tags used at build time set via ldflags
+	BuildTags string
+	progName  string
 )
 
 func init() {
 	progName = path.Base(os.Args[0])
+	if RevisionString == "" {
+		RevisionString = "<unknown>"
+	}
+	if VersionString == "" {
+		VersionString = "<unknown>"
+	}
 }
 
 func printVersion() {
@@ -21,16 +31,13 @@ func printVersion() {
 }
 
 func printRevision() {
-	if RevisionString == "" {
-		RevisionString = "<unknown>"
-	}
 	fmt.Println(RevisionString)
 }
 
 func progVersion() string {
-	if VersionString == "" {
-		VersionString = "<unknown>"
-	}
-
 	return fmt.Sprintf("%s %s", progName, VersionString)
+}
+
+func printVersionRevTags() {
+	fmt.Printf("%s\nrev: %s\ntags: %s\n", progVersion(), RevisionString, BuildTags)
 }
