@@ -171,28 +171,12 @@ func (me *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func (me *Server) handleGithubPayload(w http.ResponseWriter, r *http.Request) int {
-	status := http.StatusNoContent
-
-	rawPayload := r.FormValue("payload")
-	if len(rawPayload) < 1 {
-		log.Println("Empty payload!")
-		return http.StatusBadRequest
-	}
-
 	payload := &GithubPayload{}
-	if me.debug {
-		log.Println("Raw payload: ", rawPayload)
-	}
-
-	err := json.Unmarshal([]byte(rawPayload), payload)
+	err := me.extractPayload(payload, r)
 	if err != nil {
-		log.Println("Failed to unmarshal payload: ", err)
+		log.Printf("Error extracting payload: %v\n", err)
 		return http.StatusBadRequest
 	}
-
-	/*
-		TODO right here is "parse time" for payloads
-	*/
 
 	if !payload.IsValid() {
 		if me.debug {
@@ -205,7 +189,7 @@ func (me *Server) handleGithubPayload(w http.ResponseWriter, r *http.Request) in
 		if me.debug {
 			log.Println("No pipeline present, so doing nothing.")
 		}
-		return status
+		return http.StatusNoContent
 	}
 
 	if me.debug {
@@ -214,27 +198,17 @@ func (me *Server) handleGithubPayload(w http.ResponseWriter, r *http.Request) in
 
 	err = me.pipeline.HandleGithubPayload(payload)
 	if err != nil {
-		status = http.StatusInternalServerError
+		return http.StatusInternalServerError
 	}
 
-	return status
+	return http.StatusNoContent
 }
 
 func (me *Server) handleTravisPayload(w http.ResponseWriter, r *http.Request) int {
-	rawPayload := r.FormValue("payload")
-	if len(rawPayload) < 1 {
-		log.Println("Empty payload!")
-		return http.StatusBadRequest
-	}
-
 	payload := &TravisPayload{}
-	if me.debug {
-		log.Println("Raw payload: ", rawPayload)
-	}
-
-	err := json.Unmarshal([]byte(rawPayload), payload)
+	err := me.extractPayload(payload, r)
 	if err != nil {
-		log.Println("Failed to unmarshal payload: ", err)
+		log.Printf("Error extracting payload: %v\n", err)
 		return http.StatusBadRequest
 	}
 
@@ -254,5 +228,25 @@ func (me *Server) handleTravisPayload(w http.ResponseWriter, r *http.Request) in
 		return http.StatusInternalServerError
 	}
 
-	return http.StatusNotFound
+	return http.StatusNoContent
+}
+
+func (me *Server) extractPayload(payload Payload, r *http.Request) error {
+	rawPayload := r.FormValue("payload")
+	if len(rawPayload) < 1 {
+		log.Println("Empty payload!")
+		return fmt.Errorf("Empty payload!")
+	}
+
+	if me.debug {
+		log.Println("Raw payload: ", rawPayload)
+	}
+
+	err := json.Unmarshal([]byte(rawPayload), payload)
+	if err != nil {
+		log.Println("Failed to unmarshal payload: ", err)
+		return err
+	}
+
+	return nil
 }
