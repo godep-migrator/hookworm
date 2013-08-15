@@ -1,13 +1,13 @@
-$LOAD_PATH.unshift(File.expand_path('../../', __FILE__))
+require_relative 'test_helper'
 
-require 'minitest/autorun'
 require 'stringio'
 require 'tmpdir'
-require '.golden/bits'
+
 require 'worm.d/00-hookworm-logger'
 
 describe HookwormLogger do
-  include Bits
+  include Annunciation
+  include NetThings
 
   def handler
     HookwormLogger.new
