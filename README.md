@@ -27,8 +27,8 @@ memory usage at payload handling time is ephemeral, assuming the handler
 executables aren't doing anything silly.
 
 An example invocation that uses the handler executables shipped with
-hookworm would look like this, assuming the hookworm has been cloned
-into `/var/lib/hookworm`:
+hookworm would look like this, assuming the hookworm repo has been
+cloned into `/var/lib/hookworm`:
 
 ``` bash
 mkdir -p /var/run/hookworm-main
