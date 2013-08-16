@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"path"
+	"sort"
 	"strings"
 )
 
@@ -70,20 +71,12 @@ type HandlerConfig struct {
 	WormDir       string       `json:"worm_dir"`
 	WormTimeout   int          `json:"worm_timeout"`
 	WormFlags     *wormFlagMap `json:"worm_flags"`
-
-	// TODO remove these once the python rogue handler is ready
-	EmailFromAddr   string   `json:"email_from_addr"`
-	EmailRcpts      []string `json:"email_recipients"`
-	EmailUri        string   `json:"email_uri"`
-	WatchedBranches []string `json:"watched_branches"`
-	WatchedPaths    []string `json:"watched_paths"`
-	// END TODO
 }
 
 // Handler is the interface each pipeline handler must fulfill
 type Handler interface {
-	HandleGithubPayload(*GithubPayload) error
-	HandleTravisPayload(*TravisPayload) error
+	HandleGithubPayload(string) error
+	HandleTravisPayload(string) error
 	SetNextHandler(Handler)
 	NextHandler() Handler
 }
@@ -102,23 +95,6 @@ func NewHandlerPipeline(cfg *HandlerConfig) (Handler, error) {
 		err = loadShellHandlersFromWormDir(pipeline, cfg)
 		if err != nil {
 			return nil, err
-		}
-	}
-
-	/*
-		TODO move the rogue commit handler to a script
-		that ships with the repository in the default "worm dir"
-	*/
-	if len(cfg.WatchedBranches) > 0 {
-		pipeline.SetNextHandler(NewRogueCommitHandler(cfg))
-		if cfg.Debug {
-			log.Printf("Added rogue commit handler "+
-				"for watched branches %+v, watched paths %+v\n",
-				cfg.WatchedBranches, cfg.WatchedPaths)
-		}
-	} else {
-		if cfg.Debug {
-			log.Println("No rogue commit handler added")
 		}
 	}
 
@@ -143,6 +119,10 @@ func loadShellHandlersFromWormDir(pipeline Handler, cfg *HandlerConfig) error {
 		return err
 	}
 
+	sort.Strings(collection)
+
+	curHandler := pipeline
+
 	for _, name := range collection {
 		fullpath := path.Join(cfg.WormDir, name)
 		sh, err := newShellHandler(fullpath, cfg)
@@ -157,8 +137,16 @@ func loadShellHandlersFromWormDir(pipeline Handler, cfg *HandlerConfig) error {
 			log.Printf("Adding shell handler for %v\n", fullpath)
 		}
 
-		sh.SetNextHandler(pipeline.NextHandler())
-		pipeline.SetNextHandler(sh)
+		curHandler.SetNextHandler(sh)
+		curHandler = sh
+	}
+
+	if cfg.Debug {
+		log.Printf("Current pipeline: %#v\n", pipeline)
+
+		for nh := pipeline.NextHandler(); nh != nil; nh = nh.NextHandler() {
+			log.Printf("   ---> %#v\n", nh)
+		}
 	}
 
 	return nil

@@ -47,29 +47,35 @@ func (me *shellHandler) configure() error {
 		log.Printf("Error JSON-marshalling config: %v", err)
 	}
 
-	return me.command.configure(configJSON)
+	return me.command.configure(string(configJSON))
 }
 
-func (me *shellHandler) HandleGithubPayload(payload *GithubPayload) error {
-	payloadJSON, err := json.Marshal(payload)
-	if err != nil {
-		return err
-	}
+func (me *shellHandler) HandleGithubPayload(payload string) error {
 	if me.cfg.Debug {
 		log.Printf("Sending github payload to %+v\n", me)
 	}
-	return me.command.handleGithubPayload(payloadJSON)
-}
-
-func (me *shellHandler) HandleTravisPayload(payload *TravisPayload) error {
-	payloadJSON, err := json.Marshal(payload)
+	err := me.command.handleGithubPayload(payload)
 	if err != nil {
 		return err
 	}
+	if me.next != nil {
+		return me.next.HandleGithubPayload(payload)
+	}
+	return nil
+}
+
+func (me *shellHandler) HandleTravisPayload(payload string) error {
 	if me.cfg.Debug {
 		log.Printf("Sending travis payload to %+v\n", me)
 	}
-	return me.command.handleTravisPayload(payloadJSON)
+	err := me.command.handleTravisPayload(payload)
+	if err != nil {
+		return err
+	}
+	if me.next != nil {
+		return me.next.HandleTravisPayload(payload)
+	}
+	return nil
 }
 
 func (me *shellHandler) SetNextHandler(n Handler) {

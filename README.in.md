@@ -38,7 +38,9 @@ Handler executables are expected to fulfill the following contract:
 - exits `0` on success or no-op
 
 It is up to the handler executable to decide what is done for each
-command invocation.
+command invocation.  The execution environment includes the
+`HOOKWORM_WORKING_DIR` variable, which may be used as a scratch pad for
+temporary files.
 
 #### `<interpreter> <handler-executable> configure`
 

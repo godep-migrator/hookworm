@@ -4,12 +4,8 @@ $servers.each do |name,server|
   describe "#{name} server receiving hook payloads" do
     include NetThings
 
-    it 'accepts valid POSTs' do
+    it 'accepts POSTs' do
       post_github_payload(server.port, :valid).first.code.must_equal '204'
-    end
-
-    it 'rejects invalid POSTs' do
-      post_github_payload(server.port, :bogus).first.code.must_equal '400'
     end
   end
 end

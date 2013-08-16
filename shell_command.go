@@ -1,9 +1,9 @@
 package hookworm
 
 import (
-	"bytes"
 	"os"
 	"os/exec"
+	"strings"
 	"time"
 )
 
@@ -21,19 +21,19 @@ func newShellCommand(interpreter, filePath string, timeout int) shellCommand {
 	}
 }
 
-func (me *shellCommand) configure(configJSON []byte) error {
-	return me.runCmd(configJSON, "configure")
+func (me *shellCommand) configure(config string) error {
+	return me.runCmd(config, "configure")
 }
 
-func (me *shellCommand) handleGithubPayload(payloadJSON []byte) error {
-	return me.runCmd(payloadJSON, "handle", "github")
+func (me *shellCommand) handleGithubPayload(payload string) error {
+	return me.runCmd(payload, "handle", "github")
 }
 
-func (me *shellCommand) handleTravisPayload(payloadJSON []byte) error {
-	return me.runCmd(payloadJSON, "handle", "travis")
+func (me *shellCommand) handleTravisPayload(payload string) error {
+	return me.runCmd(payload, "handle", "travis")
 }
 
-func (me *shellCommand) runCmd(stdin []byte, argv ...string) error {
+func (me *shellCommand) runCmd(stdin string, argv ...string) error {
 	var cmd *exec.Cmd
 
 	var (
@@ -52,7 +52,7 @@ func (me *shellCommand) runCmd(stdin []byte, argv ...string) error {
 	commandArgs = append(commandArgs, argv...)
 
 	cmd = exec.Command(interpreter, commandArgs...)
-	cmd.Stdin = bytes.NewReader(stdin)
+	cmd.Stdin = strings.NewReader(stdin)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 

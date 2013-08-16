@@ -75,6 +75,8 @@ module NetThings
 
   def perform_request(request, port)
     Net::HTTP.start('localhost', port) do |http|
+      http.open_timeout = 1
+      http.read_timeout = 3
       http.request(request)
     end
   end

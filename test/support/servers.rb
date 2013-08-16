@@ -24,15 +24,16 @@ $servers = {
     '-a' => ":#{rand(12110..12119)}",
     '-d' => nil,
     '-P' => File.expand_path('../../../log/hookworm-server-debug.pid', __FILE__),
-    '-b' => '^master$,^develop$',
-    '-p' => '\.go$,\.json$',
-    '-e' => "smtp://localhost:#{$fakesmtpd_server.port}",
-    '-f' => 'hookworm-runtests@testing.local',
-    '-r' => 'hookworm-self@testing.local',
     '-D' => File.expand_path(
       "../../../log/hookworm-debug-#{Time.now.utc.to_i}-#{$$}", __FILE__
     ),
+    '-T' => '5',
     '-W' => File.expand_path('../../../worm.d', __FILE__),
+	"watched_branches='^master$,^develop$'" => nil,
+    "watched_paths='\.go$,\.json$'" => nil,
+    "email_uri='smtp://localhost:#{$fakesmtpd_server.port}'" => nil,
+    "email_from_addr='hookworm-runtests@testing.local'" => nil,
+    "email_recipients='hookworm-self@testing.local'" => nil,
     start: Time.now.utc,
   )
 }
@@ -50,6 +51,21 @@ def start_servers
     $fakesmtpd_server.start
     $servers.each do |_,runner|
       runner.start
+      wait_for_server(runner.port)
+    end
+  end
+end
+
+def wait_for_server(http_port)
+  maxloops = 10
+  curloop = 0
+  begin
+    TCPSocket.new('localhost', http_port).close
+  rescue
+    curloop += 1
+    if curloop < maxloops
+      sleep 0.5
+      retry
     end
   end
 end

@@ -25,14 +25,6 @@ var (
 	printVersionFlag        = flag.Bool("version", false, "Print version and exit")
 	printVersionRevTagsFlag = flag.Bool("version+", false, "Print version, revision, and build tags")
 
-	// TODO remove these once the python rogue handler is ready
-	emailFlag           = flag.String("e", "smtp://localhost:25", "Email server address")
-	emailFromFlag       = flag.String("f", "hookworm@localhost", "Email from address")
-	emailRcptsFlag      = flag.String("r", "", "Email recipients (comma-delimited)")
-	watchedBranchesFlag = flag.String("b", "", "Watched branches (comma-delimited regexes)")
-	watchedPathsFlag    = flag.String("p", "", "Watched paths (comma-delimited regexes)")
-	// END TODO
-
 	logTimeFmt = "2/Jan/2006:15:04:05 -0700" // "%d/%b/%Y:%H:%M:%S %z"
 )
 
@@ -122,24 +114,23 @@ func ServerMain() int {
 	}
 
 	log.Println("Using working directory", workingDir)
+	if err := os.Setenv("HOOKWORM_WORKING_DIR", workingDir); err != nil {
+		log.Printf("ERROR: %v\n", err)
+		return 1
+	}
 
 	defer os.RemoveAll(workingDir)
 
 	cfg := &HandlerConfig{
-		Debug:           *debugFlag,
-		EmailFromAddr:   *emailFromFlag,
-		EmailRcpts:      commaSplit(*emailRcptsFlag),
-		EmailUri:        *emailFlag,
-		GithubPath:      *githubPathFlag,
-		ServerAddress:   *addrFlag,
-		ServerPidFile:   *pidFileFlag,
-		TravisPath:      *travisPathFlag,
-		WatchedBranches: commaSplit(*watchedBranchesFlag),
-		WatchedPaths:    commaSplit(*watchedPathsFlag),
-		WorkingDir:      workingDir,
-		WormDir:         *wormDirFlag,
-		WormTimeout:     *wormTimeoutFlag,
-		WormFlags:       wormFlags,
+		Debug:         *debugFlag,
+		GithubPath:    *githubPathFlag,
+		ServerAddress: *addrFlag,
+		ServerPidFile: *pidFileFlag,
+		TravisPath:    *travisPathFlag,
+		WorkingDir:    workingDir,
+		WormDir:       *wormDirFlag,
+		WormTimeout:   *wormTimeoutFlag,
+		WormFlags:     wormFlags,
 	}
 
 	if cfg.Debug {
@@ -241,22 +232,10 @@ func (me *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func (me *Server) handleGithubPayload(w http.ResponseWriter, r *http.Request) (int, string) {
-	payload := &GithubPayload{}
-	err := me.extractPayload(payload, r)
+	payload, err := me.extractPayload(r)
 	if err != nil {
 		log.Printf("Error extracting payload: %v\n", err)
 		errJSON, err := json.Marshal(err)
-		if err != nil {
-			return http.StatusBadRequest, string(errJSON)
-		}
-		return http.StatusBadRequest, boomExplosionsJSON
-	}
-
-	if !payload.IsValid() {
-		if me.debug {
-			log.Println("Invalid payload!")
-		}
-		errJSON, err := json.Marshal(fmt.Errorf("Invalid payload!"))
 		if err != nil {
 			return http.StatusBadRequest, string(errJSON)
 		}
@@ -287,8 +266,7 @@ func (me *Server) handleGithubPayload(w http.ResponseWriter, r *http.Request) (i
 }
 
 func (me *Server) handleTravisPayload(w http.ResponseWriter, r *http.Request) (int, string) {
-	payload := &TravisPayload{}
-	err := me.extractPayload(payload, r)
+	payload, err := me.extractPayload(r)
 	if err != nil {
 		log.Printf("Error extracting payload: %v\n", err)
 
@@ -322,22 +300,15 @@ func (me *Server) handleTravisPayload(w http.ResponseWriter, r *http.Request) (i
 	return http.StatusNoContent, ""
 }
 
-func (me *Server) extractPayload(payload Payload, r *http.Request) error {
+func (me *Server) extractPayload(r *http.Request) (string, error) {
 	rawPayload := r.FormValue("payload")
 	if len(rawPayload) < 1 {
 		log.Println("Empty payload!")
-		return fmt.Errorf("Empty payload!")
+		return "", fmt.Errorf("Empty payload!")
 	}
 
 	if me.debug {
 		log.Println("Raw payload: ", rawPayload)
 	}
-
-	err := json.Unmarshal([]byte(rawPayload), payload)
-	if err != nil {
-		log.Println("Failed to unmarshal payload: ", err)
-		return err
-	}
-
-	return nil
+	return rawPayload, nil
 }

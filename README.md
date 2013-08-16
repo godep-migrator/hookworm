@@ -12,13 +12,8 @@ Usage: hookworm-server [options] [key=value...]
   -T=30: Timeout for handler executables (in seconds)
   -W="": Worm directory that contains handler executables
   -a=":9988": Server address
-  -b="": Watched branches (comma-delimited regexes)
   -d=false: Show debug output
-  -e="smtp://localhost:25": Email server address
-  -f="hookworm@localhost": Email from address
   -github.path="/github": Path to handle Github payloads
-  -p="": Watched paths (comma-delimited regexes)
-  -r="": Email recipients (comma-delimited)
   -rev=false: Print revision and exit
   -travis.path="/travis": Path to handle Travis payloads
   -version=false: Print version and exit
@@ -54,7 +49,9 @@ Handler executables are expected to fulfill the following contract:
 - exits `0` on success or no-op
 
 It is up to the handler executable to decide what is done for each
-command invocation.
+command invocation.  The execution environment includes the
+`HOOKWORM_WORKING_DIR` variable, which may be used as a scratch pad for
+temporary files.
 
 #### `<interpreter> <handler-executable> configure`
 
