@@ -4,12 +4,18 @@ def main(argv = [].freeze)
   ENV['IN_TEST_RUNNER'] = '1'
   require_relative 'test_helper'
 
+  include Annunciation
+
   Dir.glob("#{File.expand_path('../', __FILE__)}/**/*_test.rb").each do |f|
     require f
   end
 
   start_servers
-  at_exit { stop_servers }
+  announce! "Started servers"
+  at_exit do
+    stop_servers
+    announce! "Stopped servers"
+  end
   exit_code = 1
 
   Dir.chdir(File.expand_path('../../log', __FILE__)) do

@@ -11,8 +11,8 @@ describe 'hookworm logger' do
   def handle(stdin_string, args)
     ENV['HOOKWORM_WORKING_DIR'] = @tempdir
     command = [
-      'ruby',
-      File.expand_path('../../worm.d/00-hookworm-logger.rb', __FILE__)
+      'go', 'run',
+      File.expand_path('../../worm.d/10-hookworm-rogue-commit-handler.go', __FILE__)
     ] + args
     out_err = ''
     exit_status = 1
@@ -56,27 +56,11 @@ describe 'hookworm logger' do
 
   describe 'when configuring' do
     it 'writes JSON from stdin to a config file' do
+      out_err = ''
       Dir.chdir(@tempdir) do
-        handle(JSON.dump(@handler_config), %w(configure))
+        out_err = handle(JSON.dump(@handler_config), %w(configure)).last
       end
-      File.exists?("#{@tempdir}/00-hookworm-logger.rb.cfg.json").must_equal true
-    end
-  end
-
-  describe 'when handling github payloads' do
-    before do
-      @github_payload = github_payload_hash('pull_request')
-      @github_payload[:repository].merge!({id: @fizz})
-      Dir.chdir(@tempdir) do
-        handle(JSON.dump(@handler_config), %w(configure))
-      end
-    end
-
-    it 'logs if the payload is a pull request merge' do
-      Dir.chdir(@tempdir) do
-        out_err = handle(JSON.dump(@github_payload), %w(handle github)).last
-        out_err.must_match(/Pull request merge\? true/)
-      end
+      File.exists?("#{@tempdir}/10-hookworm-rogue-commit-handler.go.cfg.json").must_equal true
     end
   end
 end
