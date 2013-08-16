@@ -1,16 +1,28 @@
 require_relative 'test_helper'
 
-require 'stringio'
+require 'open3'
 require 'tmpdir'
 
-require 'worm.d/00-hookworm-logger'
-
-describe HookwormLogger do
+describe 'hookworm logger' do
   include Annunciation
   include NetThings
+  include Open3
 
-  def handler
-    HookwormLogger.new
+  def handle(stdin_string, args)
+    command = [
+      "ruby", File.expand_path('../../worm.d/00-hookworm-logger.rb', __FILE__)
+    ] + args
+    out_err = ''
+    exit_status = 1
+
+    popen2e(*command) do |stdin, stdout_stderr, wait_thr|
+      stdin.write stdin_string
+      stdin.close
+      out_err << stdout_stderr.read
+      exit_status = wait_thr.value
+    end
+
+    [exit_status == 0, out_err]
   end
 
   def handler_config(fizz, working_dir)
@@ -34,39 +46,35 @@ describe HookwormLogger do
 
   describe 'when given an invalid command' do
     it 'explodes' do
-      proc { handler.run!(%w(fribble)) }.must_raise SystemExit
+      Dir.chdir(@tempdir) do
+        handle('', %w(fribble)).first.must_equal false
+      end
     end
   end
 
   describe 'when configuring' do
-    before do
-      @handler = handler
-      $hookworm_stdin = StringIO.new(JSON.dump(@handler_config))
-    end
-
     it 'writes JSON from stdin to a config file' do
-      @handler.run!(%w(configure))
-      JSON.parse(File.read(@handler.send(:cfg_file)))['fizz'].must_equal @fizz
+      Dir.chdir(@tempdir) do
+        handle(JSON.dump(@handler_config), %w(configure))
+      end
+      File.exists?("#{@tempdir}/00-hookworm-logger.rb.cfg.json").must_equal true
     end
   end
 
   describe 'when handling github payloads' do
     before do
-      @handler = handler
       @github_payload = github_payload_hash('pull_request')
       @github_payload[:repository].merge!({id: @fizz})
-      $hookworm_stdin = StringIO.new(JSON.dump(@handler_config))
-      @handler.run!(%w(configure))
-      $hookworm_stdin = StringIO.new(JSON.dump(@github_payload))
-      $hookworm_stderr = StringIO.new
-      @log = Logger.new($hookworm_stderr)
-      @handler.instance_variable_set(:@log, @log)
+      Dir.chdir(@tempdir) do
+        handle(JSON.dump(@handler_config), %w(configure))
+      end
     end
 
     it 'logs if the payload is a pull request merge' do
-      @handler.run!(%w(handle github))
-      $hookworm_stderr.seek(0)
-      $hookworm_stderr.read.must_match(/Pull request merge\? true/)
+      Dir.chdir(@tempdir) do
+        out_err = handle(JSON.dump(@github_payload), %w(handle github)).last
+        out_err.must_match(/Pull request merge\? true/)
+      end
     end
   end
 end
