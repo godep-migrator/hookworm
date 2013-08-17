@@ -39,7 +39,8 @@ golden:
 	./runtests -v 2>&1 | tee runtests.log
 
 README.md: README.in.md $(wildcard *.go)
-	./build-readme < $< > $@
+	ruby -e "exe = \"#{ENV['GOPATH'].split(':').first}/bin/hookworm-server\" ; \
+	  puts \$$<.read.sub(/___USAGE___/, \`#{exe} -h 2>&1\`.chomp)" < $< > $@
 
 serve:
 	$${GOPATH%%:*}/bin/hookworm-server -a $(ADDR) -S
