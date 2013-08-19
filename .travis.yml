@@ -31,6 +31,10 @@ after_success:
       tb setup-aws ;
       tb install-travis-artifacts ;
       tb upload-go-artifacts --public ;
+      tb upload-artifact $TRAVIS_BUILD_DIR/worm.d
+        artifacts/binaries/$(go env GOOS)/$(go env GOARCH)/hookworm/$TRAVIS_COMMIT/ --public ;
+      tb upload-artifact $TRAVIS_BUILD_DIR/worm.d
+        artifacts/binaries/$(go env GOOS)/$(go env GOARCH)/hookworm/$TRAVIS_BRANCH/ --public ;
     fi ;
   fi
 notifications:
