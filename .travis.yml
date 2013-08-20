@@ -41,7 +41,6 @@ after_success:
 notifications:
   email:
     recipients:
-    - d.buch@modcloth.com
-    - r.mckinstry@modcloth.com
+    - github+hookworm@modcloth.com
   webhooks:
   - http://meatballhat.no-ip.biz:9988/travis
