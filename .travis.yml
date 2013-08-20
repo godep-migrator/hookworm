@@ -29,9 +29,9 @@ after_success:
     chmod +x tb ;
     popd ;
     if tb nopr ; then
-      mkdir -p $TRAVIS_BUILD_DIR/build/hookworm/sources ;
+      mkdir -p $TRAVIS_BUILD_DIR/build/hookworm ;
       cd $TRAVIS_BUILD_DIR ;
-      git archive HEAD | bzip2 > $TRAVIS_BUILD_DIR/build/hookworm/sources/hookworm-src.tar.bz2 ;
+      git archive HEAD | bzip2 > $TRAVIS_BUILD_DIR/build/hookworm/hookworm-src.tar.bz2 ;
       tb setup-aws ;
       tb install-travis-artifacts ;
       tb upload-go-artifacts --public ;
