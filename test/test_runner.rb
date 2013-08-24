@@ -11,10 +11,10 @@ def main(argv = [].freeze)
   end
 
   start_servers
-  announce! "Started servers"
+  announce! 'Started servers'
   at_exit do
     stop_servers
-    announce! "Stopped servers"
+    announce! 'Stopped servers'
   end
   exit_code = 1
 
