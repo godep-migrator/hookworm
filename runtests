@@ -1,2 +1,0 @@
-#!/bin/bash
-exec ruby "$(dirname $0)/test/test_runner.rb" "$@"

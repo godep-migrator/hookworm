@@ -1,5 +1,8 @@
 /tags
 /log/
-/runtests.log
+/tests.log
+/mtbb
+/fakesmtpd
+/.mtbb-artifacts/
 
 *.test

@@ -1,8 +1,10 @@
 require_relative 'test_helper'
 
-$servers.each do |name,server|
+Mtbb::SERVERS.each do |name, server|
+  next if name == :fakesmtpd
+
   describe "#{name} server receiving hook payloads" do
-    include NetThings
+    include Mtbb::NetThings
 
     it 'accepts POSTs' do
       post_github_payload(server.port, :valid).first.code.must_equal '204'
@@ -11,10 +13,10 @@ $servers.each do |name,server|
 end
 
 describe 'when receiving a payload for a watched branch' do
-  include NetThings
+  include Mtbb::NetThings
 
   before do
-    @sent_messages = post_github_payload($servers[:debug].port, :rogue).last
+    @sent_messages = post_github_payload(Mtbb.server(:debug).port, :rogue).last
   end
 
   it 'sends a rogue commit email' do
@@ -23,11 +25,11 @@ describe 'when receiving a payload for a watched branch' do
 end
 
 describe 'when receiving a payload for an unwatched branch' do
-  include NetThings
+  include Mtbb::NetThings
 
   before do
     @sent_messages = post_github_payload(
-      $servers[:debug].port, :rogue_unwatched_branch
+      Mtbb.server(:debug).port, :rogue_unwatched_branch
     ).last
   end
 
@@ -37,11 +39,11 @@ describe 'when receiving a payload for an unwatched branch' do
 end
 
 describe 'when receiving a payload for an unwatched path' do
-  include NetThings
+  include Mtbb::NetThings
 
   before do
     @sent_messages = post_github_payload(
-      $servers[:debug].port, :rogue_unwatched_path
+      Mtbb.server(:debug).port, :rogue_unwatched_path
     ).last
   end
 
@@ -51,10 +53,10 @@ describe 'when receiving a payload for an unwatched path' do
 end
 
 describe 'rogue commit emails' do
-  include NetThings
+  include Mtbb::NetThings
 
   before do
-    @rogue_response ||= post_github_payload($servers[:debug].port, :rogue).first
+    @rogue_response ||= post_github_payload(Mtbb.server(:debug).port, :rogue).first
   end
 
   it 'are multipart' do
