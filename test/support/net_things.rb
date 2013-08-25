@@ -5,28 +5,7 @@ require 'mail'
 
 require_relative 'servers'
 
-module NetThings
-  def post_request(options = {})
-    request = Net::HTTP::Post.new(options[:path] || '/')
-    request.content_type = 'application/x-www-form-urlencoded'
-    request.body = options.fetch(:body)
-    perform_request(request, options.fetch(:port))
-  end
-
-  def get_request(options = {})
-    perform_request(
-      Net::HTTP::Get.new(options[:path] || '/'),
-      options.fetch(:port)
-    )
-  end
-
-  def delete_request(options = {})
-    perform_request(
-      Net::HTTP::Delete.new(options[:path] || '/'),
-      options.fetch(:port)
-    )
-  end
-
+module Mtbb::NetThings
   def github_payload(name)
     "payload=#{URI.escape(github_payload_string(name))}"
   end
@@ -45,12 +24,12 @@ module NetThings
 
   def current_mail_messages
     JSON.parse(
-      get_request(path: '/messages', port: $fakesmtpd_server.http_port).body
+      get_request(path: '/messages', port: Mtbb.server(:fakesmtpd).port + 1).body
     ).fetch('_embedded').fetch('messages').map { |h| h['_links']['self']['href'] }
   end
 
   def clear_mail_messages
-    delete_request(path: '/messages', port: $fakesmtpd_server.http_port)
+    #delete_request(path: '/messages', port: Mtbb.server(:fakesmtpd).port + 1)
   end
 
   def post_github_payload(port, payload_name)
@@ -61,7 +40,7 @@ module NetThings
 
   def last_message
     message = JSON.parse(get_request(
-      path: current_mail_messages.last, port: $fakesmtpd_server.http_port
+      path: current_mail_messages.last, port: Mtbb.server(:fakesmtpd).port + 1
     ).body)
     return Mail.new if message['body'].nil?
     return Mail.new(message['body'].join("\n"))
@@ -69,15 +48,5 @@ module NetThings
 
   def last_message_header(header_name)
     last_message[header_name].to_s
-  end
-
-  private
-
-  def perform_request(request, port)
-    Net::HTTP.start('localhost', port) do |http|
-      http.open_timeout = 1
-      http.read_timeout = 3
-      http.request(request)
-    end
   end
 end

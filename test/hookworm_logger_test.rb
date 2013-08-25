@@ -1,11 +1,10 @@
-require_relative 'test_helper'
-
 require 'open3'
 require 'tmpdir'
 
+require_relative 'test_helper'
+
 describe 'hookworm logger' do
-  include Annunciation
-  include NetThings
+  include Mtbb::NetThings
   include Open3
 
   def handle(stdin_string, args)

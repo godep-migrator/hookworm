@@ -21,26 +21,32 @@ build: deps
 	go install $(GOBUILD_LDFLAGS) $(GO_TAG_ARGS) -x $(TARGETS)
 	go build -o $${GOPATH%%:*}/bin/hookworm-server $(GOBUILD_LDFLAGS) $(GO_TAG_ARGS) ./hookworm-server
 
-deps:
+deps: fakesmtpd mtbb
 	if [ ! -L $${GOPATH%%:*}/src/hookworm ] ; then gvm linkthis ; fi
 	gem query --local | grep -Eq '^mail\b.*\b2\.5\.4\b'  || \
 	  gem install mail -v 2.5.4 --no-ri --no-rdoc
-	gem query --local | grep -Eq '^fakesmtpd\b.*\b0\.2\.0\b'  || \
-	  gem install fakesmtpd -v 0.2.0 --no-ri --no-rdoc
 
 clean:
-	rm -rf ./log
+	rm -rf ./log ./.mtbb-artifacts/ ./tests.log
 	go clean -x $(TARGETS) || true
 	if [ -d $${GOPATH%%:*}/pkg ] ; then \
 		find $${GOPATH%%:*}/pkg -name '*hookworm*' -exec rm -v {} \; ; \
 	fi
 
 golden:
-	./runtests -v 2>&1 | tee runtests.log
+	./mtbb -v 2>&1 | tee tests.log
 
 README.md: README.in.md $(wildcard *.go)
 	ruby -e "exe = \"#{ENV['GOPATH'].split(':').first}/bin/hookworm-server\" ; \
 	  puts \$$<.read.sub(/___USAGE___/, \`#{exe} -h 2>&1\`.chomp)" < $< > $@
+
+fakesmtpd:
+	curl -s -o $@ https://raw.github.com/modcloth-labs/fakesmtpd/v0.3.0/lib/fakesmtpd/server.rb
+	chmod +x $@
+
+mtbb:
+	curl -s -o $@ https://raw.github.com/modcloth-labs/mtbb/v0.1.0/lib/mtbb.rb
+	chmod +x $@
 
 serve:
 	$${GOPATH%%:*}/bin/hookworm-server -a $(ADDR) -S
