@@ -27,7 +27,7 @@ deps: fakesmtpd mtbb
 	  gem install mail -v 2.5.4 --no-ri --no-rdoc
 
 clean:
-	rm -rf ./log ./.mtbb-artifacts/
+	rm -rf ./log ./.mtbb-artifacts/ ./tests.log
 	go clean -x $(TARGETS) || true
 	if [ -d $${GOPATH%%:*}/pkg ] ; then \
 		find $${GOPATH%%:*}/pkg -name '*hookworm*' -exec rm -v {} \; ; \
@@ -45,7 +45,7 @@ fakesmtpd:
 	chmod +x $@
 
 mtbb:
-	curl -s -o $@ https://raw.github.com/modcloth-labs/mtbb/master/lib/mtbb.rb
+	curl -s -o $@ https://raw.github.com/modcloth-labs/mtbb/v0.1.0/lib/mtbb.rb
 	chmod +x $@
 
 serve:
