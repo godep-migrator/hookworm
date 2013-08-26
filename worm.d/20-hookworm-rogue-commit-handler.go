@@ -178,8 +178,7 @@ Content-Transfer-Encoding: 7bit
 
 	hostname string
 
-	rfc2822DateFmt       = "Mon, 02 Jan 2006 15:04:05 -0700"
-	pullRequestMessageRe = regexp.MustCompile("Merge pull request #[0-9]+ from.*")
+	rfc2822DateFmt = "Mon, 02 Jan 2006 15:04:05 -0700"
 )
 
 func init() {
@@ -223,11 +222,7 @@ type githubPayload struct {
 	HeadCommit *commit         `json:"head_commit"`
 	Repository *repository     `json:"repository"`
 	Pusher     *pusher         `json:"pusher"`
-}
-
-func (ghp *githubPayload) IsPullRequestMerge() bool {
-	return len(ghp.Commits) > 1 &&
-		pullRequestMessageRe.Match([]byte(ghp.HeadCommit.Message.String()))
+	IsPrMerge  *nullableBool   `json:"is_pr_merge"`
 }
 
 func (ghp *githubPayload) Paths() []string {
@@ -243,7 +238,7 @@ func (ghp *githubPayload) Paths() []string {
 	commits = append(commits, ghp.HeadCommit)
 
 	for i, commit := range commits {
-		if ghp.IsPullRequestMerge() && i == 0 {
+		if ghp.IsPrMerge.Value && i == 0 {
 			continue
 		}
 		for _, path := range commit.Paths() {
@@ -529,7 +524,7 @@ func (rch *rogueCommitHandler) HandleGithubPayload(payload *githubPayload) error
 
 	hcID := payload.HeadCommit.ID.String()
 
-	if payload.IsPullRequestMerge() {
+	if payload.IsPrMerge.Value {
 		if rch.debug {
 			log.Printf("%v is a pull request merge, yay!\n", hcID)
 		}
@@ -708,7 +703,7 @@ func configPath() (string, error) {
 		return "", fmt.Errorf("missing HOOKWORM_WORKING_DIR")
 	}
 
-	return path.Join(workingDir, "10-hookworm-rogue-commit-handler.go.cfg.json"), nil
+	return path.Join(workingDir, "20-hookworm-rogue-commit-handler.go.cfg.json"), nil
 }
 
 func config() (*handlerConfig, error) {

@@ -1,12 +1,47 @@
 require 'json'
 require 'net/http'
+require 'open3'
+require 'tmpdir'
 require 'uri'
+
 require 'mail'
 
 require_relative 'servers'
 
 module HookwormJunkDrawer
   include Mtbb::NetThings
+
+  def base_command
+    ['echo']
+  end
+
+  def handle(stdin_string, args)
+    ENV['HOOKWORM_WORKING_DIR'] = tempdir
+    command = base_command + args
+    out, err = '', ''
+    exit_status = 1
+
+    Dir.chdir(tempdir) do
+      Open3.popen3(*command) do |stdin, stdout, stderr, wait_thr|
+        stdin.write stdin_string
+        stdin.close
+        out << stdout.read
+        err << stderr.read
+        exit_status = wait_thr.value
+      end
+    end
+
+    [exit_status == 0, out, err]
+  end
+
+  def tempdir
+    @tempdir ||= begin
+      d = Dir.mktmpdir
+      at_exit { FileUtils.rm_rf(d) }
+      d
+    end
+    @tempdir
+  end
 
   def github_payload(name)
     "payload=#{URI.escape(github_payload_string(name))}"

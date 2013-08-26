@@ -10,7 +10,7 @@ describe 'hookworm logger' do
     ENV['HOOKWORM_WORKING_DIR'] = @tempdir
     command = [
       'go', 'run',
-      File.expand_path('../../worm.d/10-hookworm-rogue-commit-handler.go', __FILE__)
+      File.expand_path('../../worm.d/20-hookworm-rogue-commit-handler.go', __FILE__)
     ] + args
     out, err = '', ''
     exit_status = 1
@@ -58,7 +58,7 @@ describe 'hookworm logger' do
       Dir.chdir(@tempdir) do
         handle(JSON.dump(@handler_config), %w(configure)).last
       end
-      File.exists?("#{@tempdir}/10-hookworm-rogue-commit-handler.go.cfg.json").must_equal true
+      File.exists?("#{@tempdir}/20-hookworm-rogue-commit-handler.go.cfg.json").must_equal true
     end
   end
 

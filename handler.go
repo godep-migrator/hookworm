@@ -124,11 +124,16 @@ func loadShellHandlersFromWormDir(pipeline Handler, cfg *HandlerConfig) error {
 	curHandler := pipeline
 
 	for _, name := range collection {
+		if strings.HasPrefix(name, ".") {
+			log.Printf("Ignoring hidden file %q\n", name)
+			continue
+		}
+
 		fullpath := path.Join(cfg.WormDir, name)
 		sh, err := newShellHandler(fullpath, cfg)
 
 		if err != nil {
-			log.Printf("Failed to build shell handler for %v, skipping.: %v",
+			log.Printf("Failed to build shell handler for %v, skipping.: %v\n",
 				fullpath, err)
 			continue
 		}
