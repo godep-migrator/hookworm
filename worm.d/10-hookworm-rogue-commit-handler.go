@@ -225,25 +225,25 @@ type githubPayload struct {
 	Pusher     *pusher         `json:"pusher"`
 }
 
-func (me *githubPayload) IsPullRequestMerge() bool {
-	return len(me.Commits) > 1 &&
-		pullRequestMessageRe.Match([]byte(me.HeadCommit.Message.String()))
+func (ghp *githubPayload) IsPullRequestMerge() bool {
+	return len(ghp.Commits) > 1 &&
+		pullRequestMessageRe.Match([]byte(ghp.HeadCommit.Message.String()))
 }
 
-func (me *githubPayload) Paths() []string {
+func (ghp *githubPayload) Paths() []string {
 	var (
 		paths   []string
 		commits []*commit
 	)
 
-	for _, commit := range me.Commits {
+	for _, commit := range ghp.Commits {
 		commits = append(commits, commit)
 	}
 
-	commits = append(commits, me.HeadCommit)
+	commits = append(commits, ghp.HeadCommit)
 
 	for i, commit := range commits {
-		if me.IsPullRequestMerge() && i == 0 {
+		if ghp.IsPullRequestMerge() && i == 0 {
 			continue
 		}
 		for _, path := range commit.Paths() {
@@ -253,12 +253,12 @@ func (me *githubPayload) Paths() []string {
 	return paths
 }
 
-func (me *githubPayload) IsValid() bool {
-	return me.Ref != nil && me.After != nil &&
-		me.Before != nil && me.Created != nil &&
-		me.Deleted != nil && me.Forced != nil &&
-		me.Compare != nil && me.Commits != nil &&
-		me.Repository != nil && me.Pusher != nil
+func (ghp *githubPayload) IsValid() bool {
+	return ghp.Ref != nil && ghp.After != nil &&
+		ghp.Before != nil && ghp.Created != nil &&
+		ghp.Deleted != nil && ghp.Forced != nil &&
+		ghp.Compare != nil && ghp.Commits != nil &&
+		ghp.Repository != nil && ghp.Pusher != nil
 }
 
 type commit struct {
@@ -274,11 +274,11 @@ type commit struct {
 	Modified  []*nullableString `json:"modified"`
 }
 
-func (me *commit) Paths() []string {
+func (c *commit) Paths() []string {
 	var paths []string
 	pathSet := make(map[string]bool)
 
-	for _, pathList := range [][]*nullableString{me.Added, me.Removed, me.Modified} {
+	for _, pathList := range [][]*nullableString{c.Added, c.Removed, c.Modified} {
 		for _, path := range pathList {
 			pathSet[path.String()] = true
 		}
@@ -335,31 +335,31 @@ type nullableString struct {
 	isNull bool
 }
 
-func (me *nullableString) UnmarshalJSON(raw []byte) error {
+func (s *nullableString) UnmarshalJSON(raw []byte) error {
 	if bytes.Equal(raw, []byte("null")) {
-		me.isNull = true
+		s.isNull = true
 		return nil
 	}
-	me.Value = strings.TrimRight(strings.TrimLeft(string(raw), "\""), "\"")
+	s.Value = strings.TrimRight(strings.TrimLeft(string(raw), "\""), "\"")
 	return nil
 }
 
-func (me *nullableString) MarshalJSON() ([]byte, error) {
-	if me.isNull {
+func (s *nullableString) MarshalJSON() ([]byte, error) {
+	if s.isNull {
 		return []byte("null"), nil
 	}
-	return []byte(fmt.Sprintf("%q", me.Value)), nil
+	return []byte(fmt.Sprintf("%q", s.Value)), nil
 }
 
-func (me *nullableString) String() string {
-	str := string(me.Value)
+func (s *nullableString) String() string {
+	str := string(s.Value)
 	str = strings.Replace(str, "\\n", "\n", -1)
 	str = strings.Replace(str, "\\t", "\t", -1)
 	return str
 }
 
-func (me *nullableString) HTML() string {
-	str := string(me.Value)
+func (s *nullableString) HTML() string {
+	str := string(s.Value)
 	str = strings.Replace(str, "\\n", "<br/>", -1)
 	str = strings.Replace(str, "\\t", "    ", -1)
 	return str
@@ -370,29 +370,29 @@ type nullableInt64 struct {
 	isNull bool
 }
 
-func (me *nullableInt64) UnmarshalJSON(raw []byte) error {
+func (i *nullableInt64) UnmarshalJSON(raw []byte) error {
 	if bytes.Equal(raw, []byte("null")) {
-		me.isNull = true
+		i.isNull = true
 		return nil
 	}
 	value, err := strconv.ParseInt(string(raw), 10, 64)
 	if err != nil {
-		me.isNull = true
+		i.isNull = true
 		return err
 	}
-	me.Value = value
+	i.Value = value
 	return nil
 }
 
-func (me *nullableInt64) MarshalJSON() ([]byte, error) {
-	if me.isNull {
+func (i *nullableInt64) MarshalJSON() ([]byte, error) {
+	if i.isNull {
 		return []byte("null"), nil
 	}
-	return []byte(strconv.FormatInt(me.Value, 10)), nil
+	return []byte(strconv.FormatInt(i.Value, 10)), nil
 }
 
-func (me *nullableInt64) String() string {
-	return strconv.FormatInt(me.Value, 10)
+func (i *nullableInt64) String() string {
+	return strconv.FormatInt(i.Value, 10)
 }
 
 type nullableBool struct {
@@ -400,29 +400,29 @@ type nullableBool struct {
 	isNull bool
 }
 
-func (me *nullableBool) UnmarshalJSON(raw []byte) error {
+func (b *nullableBool) UnmarshalJSON(raw []byte) error {
 	if bytes.Equal(raw, []byte("null")) {
-		me.isNull = true
+		b.isNull = true
 		return nil
 	}
 	value, err := strconv.ParseBool(string(raw))
 	if err != nil {
-		me.isNull = true
+		b.isNull = true
 		return err
 	}
-	me.Value = value
+	b.Value = value
 	return nil
 }
 
-func (me *nullableBool) MarshalJSON() ([]byte, error) {
-	if me.isNull {
+func (b *nullableBool) MarshalJSON() ([]byte, error) {
+	if b.isNull {
 		return []byte("null"), nil
 	}
-	return []byte(strconv.FormatBool(me.Value)), nil
+	return []byte(strconv.FormatBool(b.Value)), nil
 }
 
-func (me *nullableBool) String() string {
-	return strconv.FormatBool(me.Value)
+func (b *nullableBool) String() string {
+	return strconv.FormatBool(b.Value)
 }
 
 type wormFlagMap struct {
@@ -515,62 +515,62 @@ func newRogueCommitHandler(cfg *handlerConfig) *rogueCommitHandler {
 	return handler
 }
 
-func (me *rogueCommitHandler) HandleGithubPayload(payload *githubPayload) error {
-	if !me.isWatchedBranch(payload.Ref.String()) {
-		if me.debug {
+func (rch *rogueCommitHandler) HandleGithubPayload(payload *githubPayload) error {
+	if !rch.isWatchedBranch(payload.Ref.String()) {
+		if rch.debug {
 			log.Printf("%v is not a watched branch, yay!\n", payload.Ref.String())
 		}
 		return nil
 	}
 
-	if me.debug {
+	if rch.debug {
 		log.Printf("%v is a watched branch!\n", payload.Ref.String())
 	}
 
 	hcID := payload.HeadCommit.ID.String()
 
 	if payload.IsPullRequestMerge() {
-		if me.debug {
+		if rch.debug {
 			log.Printf("%v is a pull request merge, yay!\n", hcID)
 		}
 		return nil
 	}
 
-	if me.debug {
+	if rch.debug {
 		log.Printf("%v is not a pull request merge!\n", hcID)
 	}
 
-	if !me.hasWatchedPath(payload.Paths()) {
-		if me.debug {
+	if !rch.hasWatchedPath(payload.Paths()) {
+		if rch.debug {
 			log.Printf("%v does not contain watched paths, yay!\n", hcID)
 		}
 		return nil
 	}
 
-	if me.debug {
+	if rch.debug {
 		log.Printf("%v contains watched paths!\n", hcID)
 	}
 
-	if err := me.alert(payload); err != nil {
-		if me.debug {
+	if err := rch.alert(payload); err != nil {
+		if rch.debug {
 			log.Printf("ERROR sending alert: %+v\n", err)
 		}
 		return err
 	}
 
-	if me.debug {
-		log.Printf("Sent alert to %+v\n", me.recipients)
+	if rch.debug {
+		log.Printf("Sent alert to %+v\n", rch.recipients)
 	}
 	return nil
 }
 
-func (me *rogueCommitHandler) HandleTravisPayload(*travisPayload) error {
+func (rch *rogueCommitHandler) HandleTravisPayload(*travisPayload) error {
 	return nil
 }
 
-func (me *rogueCommitHandler) isWatchedBranch(ref string) bool {
+func (rch *rogueCommitHandler) isWatchedBranch(ref string) bool {
 	sansRefsHeads := strings.Replace(ref, "refs/heads/", "", 1)
-	for _, branchRe := range me.watchedBranches {
+	for _, branchRe := range rch.watchedBranches {
 		if branchRe.MatchString(sansRefsHeads) {
 			return true
 		}
@@ -578,8 +578,8 @@ func (me *rogueCommitHandler) isWatchedBranch(ref string) bool {
 	return false
 }
 
-func (me *rogueCommitHandler) hasWatchedPath(paths []string) bool {
-	for _, pathRe := range me.watchedPaths {
+func (rch *rogueCommitHandler) hasWatchedPath(paths []string) bool {
+	for _, pathRe := range rch.watchedPaths {
 		for _, path := range paths {
 			if pathRe.MatchString(path) {
 				return true
@@ -589,26 +589,26 @@ func (me *rogueCommitHandler) hasWatchedPath(paths []string) bool {
 	return false
 }
 
-func (me *rogueCommitHandler) alert(payload *githubPayload) error {
+func (rch *rogueCommitHandler) alert(payload *githubPayload) error {
 	log.Printf("WARNING rogue commit! %+v, head commit: %+v\n",
 		payload, payload.HeadCommit)
-	if len(me.recipients) == 0 {
+	if len(rch.recipients) == 0 {
 		log.Println("No email recipients specified, so no emailing!")
 		return nil
 	}
 
 	hc := payload.HeadCommit
 	ctx := &rogueCommitEmailContext{
-		From:       me.fromAddr,
-		Recipients: strings.Join(me.recipients, ", "),
+		From:       rch.fromAddr,
+		Recipients: strings.Join(rch.recipients, ", "),
 		Date:       time.Now().UTC().Format(rfc2822DateFmt),
 		MessageID:  fmt.Sprintf("%v", time.Now().UTC().UnixNano()),
 		Hostname:   hostname,
 		Repo: fmt.Sprintf("%s/%s", payload.Repository.Owner.Name.String(),
 			payload.Repository.Name.String()),
 		Ref:                   payload.Ref.String(),
-		WatchedBranches:       me.watchedBranchesStrings,
-		WatchedPaths:          me.watchedPathsStrings,
+		WatchedBranches:       rch.watchedBranchesStrings,
+		WatchedPaths:          rch.watchedPathsStrings,
 		RepoURL:               payload.Repository.URL.String(),
 		HeadCommitID:          hc.ID.String(),
 		HeadCommitURL:         hc.URL.String(),
@@ -625,10 +625,10 @@ func (me *rogueCommitHandler) alert(payload *githubPayload) error {
 		return err
 	}
 
-	if me.debug {
+	if rch.debug {
 		log.Printf("Email message:\n%v\n", string(emailBuf.Bytes()))
 	}
-	return me.emailer.Send(me.fromAddr, me.recipients, emailBuf.Bytes())
+	return rch.emailer.Send(rch.fromAddr, rch.recipients, emailBuf.Bytes())
 }
 
 type emailer struct {
@@ -654,8 +654,8 @@ func newEmailer(serverUri string) *emailer {
 	return &emailer{serverUri: parsedUri, auth: auth}
 }
 
-func (me *emailer) Send(from string, to []string, msg []byte) error {
-	return insecureSendMail(me.serverUri.Host, me.auth, from, to, msg)
+func (em *emailer) Send(from string, to []string, msg []byte) error {
+	return insecureSendMail(em.serverUri.Host, em.auth, from, to, msg)
 }
 
 func insecureSendMail(addr string, a smtp.Auth, from string, to []string, msg []byte) error {
@@ -705,7 +705,7 @@ func insecureSendMail(addr string, a smtp.Auth, from string, to []string, msg []
 func configPath() (string, error) {
 	workingDir := os.Getenv("HOOKWORM_WORKING_DIR")
 	if len(workingDir) < 1 {
-		return "", fmt.Errorf("Missing HOOKWORM_WORKING_DIR")
+		return "", fmt.Errorf("missing HOOKWORM_WORKING_DIR")
 	}
 
 	return path.Join(workingDir, "10-hookworm-rogue-commit-handler.go.cfg.json"), nil
@@ -779,7 +779,12 @@ func handleGithub() error {
 	if err != nil {
 		return err
 	}
+
 	if err := json.Unmarshal(rawPayload, payload); err != nil {
+		return err
+	}
+
+	if _, err := bytes.NewBuffer(rawPayload).WriteTo(os.Stdout); err != nil {
 		return err
 	}
 
@@ -799,7 +804,12 @@ func handleTravis() error {
 	if err != nil {
 		return err
 	}
+
 	if err := json.Unmarshal(rawPayload, payload); err != nil {
+		return err
+	}
+
+	if _, err := bytes.NewBuffer(rawPayload).WriteTo(os.Stdout); err != nil {
 		return err
 	}
 

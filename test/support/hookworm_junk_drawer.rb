@@ -5,7 +5,9 @@ require 'mail'
 
 require_relative 'servers'
 
-module Mtbb::NetThings
+module HookwormJunkDrawer
+  include Mtbb::NetThings
+
   def github_payload(name)
     "payload=#{URI.escape(github_payload_string(name))}"
   end
@@ -22,6 +24,34 @@ module Mtbb::NetThings
     File.expand_path("../../../sampledata/github-payloads/#{name.to_s}.json", __FILE__)
   end
 
+  def post_github_payload(port, payload_name)
+    pre_request_messages = current_mail_messages
+    response = post_request(port: port, body: github_payload(payload_name), path: '/github')
+    [response, current_mail_messages - pre_request_messages]
+  end
+
+  def travis_payload(name)
+    "payload=#{URI.escape(travis_payload_string(name))}"
+  end
+
+  def travis_payload_hash(name)
+    JSON.parse(travis_payload_string(name), symbolize_names: true)
+  end
+
+  def travis_payload_string(name)
+    File.read(travis_payload_file(name))
+  end
+
+  def travis_payload_file(name)
+    File.expand_path("../../../sampledata/travis-payloads/#{name.to_s}.json", __FILE__)
+  end
+
+  def post_travis_payload(port, payload_name)
+    pre_request_messages = current_mail_messages
+    response = post_request(port: port, body: travis_payload(payload_name), path: '/travis')
+    [response, current_mail_messages - pre_request_messages]
+  end
+
   def current_mail_messages
     JSON.parse(
       get_request(path: '/messages', port: Mtbb.server(:fakesmtpd).port + 1).body
@@ -29,13 +59,7 @@ module Mtbb::NetThings
   end
 
   def clear_mail_messages
-    #delete_request(path: '/messages', port: Mtbb.server(:fakesmtpd).port + 1)
-  end
-
-  def post_github_payload(port, payload_name)
-    pre_request_messages = current_mail_messages
-    response = post_request(port: port, body: github_payload(payload_name), path: '/github')
-    [response, current_mail_messages - pre_request_messages]
+    delete_request(path: '/messages', port: Mtbb.server(:fakesmtpd).port + 1)
   end
 
   def last_message

@@ -41,47 +41,48 @@ func newShellHandler(filePath string, cfg *HandlerConfig) (*shellHandler, error)
 	return handler, nil
 }
 
-func (me *shellHandler) configure() error {
-	configJSON, err := json.Marshal(me.cfg)
+func (sh *shellHandler) configure() error {
+	configJSON, err := json.Marshal(sh.cfg)
 	if err != nil {
 		log.Printf("Error JSON-marshalling config: %v", err)
 	}
 
-	return me.command.configure(string(configJSON))
+	_, err = sh.command.configure(string(configJSON))
+	return err
 }
 
-func (me *shellHandler) HandleGithubPayload(payload string) error {
-	if me.cfg.Debug {
-		log.Printf("Sending github payload to %+v\n", me)
+func (sh *shellHandler) HandleGithubPayload(payload string) (string, error) {
+	if sh.cfg.Debug {
+		log.Printf("Sending github payload to %+v\n", sh)
 	}
-	err := me.command.handleGithubPayload(payload)
+	out, err := sh.command.handleGithubPayload(payload)
 	if err != nil {
-		return err
+		return string(out), err
 	}
-	if me.next != nil {
-		return me.next.HandleGithubPayload(payload)
+	if sh.next != nil {
+		return sh.next.HandleGithubPayload(string(out))
 	}
-	return nil
+	return string(out), nil
 }
 
-func (me *shellHandler) HandleTravisPayload(payload string) error {
-	if me.cfg.Debug {
-		log.Printf("Sending travis payload to %+v\n", me)
+func (sh *shellHandler) HandleTravisPayload(payload string) (string, error) {
+	if sh.cfg.Debug {
+		log.Printf("Sending travis payload to %+v\n", sh)
 	}
-	err := me.command.handleTravisPayload(payload)
+	out, err := sh.command.handleTravisPayload(payload)
 	if err != nil {
-		return err
+		return string(out), err
 	}
-	if me.next != nil {
-		return me.next.HandleTravisPayload(payload)
+	if sh.next != nil {
+		return sh.next.HandleTravisPayload(string(out))
 	}
-	return nil
+	return string(out), nil
 }
 
-func (me *shellHandler) SetNextHandler(n Handler) {
-	me.next = n
+func (sh *shellHandler) SetNextHandler(n Handler) {
+	sh.next = n
 }
 
-func (me *shellHandler) NextHandler() Handler {
-	return me.next
+func (sh *shellHandler) NextHandler() Handler {
+	return sh.next
 }

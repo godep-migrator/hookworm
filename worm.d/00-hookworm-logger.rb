@@ -46,11 +46,13 @@ class HookwormLogger
       log.info "payload json=#{re_serialized_payload.inspect}"
     end
 
-    if cfg[:worm_flags][:syslog]
+    if (cfg[:worm_flags] || {})[:syslog]
       Syslog.open($0, Syslog::LOG_PID | Syslog::LOG_CONS) do |syslog|
         syslog.info(re_serialized_payload)
       end
     end
+
+    output_stream.puts(re_serialized_payload)
 
     return 0
   rescue => e
@@ -70,11 +72,13 @@ class HookwormLogger
       log.info "payload json=#{re_serialized_payload.inspect}"
     end
 
-    if cfg[:worm_flags][:syslog]
+    if (cfg[:worm_flags] || {})[:syslog]
       Syslog.open($0, Syslog::LOG_PID | Syslog::LOG_CONS) do |syslog|
         syslog.info(re_serialized_payload)
       end
     end
+
+    output_stream.puts(re_serialized_payload)
 
     return 0
   rescue => e
@@ -91,6 +95,10 @@ class HookwormLogger
 
   def input_stream
     $hookworm_stdin || $stdin
+  end
+
+  def output_stream
+    $hookworm_stdout || $stdout
   end
 
   def log_stream

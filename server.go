@@ -181,7 +181,7 @@ func NewServer(cfg *HandlerConfig) (*Server, error) {
 	return server, nil
 }
 
-func (me *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (srv *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	status := http.StatusBadRequest
 	body := ""
 	contentType := "application/json; charset=utf-8"
@@ -196,21 +196,21 @@ func (me *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}()
 
 	switch r.URL.Path {
-	case me.githubPath:
+	case srv.githubPath:
 		log.Printf("Handling github request at %s", r.URL.Path)
 		if r.Method != "POST" {
 			status = http.StatusMethodNotAllowed
 			return
 		}
-		status, body = me.handleGithubPayload(w, r)
+		status, body = srv.handleGithubPayload(w, r)
 		return
-	case me.travisPath:
+	case srv.travisPath:
 		log.Printf("Handling travis request at %s", r.URL.Path)
 		if r.Method != "POST" {
 			status = http.StatusMethodNotAllowed
 			return
 		}
-		status, body = me.handleTravisPayload(w, r)
+		status, body = srv.handleTravisPayload(w, r)
 		return
 	case "/blank":
 		log.Printf("Handling blank request at %s", r.URL.Path)
@@ -231,8 +231,8 @@ func (me *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (me *Server) handleGithubPayload(w http.ResponseWriter, r *http.Request) (int, string) {
-	payload, err := me.extractPayload(r)
+func (srv *Server) handleGithubPayload(w http.ResponseWriter, r *http.Request) (int, string) {
+	payload, err := srv.extractPayload(r)
 	if err != nil {
 		log.Printf("Error extracting payload: %v\n", err)
 		errJSON, err := json.Marshal(err)
@@ -242,18 +242,18 @@ func (me *Server) handleGithubPayload(w http.ResponseWriter, r *http.Request) (i
 		return http.StatusBadRequest, boomExplosionsJSON
 	}
 
-	if me.pipeline == nil {
-		if me.debug {
+	if srv.pipeline == nil {
+		if srv.debug {
 			log.Println("No pipeline present, so doing nothing.")
 		}
 		return http.StatusNoContent, ""
 	}
 
-	if me.debug {
+	if srv.debug {
 		log.Printf("Sending payload down pipeline: %+v", payload)
 	}
 
-	err = me.pipeline.HandleGithubPayload(payload)
+	_, err = srv.pipeline.HandleGithubPayload(payload)
 	if err != nil {
 		errJSON, err := json.Marshal(err)
 		if err != nil {
@@ -265,8 +265,8 @@ func (me *Server) handleGithubPayload(w http.ResponseWriter, r *http.Request) (i
 	return http.StatusNoContent, ""
 }
 
-func (me *Server) handleTravisPayload(w http.ResponseWriter, r *http.Request) (int, string) {
-	payload, err := me.extractPayload(r)
+func (srv *Server) handleTravisPayload(w http.ResponseWriter, r *http.Request) (int, string) {
+	payload, err := srv.extractPayload(r)
 	if err != nil {
 		log.Printf("Error extracting payload: %v\n", err)
 
@@ -277,18 +277,18 @@ func (me *Server) handleTravisPayload(w http.ResponseWriter, r *http.Request) (i
 		return http.StatusInternalServerError, boomExplosionsJSON
 	}
 
-	if me.pipeline == nil {
-		if me.debug {
+	if srv.pipeline == nil {
+		if srv.debug {
 			log.Println("No pipeline present, so doing nothing.")
 		}
 		return http.StatusNoContent, ""
 	}
 
-	if me.debug {
+	if srv.debug {
 		log.Printf("Sending payload down pipeline: %+v", payload)
 	}
 
-	err = me.pipeline.HandleTravisPayload(payload)
+	_, err = srv.pipeline.HandleTravisPayload(payload)
 	if err != nil {
 		errJSON, err := json.Marshal(err)
 		if err != nil {
@@ -300,14 +300,14 @@ func (me *Server) handleTravisPayload(w http.ResponseWriter, r *http.Request) (i
 	return http.StatusNoContent, ""
 }
 
-func (me *Server) extractPayload(r *http.Request) (string, error) {
+func (srv *Server) extractPayload(r *http.Request) (string, error) {
 	rawPayload := r.FormValue("payload")
 	if len(rawPayload) < 1 {
 		log.Println("Empty payload!")
-		return "", fmt.Errorf("Empty payload!")
+		return "", fmt.Errorf("empty payload")
 	}
 
-	if me.debug {
+	if srv.debug {
 		log.Println("Raw payload: ", rawPayload)
 	}
 	return rawPayload, nil
