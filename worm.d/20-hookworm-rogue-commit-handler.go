@@ -211,18 +211,19 @@ type travisRepository struct {
 }
 
 type githubPayload struct {
-	Ref        *nullableString `json:"ref"`
-	After      *nullableString `json:"after"`
-	Before     *nullableString `json:"before"`
-	Created    *nullableBool   `json:"created"`
-	Deleted    *nullableBool   `json:"deleted"`
-	Forced     *nullableBool   `json:"forced"`
-	Compare    *nullableString `json:"compare"`
-	Commits    []*commit       `json:"commits"`
-	HeadCommit *commit         `json:"head_commit"`
-	Repository *repository     `json:"repository"`
-	Pusher     *pusher         `json:"pusher"`
-	IsPrMerge  *nullableBool   `json:"is_pr_merge"`
+	Ref             *nullableString `json:"ref"`
+	After           *nullableString `json:"after"`
+	Before          *nullableString `json:"before"`
+	Created         *nullableBool   `json:"created"`
+	Deleted         *nullableBool   `json:"deleted"`
+	Forced          *nullableBool   `json:"forced"`
+	Compare         *nullableString `json:"compare"`
+	Commits         []*commit       `json:"commits"`
+	HeadCommit      *commit         `json:"head_commit"`
+	Repository      *repository     `json:"repository"`
+	Pusher          *pusher         `json:"pusher"`
+	IsPrMerge       *nullableBool   `json:"is_pr_merge"`
+	IsWatchedBranch *nullableBool   `json:"is_watched_branch"`
 }
 
 func (ghp *githubPayload) Paths() []string {
@@ -463,7 +464,6 @@ type rogueCommitHandler struct {
 	emailer                *emailer
 	fromAddr               string
 	recipients             []string
-	watchedBranches        []*regexp.Regexp
 	watchedPaths           []*regexp.Regexp
 	watchedBranchesStrings []string
 	watchedPathsStrings    []string
@@ -491,17 +491,15 @@ type rogueCommitEmailContext struct {
 
 func newRogueCommitHandler(cfg *handlerConfig) *rogueCommitHandler {
 	handler := &rogueCommitHandler{
-		debug:           cfg.Debug,
-		emailer:         newEmailer(cfg.WormFlags.EmailUri),
-		fromAddr:        cfg.WormFlags.EmailFromAddr,
-		recipients:      commaSplit(cfg.WormFlags.EmailRcpts),
-		watchedBranches: strsToRegexes(commaSplit(cfg.WormFlags.WatchedBranches)),
-		watchedPaths:    strsToRegexes(commaSplit(cfg.WormFlags.WatchedPaths)),
+		debug:        cfg.Debug,
+		emailer:      newEmailer(cfg.WormFlags.EmailUri),
+		fromAddr:     cfg.WormFlags.EmailFromAddr,
+		recipients:   commaSplit(cfg.WormFlags.EmailRcpts),
+		watchedPaths: strsToRegexes(commaSplit(cfg.WormFlags.WatchedPaths)),
 	}
 
-	for _, re := range handler.watchedBranches {
-		handler.watchedBranchesStrings = append(handler.watchedBranchesStrings, re.String())
-	}
+	handler.watchedBranchesStrings = append(handler.watchedBranchesStrings,
+		commaSplit(cfg.WormFlags.WatchedBranches)...)
 
 	for _, re := range handler.watchedPaths {
 		handler.watchedPathsStrings = append(handler.watchedPathsStrings, re.String())
@@ -511,7 +509,7 @@ func newRogueCommitHandler(cfg *handlerConfig) *rogueCommitHandler {
 }
 
 func (rch *rogueCommitHandler) HandleGithubPayload(payload *githubPayload) error {
-	if !rch.isWatchedBranch(payload.Ref.String()) {
+	if !payload.IsWatchedBranch.Value {
 		if rch.debug {
 			log.Printf("%v is not a watched branch, yay!\n", payload.Ref.String())
 		}
@@ -561,16 +559,6 @@ func (rch *rogueCommitHandler) HandleGithubPayload(payload *githubPayload) error
 
 func (rch *rogueCommitHandler) HandleTravisPayload(*travisPayload) error {
 	return nil
-}
-
-func (rch *rogueCommitHandler) isWatchedBranch(ref string) bool {
-	sansRefsHeads := strings.Replace(ref, "refs/heads/", "", 1)
-	for _, branchRe := range rch.watchedBranches {
-		if branchRe.MatchString(sansRefsHeads) {
-			return true
-		}
-	}
-	return false
 }
 
 func (rch *rogueCommitHandler) hasWatchedPath(paths []string) bool {
