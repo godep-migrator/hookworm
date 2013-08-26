@@ -12,8 +12,6 @@ import (
 	"net/url"
 	"os"
 	"path"
-	"regexp"
-	"sort"
 	"strconv"
 	"strings"
 	"text/template"
@@ -224,29 +222,7 @@ type githubPayload struct {
 	Pusher          *pusher         `json:"pusher"`
 	IsPrMerge       *nullableBool   `json:"is_pr_merge"`
 	IsWatchedBranch *nullableBool   `json:"is_watched_branch"`
-}
-
-func (ghp *githubPayload) Paths() []string {
-	var (
-		paths   []string
-		commits []*commit
-	)
-
-	for _, commit := range ghp.Commits {
-		commits = append(commits, commit)
-	}
-
-	commits = append(commits, ghp.HeadCommit)
-
-	for i, commit := range commits {
-		if ghp.IsPrMerge.Value && i == 0 {
-			continue
-		}
-		for _, path := range commit.Paths() {
-			paths = append(paths, path)
-		}
-	}
-	return paths
+	HasWatchedPath  *nullableBool   `json:"has_watched_path"`
 }
 
 func (ghp *githubPayload) IsValid() bool {
@@ -268,24 +244,6 @@ type commit struct {
 	Added     []*nullableString `json:"added"`
 	Removed   []*nullableString `json:"removed"`
 	Modified  []*nullableString `json:"modified"`
-}
-
-func (c *commit) Paths() []string {
-	var paths []string
-	pathSet := make(map[string]bool)
-
-	for _, pathList := range [][]*nullableString{c.Added, c.Removed, c.Modified} {
-		for _, path := range pathList {
-			pathSet[path.String()] = true
-		}
-	}
-
-	for path := range pathSet {
-		paths = append(paths, path)
-	}
-
-	sort.Strings(paths)
-	return paths
 }
 
 type repository struct {
@@ -449,24 +407,13 @@ func commaSplit(str string) []string {
 	return ret
 }
 
-func strsToRegexes(strs []string) []*regexp.Regexp {
-	var regexps []*regexp.Regexp
-
-	for _, str := range strs {
-		regexps = append(regexps, regexp.MustCompile(str))
-	}
-
-	return regexps
-}
-
 type rogueCommitHandler struct {
-	debug                  bool
-	emailer                *emailer
-	fromAddr               string
-	recipients             []string
-	watchedPaths           []*regexp.Regexp
-	watchedBranchesStrings []string
-	watchedPathsStrings    []string
+	debug           bool
+	emailer         *emailer
+	fromAddr        string
+	recipients      []string
+	watchedBranches []string
+	watchedPaths    []string
 }
 
 type rogueCommitEmailContext struct {
@@ -491,19 +438,17 @@ type rogueCommitEmailContext struct {
 
 func newRogueCommitHandler(cfg *handlerConfig) *rogueCommitHandler {
 	handler := &rogueCommitHandler{
-		debug:        cfg.Debug,
-		emailer:      newEmailer(cfg.WormFlags.EmailUri),
-		fromAddr:     cfg.WormFlags.EmailFromAddr,
-		recipients:   commaSplit(cfg.WormFlags.EmailRcpts),
-		watchedPaths: strsToRegexes(commaSplit(cfg.WormFlags.WatchedPaths)),
+		debug:      cfg.Debug,
+		emailer:    newEmailer(cfg.WormFlags.EmailUri),
+		fromAddr:   cfg.WormFlags.EmailFromAddr,
+		recipients: commaSplit(cfg.WormFlags.EmailRcpts),
 	}
 
-	handler.watchedBranchesStrings = append(handler.watchedBranchesStrings,
+	handler.watchedBranches = append(handler.watchedBranches,
 		commaSplit(cfg.WormFlags.WatchedBranches)...)
 
-	for _, re := range handler.watchedPaths {
-		handler.watchedPathsStrings = append(handler.watchedPathsStrings, re.String())
-	}
+	handler.watchedPaths = append(handler.watchedPaths,
+		commaSplit(cfg.WormFlags.WatchedPaths)...)
 
 	return handler
 }
@@ -533,7 +478,7 @@ func (rch *rogueCommitHandler) HandleGithubPayload(payload *githubPayload) error
 		log.Printf("%v is not a pull request merge!\n", hcID)
 	}
 
-	if !rch.hasWatchedPath(payload.Paths()) {
+	if !payload.HasWatchedPath.Value {
 		if rch.debug {
 			log.Printf("%v does not contain watched paths, yay!\n", hcID)
 		}
@@ -561,17 +506,6 @@ func (rch *rogueCommitHandler) HandleTravisPayload(*travisPayload) error {
 	return nil
 }
 
-func (rch *rogueCommitHandler) hasWatchedPath(paths []string) bool {
-	for _, pathRe := range rch.watchedPaths {
-		for _, path := range paths {
-			if pathRe.MatchString(path) {
-				return true
-			}
-		}
-	}
-	return false
-}
-
 func (rch *rogueCommitHandler) alert(payload *githubPayload) error {
 	log.Printf("WARNING rogue commit! %+v, head commit: %+v\n",
 		payload, payload.HeadCommit)
@@ -590,8 +524,8 @@ func (rch *rogueCommitHandler) alert(payload *githubPayload) error {
 		Repo: fmt.Sprintf("%s/%s", payload.Repository.Owner.Name.String(),
 			payload.Repository.Name.String()),
 		Ref:                   payload.Ref.String(),
-		WatchedBranches:       rch.watchedBranchesStrings,
-		WatchedPaths:          rch.watchedPathsStrings,
+		WatchedBranches:       rch.watchedBranches,
+		WatchedPaths:          rch.watchedPaths,
 		RepoURL:               payload.Repository.URL.String(),
 		HeadCommitID:          hc.ID.String(),
 		HeadCommitURL:         hc.URL.String(),

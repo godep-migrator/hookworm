@@ -35,6 +35,7 @@ class HookwormGithubPayloadAnnotator
   def annotate(payload)
     payload[:is_pr_merge] = pr_merge?(payload)
     payload[:is_watched_branch] = watched_branch?(payload[:ref])
+    payload[:has_watched_path] = watched_path?(payload)
     payload
   end
 
@@ -61,6 +62,53 @@ class HookwormGithubPayloadAnnotator
 
   def watched_branch_strings
     ((cfg[:worm_flags] || {})[:watched_branches] || '').split(',')
+  end
+
+  def watched_path?(payload)
+    watched_paths.each do |wp|
+      payload_paths(payload).each do |path|
+        if path =~ wp
+          return true
+        end
+      end
+    end
+    false
+  end
+
+  def watched_paths
+    @watched_paths ||= watched_path_strings.map { |wp| %r{#{wp}} }
+  end
+
+  def watched_path_strings
+    ((cfg[:worm_flags] || {})[:watched_paths] || '').split(',')
+  end
+
+  def payload_paths(payload)
+    paths = []
+    commits = payload[:commits] || []
+    commits << payload[:head_commit]
+
+    commits.each_with_index do |commit, i|
+      if payload[:is_pr_merge] && i == 0
+        next
+      end
+
+      paths += commit_paths(commit)
+    end
+
+    paths
+  end
+
+  def commit_paths(commit)
+    path_set = {}
+
+    [commit[:added], commit[:removed], commit[:modified]].each do |path_list|
+      path_list.each do |path|
+        path_set[path] = true
+      end
+    end
+
+    path_set.keys.sort
   end
 end
 
