@@ -44,10 +44,15 @@ describe 'hookworm annotator' do
       handle(JSON.dump(@handler_config), %w(configure))
     end
 
-	it 'annotates is_pr_merge' do
-	  out = handle(JSON.dump(@github_payload), %w(handle github))[1]
-	  JSON.parse(out, symbolize_names: true)[:is_pr_merge].must_equal true
-	end
+    it 'annotates is_pr_merge' do
+      out = handle(JSON.dump(@github_payload), %w(handle github))[1]
+      JSON.parse(out, symbolize_names: true)[:is_pr_merge].must_equal true
+    end
+
+    it 'annotates is_watched_branch' do
+      out = handle(JSON.dump(@github_payload), %w(handle github))[1]
+      JSON.parse(out, symbolize_names: true)[:is_watched_branch].must_equal false
+    end
   end
 
   describe 'when handling travis payloads' do
