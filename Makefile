@@ -14,7 +14,7 @@ ADDR := :9988
 
 all: clean test golden README.md
 
-test: build
+test: build fmtpolice
 	go test $(GOBUILD_LDFLAGS) $(GO_TAG_ARGS) -x -v $(TARGETS)
 
 build: deps
@@ -36,7 +36,10 @@ clean:
 golden:
 	./mtbb -v 2>&1 | tee tests.log
 
-README.md: README.in.md $(wildcard *.go)
+fmtpolice:
+	set -e; for f in $(shell git ls-files '*.go'); do gofmt $$f | diff -u $$f - ; done
+
+README.md: README.in.md $(shell git ls-files '*.go')
 	ruby -e "exe = \"#{ENV['GOPATH'].split(':').first}/bin/hookworm-server\" ; \
 	  puts \$$<.read.sub(/___USAGE___/, \`#{exe} -h 2>&1\`.chomp)" < $< > $@
 
@@ -54,4 +57,4 @@ serve:
 todo:
 	@grep -n -R TODO . | grep -v -E '^(./Makefile|./.git)'
 
-.PHONY: all build clean deps serve test todo golden
+.PHONY: all build clean deps serve test fmtpolice todo golden

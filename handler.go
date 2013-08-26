@@ -20,15 +20,15 @@ func newWormFlagMap() *wormFlagMap {
 	}
 }
 
-func (me *wormFlagMap) String() string {
+func (wfm *wormFlagMap) String() string {
 	s := ""
-	for k, v := range me.values {
+	for k, v := range wfm.values {
 		s += fmt.Sprintf("%s=%v;", k, v)
 	}
 	return s
 }
 
-func (me *wormFlagMap) Set(value string) error {
+func (wfm *wormFlagMap) Set(value string) error {
 	pairs := strings.Split(value, ";")
 
 	for _, pair := range pairs {
@@ -38,26 +38,26 @@ func (me *wormFlagMap) Set(value string) error {
 			v := parts[1]
 			switch strings.ToLower(v) {
 			case "true", "yes", "on":
-				me.values[k] = true
+				wfm.values[k] = true
 			case "false", "no", "off":
-				me.values[k] = false
+				wfm.values[k] = false
 			default:
-				me.values[k] = v
+				wfm.values[k] = v
 			}
 		} else {
-			me.values[parts[0]] = true
+			wfm.values[parts[0]] = true
 		}
 	}
 
 	return nil
 }
 
-func (me *wormFlagMap) MarshalJSON() ([]byte, error) {
-	return json.Marshal(me.values)
+func (wfm *wormFlagMap) MarshalJSON() ([]byte, error) {
+	return json.Marshal(wfm.values)
 }
 
-func (me *wormFlagMap) UnmarshalJSON(raw []byte) error {
-	return json.Unmarshal(raw, &me.values)
+func (wfm *wormFlagMap) UnmarshalJSON(raw []byte) error {
+	return json.Unmarshal(raw, &wfm.values)
 }
 
 // HandlerConfig contains the bag of configuration poo used by all handlers
@@ -75,8 +75,8 @@ type HandlerConfig struct {
 
 // Handler is the interface each pipeline handler must fulfill
 type Handler interface {
-	HandleGithubPayload(string) error
-	HandleTravisPayload(string) error
+	HandleGithubPayload(string) (string, error)
+	HandleTravisPayload(string) (string, error)
 	SetNextHandler(Handler)
 	NextHandler() Handler
 }
@@ -124,11 +124,16 @@ func loadShellHandlersFromWormDir(pipeline Handler, cfg *HandlerConfig) error {
 	curHandler := pipeline
 
 	for _, name := range collection {
+		if strings.HasPrefix(name, ".") {
+			log.Printf("Ignoring hidden file %q\n", name)
+			continue
+		}
+
 		fullpath := path.Join(cfg.WormDir, name)
 		sh, err := newShellHandler(fullpath, cfg)
 
 		if err != nil {
-			log.Printf("Failed to build shell handler for %v, skipping.: %v",
+			log.Printf("Failed to build shell handler for %v, skipping.: %v\n",
 				fullpath, err)
 			continue
 		}

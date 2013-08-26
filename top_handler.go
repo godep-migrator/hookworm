@@ -12,28 +12,28 @@ func newTopHandler() *topHandler {
 	return &topHandler{}
 }
 
-func (me *topHandler) HandleGithubPayload(payload string) error {
-	if me.next != nil {
-		return me.next.HandleGithubPayload(payload)
+func (th *topHandler) HandleGithubPayload(payload string) (string, error) {
+	if th.next != nil {
+		return th.next.HandleGithubPayload(payload)
 	}
 
 	log.Println("WARNING: no next handler?")
-	return nil
+	return "", nil
 }
 
-func (me *topHandler) HandleTravisPayload(payload string) error {
-	if me.next != nil {
-		return me.next.HandleTravisPayload(payload)
+func (th *topHandler) HandleTravisPayload(payload string) (string, error) {
+	if th.next != nil {
+		return th.next.HandleTravisPayload(payload)
 	}
 
 	log.Println("WARNING: no next handler?")
-	return nil
+	return "", nil
 }
 
-func (me *topHandler) NextHandler() Handler {
-	return me.next
+func (th *topHandler) NextHandler() Handler {
+	return th.next
 }
 
-func (me *topHandler) SetNextHandler(nextHandler Handler) {
-	me.next = nextHandler
+func (th *topHandler) SetNextHandler(nextHandler Handler) {
+	th.next = nextHandler
 }

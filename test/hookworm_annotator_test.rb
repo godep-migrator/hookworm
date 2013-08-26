@@ -1,12 +1,12 @@
 require_relative 'test_helper'
 
-describe 'hookworm logger' do
+describe 'hookworm annotator' do
   include HookwormJunkDrawer
 
   def base_command
     [
       'ruby',
-      File.expand_path('../../worm.d/10-hookworm-logger.rb', __FILE__)
+      File.expand_path('../../worm.d/00-hookworm-annotator.rb', __FILE__)
     ]
   end
 
@@ -19,7 +19,7 @@ describe 'hookworm logger' do
 
   before do
     @fizz = rand(0..999)
-    @handler_config = handler_config(@fizz, @tempdir)
+    @handler_config = handler_config(@fizz, tempdir)
   end
 
   after { @tempdir = nil }
@@ -33,7 +33,7 @@ describe 'hookworm logger' do
   describe 'when configuring' do
     it 'writes JSON from stdin to a config file' do
       handle(JSON.dump(@handler_config), %w(configure))
-      File.exists?("#{@tempdir}/10-hookworm-logger.rb.cfg.json").must_equal true
+      File.exists?("#{@tempdir}/00-hookworm-annotator.rb.cfg.json").must_equal true
     end
   end
 
@@ -44,14 +44,14 @@ describe 'hookworm logger' do
       handle(JSON.dump(@handler_config), %w(configure))
     end
 
-    it 'logs if the payload is a pull request merge' do
-      err = handle(JSON.dump(@github_payload), %w(handle github)).last
-      err.must_match(/Pull request merge\? true/)
+    it 'annotates is_pr_merge' do
+      out = handle(JSON.dump(@github_payload), %w(handle github))[1]
+      JSON.parse(out, symbolize_names: true)[:is_pr_merge].must_equal true
     end
 
-    it 'echoes the payload unaltered' do
+    it 'annotates is_watched_branch' do
       out = handle(JSON.dump(@github_payload), %w(handle github))[1]
-      JSON.parse(out, symbolize_names: true).must_equal @github_payload
+      JSON.parse(out, symbolize_names: true)[:is_watched_branch].must_equal false
     end
   end
 
@@ -59,11 +59,6 @@ describe 'hookworm logger' do
     before do
       @travis_payload = travis_payload_hash('success')
       handle(JSON.dump(@handler_config), %w(configure))
-    end
-
-    it 'echoes the payload unaltered' do
-      out = handle(JSON.dump(@travis_payload), %w(handle travis))[1]
-      JSON.parse(out, symbolize_names: true).must_equal @travis_payload
     end
   end
 end

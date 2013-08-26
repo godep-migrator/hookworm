@@ -4,37 +4,12 @@ require 'json'
 require 'logger'
 require 'syslog'
 
+require_relative '.hookworm_base'
+
 class HookwormLogger
-  def run!(argv)
-    action = argv.first
-    if %(configure handle).include?(action)
-      send(*argv)
-    else
-      abort("I don't know how to #{action.inspect}")
-    end
-  end
+  include HookwormBase
 
   private
-
-  def configure
-    @cfg = JSON.parse(input_stream.read, symbolize_names: true)
-    File.open(cfg_file, 'w') do |f|
-      f.puts JSON.pretty_generate(@cfg)
-    end
-    log.info "Configured!  Wrote config to #{cfg_file}"
-  end
-
-  def cfg
-    @cfg ||= JSON.parse(File.read(cfg_file), symbolize_names: true)
-  end
-
-  def cfg_file
-    File.join(Dir.pwd, "#{File.basename($0)}.cfg.json")
-  end
-
-  def handle(type)
-    send(:"handle_#{type}")
-  end
 
   def handle_github
     payload = JSON.parse(input_stream.read, symbolize_names: true)
@@ -46,11 +21,13 @@ class HookwormLogger
       log.info "payload json=#{re_serialized_payload.inspect}"
     end
 
-    if cfg[:worm_flags][:syslog]
+    if (cfg[:worm_flags] || {})[:syslog]
       Syslog.open($0, Syslog::LOG_PID | Syslog::LOG_CONS) do |syslog|
         syslog.info(re_serialized_payload)
       end
     end
+
+    output_stream.puts(re_serialized_payload)
 
     return 0
   rescue => e
@@ -70,11 +47,13 @@ class HookwormLogger
       log.info "payload json=#{re_serialized_payload.inspect}"
     end
 
-    if cfg[:worm_flags][:syslog]
+    if (cfg[:worm_flags] || {})[:syslog]
       Syslog.open($0, Syslog::LOG_PID | Syslog::LOG_CONS) do |syslog|
         syslog.info(re_serialized_payload)
       end
     end
+
+    output_stream.puts(re_serialized_payload)
 
     return 0
   rescue => e
@@ -83,18 +62,6 @@ class HookwormLogger
       log.error e.backtrace.join("\n")
     end
     return 1
-  end
-
-  def log
-    @log ||= Logger.new(log_stream)
-  end
-
-  def input_stream
-    $hookworm_stdin || $stdin
-  end
-
-  def log_stream
-    $hookworm_stderr || $stderr
   end
 end
 

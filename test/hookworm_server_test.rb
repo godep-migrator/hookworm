@@ -4,7 +4,7 @@ Mtbb::SERVERS.each do |name, server|
   next if name == :fakesmtpd
 
   describe "#{name} server receiving hook payloads" do
-    include Mtbb::NetThings
+    include HookwormJunkDrawer
 
     it 'accepts POSTs' do
       post_github_payload(server.port, :valid).first.code.must_equal '204'
@@ -13,7 +13,7 @@ Mtbb::SERVERS.each do |name, server|
 end
 
 describe 'when receiving a payload for a watched branch' do
-  include Mtbb::NetThings
+  include HookwormJunkDrawer
 
   before do
     @sent_messages = post_github_payload(Mtbb.server(:debug).port, :rogue).last
@@ -25,7 +25,7 @@ describe 'when receiving a payload for a watched branch' do
 end
 
 describe 'when receiving a payload for an unwatched branch' do
-  include Mtbb::NetThings
+  include HookwormJunkDrawer
 
   before do
     @sent_messages = post_github_payload(
@@ -39,7 +39,7 @@ describe 'when receiving a payload for an unwatched branch' do
 end
 
 describe 'when receiving a payload for an unwatched path' do
-  include Mtbb::NetThings
+  include HookwormJunkDrawer
 
   before do
     @sent_messages = post_github_payload(
@@ -53,7 +53,7 @@ describe 'when receiving a payload for an unwatched path' do
 end
 
 describe 'rogue commit emails' do
-  include Mtbb::NetThings
+  include HookwormJunkDrawer
 
   before do
     @rogue_response ||= post_github_payload(Mtbb.server(:debug).port, :rogue).first

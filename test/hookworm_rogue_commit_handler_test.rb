@@ -4,26 +4,26 @@ require 'tmpdir'
 require_relative 'test_helper'
 
 describe 'hookworm logger' do
-  include Mtbb::NetThings
-  include Open3
+  include HookwormJunkDrawer
 
   def handle(stdin_string, args)
     ENV['HOOKWORM_WORKING_DIR'] = @tempdir
     command = [
       'go', 'run',
-      File.expand_path('../../worm.d/10-hookworm-rogue-commit-handler.go', __FILE__)
+      File.expand_path('../../worm.d/20-hookworm-rogue-commit-handler.go', __FILE__)
     ] + args
-    out_err = ''
+    out, err = '', ''
     exit_status = 1
 
-    popen2e(*command) do |stdin, stdout_stderr, wait_thr|
+    Open3.popen3(*command) do |stdin, stdout, stderr, wait_thr|
       stdin.write stdin_string
       stdin.close
-      out_err << stdout_stderr.read
+      out << stdout.read
+      err << stderr.read
       exit_status = wait_thr.value
     end
 
-    [exit_status == 0, out_err]
+    [exit_status == 0, out, err]
   end
 
   def handler_config(fizz, working_dir)
@@ -55,11 +55,43 @@ describe 'hookworm logger' do
 
   describe 'when configuring' do
     it 'writes JSON from stdin to a config file' do
-      out_err = ''
       Dir.chdir(@tempdir) do
-        out_err = handle(JSON.dump(@handler_config), %w(configure)).last
+        handle(JSON.dump(@handler_config), %w(configure)).last
       end
-      File.exists?("#{@tempdir}/10-hookworm-rogue-commit-handler.go.cfg.json").must_equal true
+      File.exists?("#{@tempdir}/20-hookworm-rogue-commit-handler.go.cfg.json").must_equal true
+    end
+  end
+
+  describe 'when handling github payloads' do
+    before do
+      @github_payload = github_payload_hash('pull_request')
+      @github_payload[:repository].merge!({id: @fizz})
+      Dir.chdir(@tempdir) do
+        handle(JSON.dump(@handler_config), %w(configure))
+      end
+    end
+
+    it 'echoes the payload unaltered' do
+      Dir.chdir(@tempdir) do
+        out = handle(JSON.dump(@github_payload), %w(handle github))[1]
+        JSON.parse(out, symbolize_names: true).must_equal @github_payload
+      end
+    end
+  end
+
+  describe 'when handling travis payloads' do
+    before do
+      @travis_payload = travis_payload_hash('success')
+      Dir.chdir(@tempdir) do
+        handle(JSON.dump(@handler_config), %w(configure))
+      end
+    end
+
+    it 'echoes the payload unaltered' do
+      Dir.chdir(@tempdir) do
+        out = handle(JSON.dump(@travis_payload), %w(handle travis))[1]
+        JSON.parse(out, symbolize_names: true).must_equal @travis_payload
+      end
     end
   end
 end
