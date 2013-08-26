@@ -13,7 +13,11 @@ describe 'hookworm annotator' do
   def handler_config(fizz, working_dir)
     {
       'fizz' => fizz,
-      'working_dir' => working_dir
+      'working_dir' => working_dir,
+      'worm_flags' => {
+        'watched_branches' => '^master$',
+        'watched_paths' => '.*',
+      }
     }
   end
 
@@ -51,7 +55,12 @@ describe 'hookworm annotator' do
 
     it 'annotates is_watched_branch' do
       out = handle(JSON.dump(@github_payload), %w(handle github))[1]
-      JSON.parse(out, symbolize_names: true)[:is_watched_branch].must_equal false
+      JSON.parse(out, symbolize_names: true)[:is_watched_branch].must_equal true
+    end
+
+    it 'annotates has_watched_path' do
+      out = handle(JSON.dump(@github_payload), %w(handle github))[1]
+      JSON.parse(out, symbolize_names: true)[:has_watched_path].must_equal true
     end
   end
 
