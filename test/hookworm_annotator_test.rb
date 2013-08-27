@@ -30,7 +30,7 @@ describe 'hookworm annotator' do
 
   describe 'when given an invalid command' do
     it 'explodes' do
-      handle('', %w(fribble)).first.must_equal false
+      handle('', %w(fribble)).first.exitstatus.wont_equal 0
     end
   end
 

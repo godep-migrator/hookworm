@@ -220,6 +220,7 @@ Content-Transfer-Encoding: 7bit
 	hostname string
 
 	rfc2822DateFmt = "Mon, 02 Jan 2006 15:04:05 -0700"
+	exitStatusNoop = 78
 )
 
 func init() {
@@ -228,27 +229,6 @@ func init() {
 	if err != nil {
 		hostname = "somewhere.local"
 	}
-}
-
-type travisPayload struct {
-	ID            int               `json:"id"`
-	Repository    *travisRepository `json:"repository"`
-	Number        string            `json:"number"`
-	Config        interface{}       `json:"config"`
-	Status        int               `json:"status"`
-	Result        int               `json:"result"`
-	StatusMessage string            `json:"status_message"`
-	ResultMessage string            `json:"result_message"`
-	StartedAt     *time.Time        `json:"started_at"`
-	FinishedAt    *time.Time        `json:"finished_at"`
-	Duration      int               `json:"duration"`
-}
-
-type travisRepository struct {
-	ID        int    `json:"id"`
-	Name      string `json:"name"`
-	OwnerName string `json:"owner_name"`
-	URL       string `json:"url"`
 }
 
 type githubPayload struct {
@@ -545,10 +525,6 @@ func (rch *rogueCommitHandler) HandleGithubPayload(payload *githubPayload) error
 	return nil
 }
 
-func (rch *rogueCommitHandler) HandleTravisPayload(*travisPayload) error {
-	return nil
-}
-
 func (rch *rogueCommitHandler) alert(payload *githubPayload) error {
 	log.Printf("WARNING rogue commit! %+v, head commit: %+v\n",
 		payload, payload.HeadCommit)
@@ -757,31 +733,6 @@ func handleGithub() error {
 	return handler.HandleGithubPayload(payload)
 }
 
-func handleTravis() error {
-	log.Printf("%s: handle travis!", path.Base(os.Args[0]))
-	payload := &travisPayload{}
-	rawPayload, err := ioutil.ReadAll(os.Stdin)
-	if err != nil {
-		return err
-	}
-
-	if err := json.Unmarshal(rawPayload, payload); err != nil {
-		return err
-	}
-
-	if _, err := bytes.NewBuffer(rawPayload).WriteTo(os.Stdout); err != nil {
-		return err
-	}
-
-	cfg, err := config()
-	if err != nil {
-		return err
-	}
-
-	handler := newRogueCommitHandler(cfg)
-	return handler.HandleTravisPayload(payload)
-}
-
 func main() {
 	if len(os.Args) < 2 {
 		fmt.Fprintln(os.Stderr, "ERROR: No command given")
@@ -807,11 +758,7 @@ func main() {
 			}
 			os.Exit(0)
 		case "travis":
-			if err := handleTravis(); err != nil {
-				fmt.Fprintf(os.Stderr, "ERROR: %v\n", err)
-				os.Exit(86)
-			}
-			os.Exit(0)
+			os.Exit(exitStatusNoop)
 		default:
 			fmt.Fprintf(os.Stderr, "ERROR: I don't know how to handle %q\n", os.Args[2])
 			os.Exit(1)

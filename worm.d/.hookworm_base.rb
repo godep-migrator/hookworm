@@ -5,7 +5,7 @@ module HookwormBase
   def run!(argv)
     action = argv.first
     if %(configure handle).include?(action)
-      send(*argv)
+      return send(*argv)
     else
       abort("I don't know how to #{action.inspect}")
     end

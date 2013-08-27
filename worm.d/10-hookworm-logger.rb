@@ -71,5 +71,5 @@ class HookwormLogger
 end
 
 if $0 == __FILE__
-  HookwormLogger.new.run!(ARGV)
+  exit HookwormLogger.new.run!(ARGV)
 end

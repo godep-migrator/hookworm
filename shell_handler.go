@@ -55,28 +55,47 @@ func (sh *shellHandler) HandleGithubPayload(payload string) (string, error) {
 	if sh.cfg.Debug {
 		log.Printf("Sending github payload to %+v\n", sh)
 	}
-	out, err := sh.command.handleGithubPayload(payload)
-	if err != nil {
-		return string(out), err
+
+	noop := false
+	outBytes, err := sh.command.handleGithubPayload(payload)
+	out := string(outBytes)
+
+	if _, noop = err.(*exitNoop); noop {
+		out = payload
 	}
+
+	if err != nil && !noop {
+		return out, err
+	}
+
 	if sh.next != nil {
-		return sh.next.HandleGithubPayload(string(out))
+		return sh.next.HandleGithubPayload(out)
 	}
-	return string(out), nil
+
+	return out, nil
 }
 
 func (sh *shellHandler) HandleTravisPayload(payload string) (string, error) {
 	if sh.cfg.Debug {
 		log.Printf("Sending travis payload to %+v\n", sh)
 	}
-	out, err := sh.command.handleTravisPayload(payload)
-	if err != nil {
-		return string(out), err
+	noop := false
+	outBytes, err := sh.command.handleTravisPayload(payload)
+	out := string(outBytes)
+
+	if _, noop = err.(*exitNoop); noop {
+		out = payload
 	}
+
+	if err != nil && !noop {
+		return out, err
+	}
+
 	if sh.next != nil {
-		return sh.next.HandleTravisPayload(string(out))
+		return sh.next.HandleTravisPayload(out)
 	}
-	return string(out), nil
+
+	return out, nil
 }
 
 func (sh *shellHandler) SetNextHandler(n Handler) {

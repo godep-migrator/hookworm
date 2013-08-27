@@ -27,15 +27,15 @@ class HookwormAnnotator
 
   private
 
-
   def handle_github
     payload = JSON.parse(input_stream.read, symbolize_names: true)
     annotate_github_payload!(payload)
     output_stream.puts JSON.pretty_generate(payload)
+    return 0
   end
 
   def handle_travis
-    output_stream.puts input_stream.read
+    return 78
   end
 
   def annotate_github_payload!(github_payload)
@@ -133,5 +133,5 @@ class HookwormGithubPayloadAnnotator
 end
 
 if $0 == __FILE__
-  HookwormAnnotator.new.run!(ARGV)
+  exit HookwormAnnotator.new.run!(ARGV)
 end

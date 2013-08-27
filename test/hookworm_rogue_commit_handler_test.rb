@@ -6,24 +6,8 @@ require_relative 'test_helper'
 describe 'hookworm logger' do
   include HookwormJunkDrawer
 
-  def handle(stdin_string, args)
-    ENV['HOOKWORM_WORKING_DIR'] = @tempdir
-    command = [
-      'go', 'run',
-      File.expand_path('../../worm.d/20-hookworm-rogue-commit-handler.go', __FILE__)
-    ] + args
-    out, err = '', ''
-    exit_status = 1
-
-    Open3.popen3(*command) do |stdin, stdout, stderr, wait_thr|
-      stdin.write stdin_string
-      stdin.close
-      out << stdout.read
-      err << stderr.read
-      exit_status = wait_thr.value
-    end
-
-    [exit_status == 0, out, err]
+  def base_command
+    ["#{@tempdir}/20-hookworm-rogue-commit-handler"]
   end
 
   def handler_config(fizz, working_dir)
@@ -36,6 +20,8 @@ describe 'hookworm logger' do
   before do
     @fizz = rand(0..999)
     @tempdir = Dir.mktmpdir
+    system "go build -o #{@tempdir}/20-hookworm-rogue-commit-handler " <<
+           "#{File.expand_path('../../worm.d/20-hookworm-rogue-commit-handler.go', __FILE__)}"
     @handler_config = handler_config(@fizz, @tempdir)
   end
 
@@ -48,7 +34,7 @@ describe 'hookworm logger' do
   describe 'when given an invalid command' do
     it 'explodes' do
       Dir.chdir(@tempdir) do
-        handle('', %w(fribble)).first.must_equal false
+        handle('', %w(fribble)).first.exitstatus.wont_equal 0
       end
     end
   end
@@ -87,10 +73,10 @@ describe 'hookworm logger' do
       end
     end
 
-    it 'echoes the payload unaltered' do
+    it 'exits 78' do
       Dir.chdir(@tempdir) do
-        out = handle(JSON.dump(@travis_payload), %w(handle travis))[1]
-        JSON.parse(out, symbolize_names: true).must_equal @travis_payload
+        ps = handle(JSON.dump(@travis_payload), %w(handle travis)).first
+        ps.exitstatus.must_equal 78
       end
     end
   end
