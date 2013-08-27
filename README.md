@@ -99,12 +99,11 @@ Is the payload the result of a pull request merge?
 
 ###### `is_watched_branch`
 Is the payload for a branch that is "watched", depending on the presence of
-the `watched_branches` postfix keyword argument.
+the `watched_branches` postfix keyword argument?
 
 ###### `has_watched_path`
 Does the payload contain changes to a "watched" path, depending on the
-presence of the `watched_paths` postfix keyword argument.
-
+presence of the `watched_paths` postfix keyword argument?
 
 #### Hookworm Logger
 
@@ -112,14 +111,13 @@ The logger is responsible for logging valid incoming requests, optionally
 logging to syslog if the `syslog=true` postfix option is provided.  Log
 verbosity is higher if the `-d` debug flag is passed.
 
-
 #### Hookworm Rogue Commit Handler
 
 The rogue commit handler is specific to GitHub payloads.  It will inspect
-a given payload in the context of the given `watched_branches` and
-`watched_paths` and send a "rogue commit email" to the email recipients
-given in `email_recipients` to provide equal visibility with those commits
-that result from pull requests.
+a payload in the context of the given `watched_branches` and `watched_paths`
+and send a "rogue commit email" to the email recipients given in
+`email_recipients` to provide visibility roughly equivalent to those commits
+that result from pull request merges.
 
 Because the rogue commit handler is affected by so many arguments, here they
 are again with more details about their associated behavior:
@@ -148,13 +146,12 @@ SMTP MAIL address when sending rogue commit emails, e.g.:
 The `email_recipients` argument should be a comma-delimited list of email
 addresses (without display name) used in the `To` header and SMTP RCPT
 addresses when sending rogue commit emails, e.g.:
-`email_recipients='developers+hookworm@company.example.com,project-distro+hookworm@partner-company.example.net'`
+`email_recipients='devs@company.example.com,project-distro+hookworm@partner.example.net'`
 
 ##### `email_uri`
 The `email_uri` argument should be a well-formed URI containing the SMTP
 hostname and port and potentially the username and password used for plain
 SMTP auth, e.g.:
 `email_uri='smtp://hookworm:secret@mailhost.example.com:2025'`
-
 
 

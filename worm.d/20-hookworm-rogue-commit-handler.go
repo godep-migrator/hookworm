@@ -3,10 +3,10 @@ package main
 //+ #### Hookworm Rogue Commit Handler
 //+
 //+ The rogue commit handler is specific to GitHub payloads.  It will inspect
-//+ a given payload in the context of the given `watched_branches` and
-//+ `watched_paths` and send a "rogue commit email" to the email recipients
-//+ given in `email_recipients` to provide equal visibility with those commits
-//+ that result from pull requests.
+//+ a payload in the context of the given `watched_branches` and `watched_paths`
+//+ and send a "rogue commit email" to the email recipients given in
+//+ `email_recipients` to provide visibility roughly equivalent to those commits
+//+ that result from pull request merges.
 //+
 //+ Because the rogue commit handler is affected by so many arguments, here they
 //+ are again with more details about their associated behavior:
@@ -35,14 +35,13 @@ package main
 //+ The `email_recipients` argument should be a comma-delimited list of email
 //+ addresses (without display name) used in the `To` header and SMTP RCPT
 //+ addresses when sending rogue commit emails, e.g.:
-//+ `email_recipients='developers+hookworm@company.example.com,project-distro+hookworm@partner-company.example.net'`
+//+ `email_recipients='devs@company.example.com,project-distro+hookworm@partner.example.net'`
 //+
 //+ ##### `email_uri`
 //+ The `email_uri` argument should be a well-formed URI containing the SMTP
 //+ hostname and port and potentially the username and password used for plain
 //+ SMTP auth, e.g.:
 //+ `email_uri='smtp://hookworm:secret@mailhost.example.com:2025'`
-//+
 
 import (
 	"bytes"

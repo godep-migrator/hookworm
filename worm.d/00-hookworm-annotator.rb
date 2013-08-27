@@ -13,12 +13,11 @@
 #+
 #+ ###### `is_watched_branch`
 #+ Is the payload for a branch that is "watched", depending on the presence of
-#+ the `watched_branches` postfix keyword argument.
+#+ the `watched_branches` postfix keyword argument?
 #+
 #+ ###### `has_watched_path`
 #+ Does the payload contain changes to a "watched" path, depending on the
-#+ presence of the `watched_paths` postfix keyword argument.
-#+
+#+ presence of the `watched_paths` postfix keyword argument?
 
 require 'json'
 require_relative '.hookworm_base'
