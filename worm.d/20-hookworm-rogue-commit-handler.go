@@ -1,5 +1,49 @@
 package main
 
+//+ #### Hookworm Rogue Commit Handler
+//+
+//+ The rogue commit handler is specific to GitHub payloads.  It will inspect
+//+ a given payload in the context of the given `watched_branches` and
+//+ `watched_paths` and send a "rogue commit email" to the email recipients
+//+ given in `email_recipients` to provide equal visibility with those commits
+//+ that result from pull requests.
+//+
+//+ Because the rogue commit handler is affected by so many arguments, here they
+//+ are again with more details about their associated behavior:
+//+
+//+ ##### `watched_branches`
+//+ The `watched_branches` argument should be a comma-delimited list of regular
+//+ expressions, e.g.: `watched_branches='^master$,^release_[0-9]'`.  If a commit
+//+ payload is received that was not the result of a pull request merge and the
+//+ Hookworm Annotator handler has determined that the branch name matches any
+//+ of the entries in `watched_branches`, then a rogue commit email will be sent.
+//+
+//+ ##### `watched_paths`
+//+ The `watched_paths` argument should be a comma-delimited list of regular
+//+ expressions, e.g.: `watched_paths='.*\.(go|rb|py)$,bin/.*'`.  If a commit
+//+ payload is received that was not the result of a pull request merge and the
+//+ Hookworm Annotator handler has determined that one of the commits in the
+//+ payload contains a path matching any of the entries in `watched_paths`, then
+//+ a rogue commit email will be sent.
+//+
+//+ ##### `email_from_addr`
+//+ The `email_from_addr` is the email address used as the `From` header and
+//+ SMTP MAIL address when sending rogue commit emails, e.g.:
+//+ `email_from_addr='hookworm-noreply@company.example.com'`.
+//+
+//+ ##### `email_recipients`
+//+ The `email_recipients` argument should be a comma-delimited list of email
+//+ addresses (without display name) used in the `To` header and SMTP RCPT
+//+ addresses when sending rogue commit emails, e.g.:
+//+ `email_recipients='developers+hookworm@company.example.com,project-distro+hookworm@partner-company.example.net'`
+//+
+//+ ##### `email_uri`
+//+ The `email_uri` argument should be a well-formed URI containing the SMTP
+//+ hostname and port and potentially the username and password used for plain
+//+ SMTP auth, e.g.:
+//+ `email_uri='smtp://hookworm:secret@mailhost.example.com:2025'`
+//+
+
 import (
 	"bytes"
 	"crypto/tls"

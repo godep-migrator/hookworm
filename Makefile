@@ -39,9 +39,8 @@ golden:
 fmtpolice:
 	set -e; for f in $(shell git ls-files '*.go'); do gofmt $$f | diff -u $$f - ; done
 
-README.md: README.in.md $(shell git ls-files '*.go')
-	ruby -e "exe = \"#{ENV['GOPATH'].split(':').first}/bin/hookworm-server\" ; \
-	  puts \$$<.read.sub(/___USAGE___/, \`#{exe} -h 2>&1\`.chomp)" < $< > $@
+README.md: README.in.md $(shell git ls-files '*.go') $(shell git ls-files 'worm.d/*.*')
+	./build-readme < $< > $@
 
 fakesmtpd:
 	curl -s -o $@ https://raw.github.com/modcloth-labs/fakesmtpd/v0.3.0/lib/fakesmtpd/server.rb
