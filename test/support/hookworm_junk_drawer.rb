@@ -31,7 +31,7 @@ module HookwormJunkDrawer
       end
     end
 
-    [exit_status == 0, out, err]
+    [exit_status, out, err]
   end
 
   def tempdir

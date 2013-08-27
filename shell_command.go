@@ -7,8 +7,15 @@ import (
 	"os/exec"
 	"path"
 	"strings"
+	"syscall"
 	"time"
 )
+
+type exitNoop struct{}
+
+func (e *exitNoop) Error() string {
+	return "exit noop 78"
+}
 
 type shellCommand struct {
 	interpreter string
@@ -103,10 +110,25 @@ func (sc *shellCommand) runCmd(stdin string, argv ...string) ([]byte, error) {
 	case <-time.After(time.Duration(sc.timeout) * time.Second):
 		err := cmd.Process.Kill()
 		<-done
-		return out.Bytes(), err
+		return out.Bytes(), sc.errWrap(err)
 	case err := <-done:
-		return out.Bytes(), err
+		return out.Bytes(), sc.errWrap(err)
 	}
 
 	panic("I should not be here")
+}
+
+func (sc *shellCommand) errWrap(err error) error {
+	if err == nil {
+		return nil
+	}
+
+	if msg, ok := err.(*exec.ExitError); ok {
+		status := msg.Sys().(syscall.WaitStatus).ExitStatus()
+		if status == 78 {
+			err = &exitNoop{}
+		}
+	}
+
+	return err
 }

@@ -37,7 +37,8 @@ Handler executables are expected to fulfill the following contract:
 - accepts positional arguments of `handle github`
 - accepts positional arguments of `handle travis`
 - writes only the (potentially modified) payload to standard output
-- exits `0` on success or no-op
+- exits `0` on success
+- exits `78` on no-op (roughly `ENOSYS`)
 
 It is up to the handler executable to decide what is done for each
 command invocation.  The execution environment includes the
