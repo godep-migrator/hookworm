@@ -79,9 +79,3 @@ describe 'rogue commit emails' do
     last_message_header('Subject').must_match(/Dan Buch/)
   end
 end
-
-describe 'when receiving a payload for a pull request merges' do
-  describe 'without signoff' do
-    it 'sends a rogue pull request email'
-  end
-end
