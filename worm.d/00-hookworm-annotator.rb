@@ -1,4 +1,24 @@
 #!/usr/bin/env ruby
+#+ #### Hookworm Annotator
+#+
+#+ The annotator is responsible for adding fields to the incoming payloads so
+#+ that subsequent handlers do not have to duplicate decision-making logic.
+#+
+#+ ##### GitHub payload annotation
+#+ GitHub payloads are given the following additional fields dependending on the
+#+ presence of certain options.
+#+
+#+ ###### `is_pr_merge`
+#+ Is the payload the result of a pull request merge?
+#+
+#+ ###### `is_watched_branch`
+#+ Is the payload for a branch that is "watched", depending on the presence of
+#+ the `watched_branches` postfix keyword argument.
+#+
+#+ ###### `has_watched_path`
+#+ Does the payload contain changes to a "watched" path, depending on the
+#+ presence of the `watched_paths` postfix keyword argument.
+#+
 
 require 'json'
 require_relative '.hookworm_base'
@@ -7,6 +27,7 @@ class HookwormAnnotator
   include HookwormBase
 
   private
+
 
   def handle_github
     payload = JSON.parse(input_stream.read, symbolize_names: true)

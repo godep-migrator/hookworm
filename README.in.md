@@ -32,9 +32,11 @@ hookworm-server -d \
 Handler executables are expected to fulfill the following contract:
 
 - has one of the following file extensions: `.go`, `.js`, `.pl`, `.py`, `.rb`, `.sh`
+- does not begin with `.` (hidden file)
 - accepts a positional argument of `configure`
 - accepts positional arguments of `handle github`
 - accepts positional arguments of `handle travis`
+- writes only the (potentially modified) payload to standard output
 - exits `0` on success or no-op
 
 It is up to the handler executable to decide what is done for each
@@ -67,3 +69,9 @@ to the handler executable as a JSON object on the standard input stream.
 The `handle travis` command is invoked whenever a payload is received at
 the Travis-handling path (`/travis` by default).  The payload is passed
 to the handler executable as a JSON object on the standard input stream.
+
+### Included handlers
+
+Hookworm ships with the following handlers:
+
+___HANDLER_USAGE___

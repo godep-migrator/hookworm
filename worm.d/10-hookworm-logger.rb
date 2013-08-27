@@ -1,4 +1,10 @@
 #!/usr/bin/env ruby
+#+ #### Hookworm Logger
+#+
+#+ The logger is responsible for logging valid incoming requests, optionally
+#+ logging to syslog if the `syslog=true` postfix option is provided.  Log
+#+ verbosity is higher if the `-d` debug flag is passed.
+#+
 
 require 'json'
 require 'logger'

@@ -43,9 +43,11 @@ hookworm-server -d \
 Handler executables are expected to fulfill the following contract:
 
 - has one of the following file extensions: `.go`, `.js`, `.pl`, `.py`, `.rb`, `.sh`
+- does not begin with `.` (hidden file)
 - accepts a positional argument of `configure`
 - accepts positional arguments of `handle github`
 - accepts positional arguments of `handle travis`
+- writes only the (potentially modified) payload to standard output
 - exits `0` on success or no-op
 
 It is up to the handler executable to decide what is done for each
@@ -78,3 +80,81 @@ to the handler executable as a JSON object on the standard input stream.
 The `handle travis` command is invoked whenever a payload is received at
 the Travis-handling path (`/travis` by default).  The payload is passed
 to the handler executable as a JSON object on the standard input stream.
+
+### Included handlers
+
+Hookworm ships with the following handlers:
+
+#### Hookworm Annotator
+
+The annotator is responsible for adding fields to the incoming payloads so
+that subsequent handlers do not have to duplicate decision-making logic.
+
+##### GitHub payload annotation
+GitHub payloads are given the following additional fields dependending on the
+presence of certain options.
+
+###### `is_pr_merge`
+Is the payload the result of a pull request merge?
+
+###### `is_watched_branch`
+Is the payload for a branch that is "watched", depending on the presence of
+the `watched_branches` postfix keyword argument.
+
+###### `has_watched_path`
+Does the payload contain changes to a "watched" path, depending on the
+presence of the `watched_paths` postfix keyword argument.
+
+
+#### Hookworm Logger
+
+The logger is responsible for logging valid incoming requests, optionally
+logging to syslog if the `syslog=true` postfix option is provided.  Log
+verbosity is higher if the `-d` debug flag is passed.
+
+
+#### Hookworm Rogue Commit Handler
+
+The rogue commit handler is specific to GitHub payloads.  It will inspect
+a given payload in the context of the given `watched_branches` and
+`watched_paths` and send a "rogue commit email" to the email recipients
+given in `email_recipients` to provide equal visibility with those commits
+that result from pull requests.
+
+Because the rogue commit handler is affected by so many arguments, here they
+are again with more details about their associated behavior:
+
+##### `watched_branches`
+The `watched_branches` argument should be a comma-delimited list of regular
+expressions, e.g.: `watched_branches='^master$,^release_[0-9]'`.  If a commit
+payload is received that was not the result of a pull request merge and the
+Hookworm Annotator handler has determined that the branch name matches any
+of the entries in `watched_branches`, then a rogue commit email will be sent.
+
+##### `watched_paths`
+The `watched_paths` argument should be a comma-delimited list of regular
+expressions, e.g.: `watched_paths='.*\.(go|rb|py)$,bin/.*'`.  If a commit
+payload is received that was not the result of a pull request merge and the
+Hookworm Annotator handler has determined that one of the commits in the
+payload contains a path matching any of the entries in `watched_paths`, then
+a rogue commit email will be sent.
+
+##### `email_from_addr`
+The `email_from_addr` is the email address used as the `From` header and
+SMTP MAIL address when sending rogue commit emails, e.g.:
+`email_from_addr='hookworm-noreply@company.example.com'`.
+
+##### `email_recipients`
+The `email_recipients` argument should be a comma-delimited list of email
+addresses (without display name) used in the `To` header and SMTP RCPT
+addresses when sending rogue commit emails, e.g.:
+`email_recipients='developers+hookworm@company.example.com,project-distro+hookworm@partner-company.example.net'`
+
+##### `email_uri`
+The `email_uri` argument should be a well-formed URI containing the SMTP
+hostname and port and potentially the username and password used for plain
+SMTP auth, e.g.:
+`email_uri='smtp://hookworm:secret@mailhost.example.com:2025'`
+
+
+
