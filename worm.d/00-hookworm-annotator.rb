@@ -1,4 +1,5 @@
 #!/usr/bin/env ruby
+# vim:fileencoding=utf-8
 #+ #### Hookworm Annotator
 #+
 #+ The annotator is responsible for adding fields to the incoming payloads so
