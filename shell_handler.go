@@ -14,7 +14,6 @@ type shellHandler struct {
 
 var (
 	interpreterMap = map[string]string{
-		".go": "go run",
 		".js": "node",
 		".py": "python",
 		".pl": "perl",

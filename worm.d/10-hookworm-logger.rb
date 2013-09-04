@@ -1,4 +1,5 @@
 #!/usr/bin/env ruby
+# vim:fileencoding=utf-8
 #+ #### Hookworm Logger
 #+
 #+ The logger is responsible for logging valid incoming requests, optionally
