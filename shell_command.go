@@ -2,10 +2,8 @@ package hookworm
 
 import (
 	"bytes"
-	"fmt"
 	"os"
 	"os/exec"
-	"path"
 	"strings"
 	"syscall"
 	"time"
@@ -32,10 +30,6 @@ func newShellCommand(interpreter, filePath string, timeout int) shellCommand {
 }
 
 func (sc *shellCommand) configure(config string) ([]byte, error) {
-	if err := sc.preBuild(); err != nil {
-		return []byte(""), err
-	}
-
 	return sc.runCmd(config, "configure")
 }
 
@@ -45,39 +39,6 @@ func (sc *shellCommand) handleGithubPayload(payload string) ([]byte, error) {
 
 func (sc *shellCommand) handleTravisPayload(payload string) ([]byte, error) {
 	return sc.runCmd(payload, "handle", "travis")
-}
-
-func (sc *shellCommand) preBuild() error {
-	if sc.interpreter != "go run" {
-		return nil
-	}
-
-	if err := sc.swapGoRunWithBinary(); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (sc *shellCommand) swapGoRunWithBinary() error {
-	workingDir := os.Getenv("HOOKWORM_WORKING_DIR")
-	if len(workingDir) < 1 {
-		return fmt.Errorf("missing HOOKWORM_WORKING_DIR")
-	}
-
-	filePath := sc.filePath
-	sc.filePath = ""
-	sc.interpreter = "go"
-
-	outfile := path.Join(workingDir, strings.Split(path.Base(filePath), ".")[0])
-	_, err := sc.runCmd("", "build", "-o", outfile, filePath)
-	if err != nil {
-		return err
-	}
-
-	sc.interpreter = outfile
-
-	return nil
 }
 
 func (sc *shellCommand) runCmd(stdin string, argv ...string) ([]byte, error) {
