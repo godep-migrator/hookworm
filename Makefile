@@ -43,7 +43,7 @@ README.md: README.in.md $(shell git ls-files '*.go') $(shell git ls-files 'worm.
 	./build-readme < $< > $@
 
 fakesmtpd:
-	curl -s -o $@ https://raw.github.com/modcloth-labs/fakesmtpd/v0.3.0/lib/fakesmtpd/server.rb
+	curl -s -o $@ https://raw.github.com/modcloth-labs/fakesmtpd/v0.3.1/lib/fakesmtpd/server.rb
 	chmod +x $@
 
 mtbb:
