@@ -10,7 +10,7 @@
     {
       "id": "7afdcae33a1903e52d0290e738b868d944ce3f60",
       "distinct": true,
-      "message": "Merge from modcloth-labs/payload-parsing-and-emailing\n\nPayload parsing and emailing",
+      "message": "Merge from modcloth-labs/payload-parsing-and-emailing\n\nPayload parsing and emœiling",
       "timestamp": "2013-06-01T19:28:39-07:00",
       "url": "https://github.com/modcloth-labs/hookworm/commit/7afdcae33a1903e52d0290e738b868d944ce3f60",
       "author": {
@@ -96,7 +96,7 @@
   "head_commit": {
     "id": "d0afb08e931361f179a7e0fd29daec7ca1663233",
     "distinct": true,
-    "message": "Merge from modcloth-labs/payload-parsing-and-emailing\n\nPayload parsing and emailing",
+    "message": "Merge from modcloth-labs/payload-parsing-and-emailing\n\nPayload parsing and emœiling",
     "timestamp": "2013-06-02T09:47:08-07:00",
     "url": "https://github.com/modcloth-labs/hookworm/commit/d0afb08e931361f179a7e0fd29daec7ca1663233",
     "author": {
