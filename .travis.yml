@@ -40,5 +40,3 @@ notifications:
   email:
     recipients:
     - github+hookworm@modcloth.com
-  webhooks:
-  - http://meatballhat.no-ip.biz:9988/travis
