@@ -36,10 +36,9 @@ var (
   <head>
     <meta charset="UTF-8">
     <title>Hookworm test page</title>
+    <link rel="shortcut icon" href="../favicon.ico">
     <style type="text/css">
-      body {
-        font-family: sans-serif;
-      }
+      body { font-family: sans-serif; }
     </style>
   </head>
   <body>
@@ -274,21 +273,7 @@ func (srv *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	case "/debug/test":
 		log.Printf("Handling test page request at %s", r.URL.Path)
-		status = http.StatusOK
-		var bodyBuf bytes.Buffer
-		err := testFormHTML.Execute(&bodyBuf, &testFormContext{
-			GithubPath:  strings.TrimLeft(srv.githubPath, "/"),
-			TravisPath:  strings.TrimLeft(srv.travisPath, "/"),
-			ProgVersion: progVersion(),
-		})
-		if err != nil {
-			status = http.StatusInternalServerError
-			body = fmt.Sprintf("%+v", err)
-			contentType = ctypeText
-		} else {
-			body = string(bodyBuf.Bytes())
-			contentType = ctypeHTML
-		}
+		status, body, contentType = srv.handleTestPage(w, r)
 		return
 	default:
 		log.Printf("Handling 404 at %s", r.URL.Path)
@@ -296,6 +281,30 @@ func (srv *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		contentType = ctypeText
 		body = "Nothing here.\n"
 	}
+}
+
+func (srv *Server) handleTestPage(w http.ResponseWriter, r *http.Request) (int, string, string) {
+	status := http.StatusOK
+	body := ""
+	contentType := ctypeText
+
+	var bodyBuf bytes.Buffer
+
+	err := testFormHTML.Execute(&bodyBuf, &testFormContext{
+		GithubPath:  strings.TrimLeft(srv.githubPath, "/"),
+		TravisPath:  strings.TrimLeft(srv.travisPath, "/"),
+		ProgVersion: progVersion(),
+	})
+	if err != nil {
+		status = http.StatusInternalServerError
+		body = fmt.Sprintf("%+v", err)
+		contentType = ctypeText
+	} else {
+		body = string(bodyBuf.Bytes())
+		contentType = ctypeHTML
+	}
+
+	return status, body, contentType
 }
 
 func (srv *Server) handleGithubPayload(w http.ResponseWriter, r *http.Request) (int, string) {
