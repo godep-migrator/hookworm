@@ -14,8 +14,14 @@ Mtbb::SERVERS.each do |name, server|
   describe "#{name} ancillary pages" do
     include HookwormJunkDrawer
 
-    it 'has a test page' do
-      get_request(port: server.port, path: '/debug/test').code.must_equal '200'
+    if name == :debug
+      it 'has a test page' do
+        get_request(port: server.port, path: '/debug/test').code.must_equal '200'
+      end
+    else
+      it 'does not have a test page' do
+        get_request(port: server.port, path: '/debug/test').code.must_equal '404'
+      end
     end
 
     it 'has a blank page' do

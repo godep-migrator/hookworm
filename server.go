@@ -46,6 +46,7 @@ var (
       <h1>Hookworm test page</h1>
       <pre>{{.ProgVersion}}</pre>
       <hr>
+      {{if .Debug}}
       <section id="debug_links">
         <h2>debugging </h2>
         <ul>
@@ -53,6 +54,7 @@ var (
           <li><a href="pprof">pprof</a></li>
         </ul>
       </section>
+      {{end}}
       <section id="github_test">
         <h2>github test</h2>
         <form name="github" action="{{.GithubPath}}" method="post">
@@ -103,6 +105,7 @@ type testFormContext struct {
 	GithubPath  string
 	TravisPath  string
 	ProgVersion string
+	Debug       bool
 }
 
 func init() {
@@ -272,8 +275,15 @@ func (srv *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		body = fmt.Sprintf("%s\n%s\n", hookwormIndex, progVersion())
 		return
 	case "/debug/test":
-		log.Printf("Handling test page request at %s", r.URL.Path)
-		status, body, contentType = srv.handleTestPage(w, r)
+		if srv.debug {
+			log.Printf("Handling test page request at %s", r.URL.Path)
+			status, body, contentType = srv.handleTestPage(w, r)
+		} else {
+			log.Printf("Debug not enabled, so returning 404 for %s", r.URL.Path)
+			status = http.StatusNotFound
+			contentType = ctypeText
+			body = "Nothing here.\n"
+		}
 		return
 	default:
 		log.Printf("Handling 404 at %s", r.URL.Path)
@@ -294,6 +304,7 @@ func (srv *Server) handleTestPage(w http.ResponseWriter, r *http.Request) (int, 
 		GithubPath:  strings.TrimLeft(srv.githubPath, "/"),
 		TravisPath:  strings.TrimLeft(srv.travisPath, "/"),
 		ProgVersion: progVersion(),
+		Debug:       srv.debug,
 	})
 	if err != nil {
 		status = http.StatusInternalServerError
