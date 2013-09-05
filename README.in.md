@@ -76,3 +76,11 @@ to the handler executable as a JSON object on the standard input stream.
 Hookworm ships with the following handlers:
 
 ___HANDLER_USAGE___
+
+----
+
+Generated for:
+
+```
+___VERSION___
+```

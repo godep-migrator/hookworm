@@ -10,6 +10,32 @@ Mtbb::SERVERS.each do |name, server|
       post_github_payload(server.port, :valid).first.code.must_equal '204'
     end
   end
+
+  describe "#{name} ancillary pages" do
+    include HookwormJunkDrawer
+
+    if name == :debug
+      it 'has a test page' do
+        get_request(port: server.port, path: '/debug/test').code.must_equal '200'
+      end
+    else
+      it 'does not have a test page' do
+        get_request(port: server.port, path: '/debug/test').code.must_equal '404'
+      end
+    end
+
+    it 'has a blank page' do
+      get_request(port: server.port, path: '/blank').code.must_equal '204'
+    end
+
+    it 'has an index page' do
+      get_request(port: server.port, path: '/').code.must_equal '200'
+    end
+
+    it 'has a favicon' do
+      get_request(port: server.port, path: '/favicon.ico').code.must_equal '200'
+    end
+  end
 end
 
 describe 'when receiving a payload for a watched branch' do

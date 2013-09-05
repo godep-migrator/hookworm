@@ -1,12 +1,16 @@
 package hookworm
 
 import (
+	"bytes"
+	"encoding/base64"
 	"encoding/json"
 	"flag"
 	"fmt"
 	"log"
 	"net/http"
 	"os"
+	"strings"
+	"text/template"
 	"time"
 )
 
@@ -25,47 +29,88 @@ var (
 	printVersionFlag        = flag.Bool("version", false, "Print version and exit")
 	printVersionRevTagsFlag = flag.Bool("version+", false, "Print version, revision, and build tags")
 
-	logTimeFmt = "2/Jan/2006:15:04:05 -0700" // "%d/%b/%Y:%H:%M:%S %z"
-)
-
-const (
-	boomExplosionsJSON = `{"error":"BOOM EXPLOSIENS"}`
-	testFormHTML       = `
+	logTimeFmt   = "2/Jan/2006:15:04:05 -0700" // "%d/%b/%Y:%H:%M:%S %z"
+	testFormHTML = template.Must(template.New("test_form").Parse(`
 <!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8">
     <title>Hookworm test page</title>
+    <link rel="shortcut icon" href="../favicon.ico">
     <style type="text/css">
-      body {
-        font-family: sans-serif;
-      }
+      body { font-family: sans-serif; }
     </style>
   </head>
   <body>
     <article>
       <h1>Hookworm test page</h1>
+      <pre>{{.ProgVersion}}</pre>
+      <hr>
+      {{if .Debug}}
+      <section id="debug_links">
+        <h2>debugging </h2>
+        <ul>
+          <li><a href="vars">vars</a></li>
+          <li><a href="pprof">pprof</a></li>
+        </ul>
+      </section>
+      {{end}}
       <section id="github_test">
         <h2>github test</h2>
-        <form name="github" action="/github" method="post">
+        <form name="github" action="{{.GithubPath}}" method="post">
           <textarea name="payload" cols="80" rows="20"
-		    placeholder="github payload JSON here"></textarea>
+                    placeholder="github payload JSON here"></textarea>
           <input type="submit" value="POST" />
         </form>
       </section>
       <section id="travis_test">
         <h2>travis test</h2>
-        <form name="travis" action="/travis" method="post">
+        <form name="travis" action="{{.TravisPath}}" method="post">
           <textarea name="payload" cols="80" rows="20"
-		    placeholder="travis payload JSON here"></textarea>
+                    placeholder="travis payload JSON here"></textarea>
           <input type="submit" value="POST" />
         </form>
       </section>
     </article>
   </body>
 </html>
+`))
+	hookwormIndex = `
+   oo           ___        ___       ___  __   ___
+   |"     |__| |__  \ /     |  |__| |__  |__) |__
+   |      |  | |___  |      |  |  | |___ |  \ |___
+ --'
+--------------------------------------------------
 `
+	hookwormFaviconBytes []byte
 )
+
+const (
+	boomExplosionsJSON = `{"error":"BOOM EXPLOSIONS"}`
+	ctypeText          = "text/plain; charset=utf-8"
+	ctypeJSON          = "application/json; charset=utf-8"
+	ctypeHTML          = "text/html; charset=utf-8"
+	ctypeIcon          = "image/vnd.microsoft.icon"
+
+	hookwormFaviconBase64 = `
+AAABAAEAEBAQAAAAAAAoAQAAFgAAACgAAAAQAAAAIAAAAAEABAAAAAAAgAAAAAAAAAAAAAAAEAAAAAAA
+AAB7/wAAgushAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAABAAABEREQAAEQABEREREAAREREREREQABERERAAERAAARERAAAR
+EAAAERAAABEQAAAAAAAAERAAAAAAAAAREAAAAAAAABERAAAAAAAAEREQAAAAAAARERAAAAAAAAERAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAA`
+)
+
+type testFormContext struct {
+	GithubPath  string
+	TravisPath  string
+	ProgVersion string
+	Debug       bool
+}
+
+func init() {
+	hookwormFaviconBytes, _ = base64.StdEncoding.DecodeString(hookwormFaviconBase64)
+}
 
 // Server implements ServeHTTP, parsing payloads and handing them off to the
 // handler pipeline
@@ -184,7 +229,7 @@ func NewServer(cfg *HandlerConfig) (*Server, error) {
 func (srv *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	status := http.StatusBadRequest
 	body := ""
-	contentType := "application/json; charset=utf-8"
+	contentType := ctypeJSON
 
 	defer func() {
 		w.Header().Set("Content-Type", contentType)
@@ -215,20 +260,62 @@ func (srv *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	case "/blank":
 		log.Printf("Handling blank request at %s", r.URL.Path)
 		status = http.StatusNoContent
-		contentType = "text/plain; charset=utf-8"
+		contentType = ctypeText
 		return
-	case "/":
-		log.Printf("Handling test page request at %s", r.URL.Path)
+	case "/favicon.ico":
+		log.Printf("Handling favicon request at %s", r.URL.Path)
 		status = http.StatusOK
-		body = testFormHTML
-		contentType = "text/html; charset=utf-8"
+		contentType = ctypeIcon
+		body = string(hookwormFaviconBytes)
+		return
+	case "/", "/index", "/index.txt":
+		log.Printf("Handling index page request at %s", r.URL.Path)
+		status = http.StatusOK
+		contentType = ctypeText
+		body = fmt.Sprintf("%s\n%s\n", hookwormIndex, progVersion())
+		return
+	case "/debug/test":
+		if srv.debug {
+			log.Printf("Handling test page request at %s", r.URL.Path)
+			status, body, contentType = srv.handleTestPage(w, r)
+		} else {
+			log.Printf("Debug not enabled, so returning 404 for %s", r.URL.Path)
+			status = http.StatusNotFound
+			contentType = ctypeText
+			body = "Nothing here.\n"
+		}
 		return
 	default:
 		log.Printf("Handling 404 at %s", r.URL.Path)
 		status = http.StatusNotFound
-		contentType = "text/plain; charset=utf-8"
+		contentType = ctypeText
 		body = "Nothing here.\n"
 	}
+}
+
+func (srv *Server) handleTestPage(w http.ResponseWriter, r *http.Request) (int, string, string) {
+	status := http.StatusOK
+	body := ""
+	contentType := ctypeText
+
+	var bodyBuf bytes.Buffer
+
+	err := testFormHTML.Execute(&bodyBuf, &testFormContext{
+		GithubPath:  strings.TrimLeft(srv.githubPath, "/"),
+		TravisPath:  strings.TrimLeft(srv.travisPath, "/"),
+		ProgVersion: progVersion(),
+		Debug:       srv.debug,
+	})
+	if err != nil {
+		status = http.StatusInternalServerError
+		body = fmt.Sprintf("%+v", err)
+		contentType = ctypeText
+	} else {
+		body = string(bodyBuf.Bytes())
+		contentType = ctypeHTML
+	}
+
+	return status, body, contentType
 }
 
 func (srv *Server) handleGithubPayload(w http.ResponseWriter, r *http.Request) (int, string) {
