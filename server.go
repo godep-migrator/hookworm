@@ -51,7 +51,7 @@ var (
         <h2>debugging </h2>
         <ul>
           <li><a href="vars">vars</a></li>
-          <li><a href="pprof">pprof</a></li>
+          <li><a href="pprof/">pprof</a></li>
         </ul>
       </section>
       {{end}}
