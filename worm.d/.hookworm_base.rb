@@ -38,14 +38,14 @@ module HookwormBase
   end
 
   def input_stream
-    $hookworm_stdin || $stdin
+    ($hookworm_stdin || $stdin).set_encoding('UTF-8')
   end
 
   def output_stream
-    $hookworm_stdout || $stdout
+    ($hookworm_stdout || $stdout).set_encoding('UTF-8')
   end
 
   def log_stream
-    $hookworm_stderr || $stderr
+    ($hookworm_stderr || $stderr).set_encoding('UTF-8')
   end
 end
