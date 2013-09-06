@@ -2,7 +2,6 @@
 
 exe = "#{ENV['GOPATH'].split(':').first}/bin/hookworm-server"
 usage = `#{exe} -h 2>&1`.chomp
-version = `#{exe} -version+ 2>&1`.chomp
 handler_usage = ''
 
 Dir.glob("#{File.expand_path('../', __FILE__)}/worm.d/*.*").each do |handler|
@@ -15,5 +14,4 @@ Dir.glob("#{File.expand_path('../', __FILE__)}/worm.d/*.*").each do |handler|
 end
 
 $stdout.puts $stdin.read.sub(/___USAGE___/, usage).
-                         sub(/___HANDLER_USAGE___/, handler_usage).
-                         sub(/___VERSION___/, version)
+                         sub(/___HANDLER_USAGE___/, handler_usage)
