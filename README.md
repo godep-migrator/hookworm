@@ -156,13 +156,3 @@ SMTP auth, e.g.:
 `email_uri='smtp://hookworm:secret@mailhost.example.com:2025'`
 
 
-
-----
-
-Generated for:
-
-```
-hookworm-server v0.3.2-4-gd8d59ec-dirty
-rev: d8d59ecd66c45895f81af4bfff09f0718be06ee1
-tags: -tags full
-```
