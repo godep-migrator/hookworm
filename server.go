@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -388,7 +389,20 @@ func (srv *Server) handleTravisPayload(w http.ResponseWriter, r *http.Request) (
 }
 
 func (srv *Server) extractPayload(r *http.Request) (string, error) {
-	rawPayload := r.FormValue("payload")
+	rawPayload := ""
+	ctype := abbrCtype(r.Header.Get("Content-Type"))
+
+	switch ctype {
+	case "application/json", "text/javascript", "text/plain":
+		rawPayloadBytes, err := ioutil.ReadAll(r.Body)
+		if err != nil {
+			return "", err
+		}
+		rawPayload = string(rawPayloadBytes)
+	case "application/x-www-form-urlencoded":
+		rawPayload = r.FormValue("payload")
+	}
+
 	if len(rawPayload) < 1 {
 		log.Println("Empty payload!")
 		return "", fmt.Errorf("empty payload")
@@ -398,4 +412,9 @@ func (srv *Server) extractPayload(r *http.Request) (string, error) {
 		log.Println("Raw payload: ", rawPayload)
 	}
 	return rawPayload, nil
+}
+
+func abbrCtype(ctype string) string {
+	s := strings.Split(ctype, ";")[0]
+	return strings.ToLower(strings.TrimSpace(s))
 }
