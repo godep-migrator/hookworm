@@ -162,7 +162,7 @@ SMTP auth, e.g.:
 Generated for:
 
 ```
-hookworm-server v0.3.2-1-g8b467b1-dirty
-rev: 8b467b1368f1cf4dc199f79817e84319060ec6db
+hookworm-server v0.3.2-4-gd8d59ec-dirty
+rev: d8d59ecd66c45895f81af4bfff09f0718be06ee1
 tags: -tags full
 ```

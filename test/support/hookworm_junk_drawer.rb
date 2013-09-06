@@ -43,8 +43,13 @@ module HookwormJunkDrawer
     @tempdir
   end
 
-  def github_payload(name)
-    "payload=#{URI.escape(github_payload_string(name))}"
+  def github_payload(name, format)
+    case format
+    when :form
+      "payload=#{URI.escape(github_payload_string(name))}"
+    when :json
+      github_payload_string(name)
+    end
   end
 
   def github_payload_hash(name)
@@ -59,9 +64,17 @@ module HookwormJunkDrawer
     File.expand_path("../../../sampledata/github-payloads/#{name.to_s}.json", __FILE__)
   end
 
-  def post_github_payload(port, payload_name)
+  def post_github_payload(port, payload_name, format)
     pre_request_messages = current_mail_messages
-    response = post_request(port: port, body: github_payload(payload_name), path: '/github')
+    response = post_request(
+      port: port,
+      body: github_payload(payload_name, format),
+      path: '/github',
+      content_type: {
+        form: 'application/x-www-form-urlencoded',
+        json: 'application/json'
+      }[format]
+    )
     [response, current_mail_messages - pre_request_messages]
   end
 

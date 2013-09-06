@@ -15,7 +15,7 @@ ADDR := :9988
 all: clean test golden README.md
 
 test: build fmtpolice
-	go test $(GOBUILD_LDFLAGS) $(GO_TAG_ARGS) -x -v $(TARGETS)
+	go test -race $(GOBUILD_LDFLAGS) $(GO_TAG_ARGS) -x -v $(TARGETS)
 
 build: deps
 	go install $(GOBUILD_LDFLAGS) $(GO_TAG_ARGS) -x $(TARGETS)
