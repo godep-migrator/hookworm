@@ -1,4 +1,5 @@
 #!/usr/bin/env ruby
+# -*- coding: utf-8 -*-
 # vim:fileencoding=utf-8
 #+ #### Hookworm Rogue Commit Handler
 #+
@@ -13,10 +14,11 @@
 #+
 #+ ##### `watched_branches`
 #+ The `watched_branches` argument should be a comma-delimited list of regular
-#+ expressions, e.g.: `watched_branches='^master$,^release_[0-9]'`.  If a commit
-#+ payload is received that was not the result of a pull request merge and the
-#+ Hookworm Annotator handler has determined that the branch name matches any
-#+ of the entries in `watched_branches`, then a rogue commit email will be sent.
+#+ expressions, e.g.: `watched_branches='^master$,^release_[0-9]'`.  If a
+#+ commit payload is received that was not the result of a pull request merge
+#+ and the Hookworm Annotator handler has determined that the branch name
+#+ matches any of the entries in `watched_branches`, then a rogue commit email
+#+ will be sent.
 #+
 #+ ##### `watched_paths`
 #+ The `watched_paths` argument should be a comma-delimited list of regular
@@ -35,7 +37,7 @@
 #+ The `email_recipients` argument should be a comma-delimited list of email
 #+ addresses (without display name) used in the `To` header and SMTP RCPT
 #+ addresses when sending rogue commit emails, e.g.:
-#+ `email_recipients='devs@company.example.com,project-distro+hookworm@partner.example.net'`
+#+ `email_recipients='devs@example.com,proj+hookworm@partner.example.net'`
 #+
 #+ ##### `email_uri`
 #+ The `email_uri` argument should be a well-formed URI containing the SMTP
@@ -64,11 +66,11 @@ class HookwormRogueCommitHandler
     ensure
       output_stream.puts JSON.pretty_generate(payload)
     end
-    return 0
+    0
   end
 
   def handle_travis
-    return 78
+    78
   end
 end
 
@@ -80,69 +82,72 @@ class Judger
   end
 
   def judge_payload(payload)
-    if !payload[:is_watched_branch]
-      if debug?
-        log.info("#{payload[:ref]} is not a watched branch, yay!")
-      end
-
-      return
-    end
-
-    if debug?
-      log.info("#{payload[:ref]} is a watched branch!")
-    end
-
+    return unless is_watched_branch?(payload)
     hcid = payload[:head_commit][:id]
+    return if is_pr_merge?(payload, hcid)
+    return unless has_watched_path?(payload, hcid)
+    safe_send_rogue_commit_email!(payload)
+  end
+
+  def new_judge_payload(payload)
+    return unless is_watched_branch?(payload)
+    hcid = payload[:head_commit][:id]
+    return if is_pr_merge?(payload, hcid)
+    return unless has_watched_path?(payload, hcid)
+    safe_send_rogue_commit_email!(payload)
+  end
+
+  def is_watched_branch?(payload)
+    unless payload[:is_watched_branch]
+      log.debug { "#{payload[:ref]} is not a watched branch, yay!" }
+      return false
+    end
+
+    log.debug { "#{payload[:ref]} is a watched branch!" }
+    true
+  end
+
+  def is_pr_merge?(payload, hcid)
     if payload[:is_pr_merge]
-      if debug?
-        log.info("#{hcid} is a pull request merge, yay!")
-      end
-
-      return
+      log.info { "#{hcid} is a pull request merge, yay!" }
+      return true
     end
 
-    if debug?
-      log.info("#{hcid} is not a pull request merge!")
+    log.debug { "#{hcid} is not a pull request merge!" }
+    false
+  end
+
+  def has_watched_path?(payload, hcid)
+    unless payload[:has_watched_path]
+      log.debug { "#{hcid} does not contain watched paths, yay!" }
+      return false
     end
 
-    if !payload[:has_watched_path]
-      if debug?
-        log.info("#{hcid} does not contain watched paths, yay!")
-      end
+    log.debug { "#{hcid} contains watched paths!" }
+    true
+  end
 
-      return
-    end
-
-    if debug?
-      log.info("#{hcid} contains watched paths!")
-    end
-
-    begin
-      send_rogue_commit_email!(payload)
-      if debug?
-        log.info("Sent rogue commit email to #{recipients}")
-      end
-    rescue => e
-      log.error("#{e.class.name} #{e.message}")
-      if debug?
-        log.error(e.backtrace.join("\n"))
-      end
-      raise e
-    end
+  def safe_send_rogue_commit_email!(payload)
+    send_rogue_commit_email!(payload)
+    log.debug { "Sent rogue commit email to #{recipients}" }
+  rescue => e
+    log.error { "#{e.class.name} #{e.message}" }
+    log.debug { e.backtrace.join("\n") }
+    raise e
   end
 
   def send_rogue_commit_email!(payload)
-    log.warn("WARNING rogue commit! #{payload}, head commit: #{payload[:head_commit]}")
+    log.warn do
+      "WARNING rogue commit! #{payload}, head commit: #{payload[:head_commit]}"
+    end
 
     if recipients.empty?
-      log.warn("No email recipients specified, so no emailing!")
+      log.warn { 'No email recipients specified, so no emailing!' }
       return
     end
 
     email_body = render_email(payload)
-    if debug?
-      log.info("Email message:\n#{email_body}\n")
-    end
+    log.debug { "Email message:\n#{email_body}" }
 
     emailer.send(fromaddr, recipients, email_body)
   end
@@ -168,7 +173,9 @@ class Judger
   end
 
   def watched_branches
-    @watched_branches ||= (cfg[:worm_flags][:watched_branches] || '').commasplit
+    @watched_branches ||= (
+      cfg[:worm_flags][:watched_branches] || ''
+    ).commasplit
   end
 
   def watched_paths
@@ -179,30 +186,38 @@ class Judger
     @emailer ||= Emailer.new(cfg[:worm_flags][:email_uri])
   end
 
-  def debug?
-    @debug ||= cfg[:debug]
-  end
-
   def log
-    @log ||= Logger.new($hookworm_stderr || $stderr)
+    @log ||= Logger.new($stderr)
   end
 
   class EmailRenderContext
     def initialize(judger, payload, tmpl)
-      @cfg = judger.cfg
-      @payload = payload
+      assign_judger_vars(judger)
+      assign_payload_vars(payload)
       @tmpl = tmpl
-      @from = judger.fromaddr
-      @recipients = judger.recipients.join(', ')
       @date = Time.now.utc.rfc2822
       @message_id = Time.now.strftime('%s%9N')
       @hostname = Socket.gethostname
-      @repo = "#{payload[:repository][:owner][:name]}/#{payload[:repository][:name]}"
-      @ref = payload[:ref]
+      assign_head_commit_vars(payload[:head_commit])
+    end
+
+    def assign_judger_vars(judger)
+      @cfg = judger.cfg
+      @from = judger.fromaddr
+      @recipients = judger.recipients.join(', ')
       @watched_branches = judger.watched_branches
       @watched_paths = judger.watched_paths
+    end
+
+    def assign_payload_vars(payload)
+      @payload = payload
+      @repo = "#{payload[:repository][:owner][:name]}/" <<
+              "#{payload[:repository][:name]}"
+      @ref = payload[:ref]
       @repo_url = payload[:repository][:url]
-      hc = payload[:head_commit]
+    end
+
+    def assign_head_commit_vars(hc)
       @head_commit_id = hc[:id]
       @head_commit_url = hc[:url]
       @head_commit_author = hc[:author][:name]
@@ -224,31 +239,37 @@ class Emailer
   end
 
   def send(from, to, msg)
-    Net::SMTP.start(@email_uri.host, @email_uri.port,
-                    @email_uri.user, @email_uri.password,
-                    @email_uri.user ? :plain : nil) do |smtp|
-      if @email_uri.scheme == 'smtps'
-        smtp.enable_ssl
-      end
+    Net::SMTP.start(*smtp_args) do |smtp|
+      smtp.enable_ssl if @email_uri.scheme == 'smtps'
       smtp.send_message(msg, from, to)
     end
+  end
+
+  private
+
+  def smtp_args
+    [
+      @email_uri.host,
+      @email_uri.port,
+      @email_uri.user,
+      @email_uri.password,
+      @email_uri.user ? :plain : nil
+    ]
   end
 end
 
 class String
   def commasplit
-    self.split(',').map(&:strip)
+    split(',').map(&:strip)
   end
 
   def to_plaintext
-    self.gsub(/\n/, "\\n").gsub(/\t/, "\\t")
+    gsub(/\n/, '\n').gsub(/\t/, '\t')
   end
 
   def to_html
-    self.gsub(/\n/, "<br />").gsub(/\t/, "    ")
+    gsub(/\n/, '<br />').gsub(/\t/, '    ')
   end
 end
 
-if $0 == __FILE__
-  exit HookwormRogueCommitHandler.new.run!(ARGV)
-end
+exit HookwormRogueCommitHandler.new.run!(ARGV) if $PROGRAM_NAME == __FILE__

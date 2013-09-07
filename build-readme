@@ -1,4 +1,6 @@
 #!/usr/bin/env ruby
+# -*- coding: utf-8 -*-
+# vim:fileencoding=utf-8
 
 exe = "#{ENV['GOPATH'].split(':').first}/bin/hookworm-server"
 usage = `#{exe} -h 2>&1`.chomp
@@ -13,5 +15,5 @@ Dir.glob("#{File.expand_path('../', __FILE__)}/worm.d/*.*").each do |handler|
   handler_usage << "\n\n"
 end
 
-$stdout.puts $stdin.read.sub(/___USAGE___/, usage).
-                         sub(/___HANDLER_USAGE___/, handler_usage)
+$stdout.puts $stdin.read.sub(/___USAGE___/, usage)
+                        .sub(/___HANDLER_USAGE___/, handler_usage)

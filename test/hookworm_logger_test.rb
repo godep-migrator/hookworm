@@ -1,3 +1,6 @@
+# -*- coding: utf-8 -*-
+# vim:fileencoding=utf-8
+
 require_relative 'test_helper'
 
 describe 'hookworm logger' do
@@ -33,20 +36,16 @@ describe 'hookworm logger' do
   describe 'when configuring' do
     it 'writes JSON from stdin to a config file' do
       handle(JSON.dump(@handler_config), %w(configure))
-      File.exists?("#{@tempdir}/10-hookworm-logger.rb.cfg.json").must_equal true
+      File.exists?("#{@tempdir}/10-hookworm-logger.rb.cfg.json")
+        .must_equal true
     end
   end
 
   describe 'when handling github payloads' do
     before do
       @github_payload = github_payload_hash('pull_request')
-      @github_payload[:repository].merge!({id: @fizz})
+      @github_payload[:repository].merge!({ id: @fizz })
       handle(JSON.dump(@handler_config), %w(configure))
-    end
-
-    it 'logs if the payload is a pull request merge' do
-      err = handle(JSON.dump(@github_payload), %w(handle github)).last
-      err.must_match(/Pull request merge\? true/)
     end
 
     it 'echoes the payload unaltered' do

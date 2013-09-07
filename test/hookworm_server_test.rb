@@ -1,3 +1,6 @@
+# -*- coding: utf-8 -*-
+# vim:fileencoding=utf-8
+
 require_relative 'test_helper'
 
 Mtbb::SERVERS.each do |name, server|
@@ -8,7 +11,8 @@ Mtbb::SERVERS.each do |name, server|
 
     %w(form json).map(&:to_sym).each do |fmt|
       it "accepts #{fmt} POSTs" do
-        post_github_payload(server.port, :valid, fmt).first.code.must_equal '204'
+        post_github_payload(server.port, :valid, fmt).first.code
+          .must_equal '204'
       end
     end
   end
@@ -18,11 +22,13 @@ Mtbb::SERVERS.each do |name, server|
 
     if name == :debug
       it 'has a test page' do
-        get_request(port: server.port, path: '/debug/test').code.must_equal '200'
+        get_request(port: server.port, path: '/debug/test')
+          .code.must_equal '200'
       end
     else
       it 'does not have a test page' do
-        get_request(port: server.port, path: '/debug/test').code.must_equal '404'
+        get_request(port: server.port, path: '/debug/test')
+          .code.must_equal '404'
       end
     end
 
@@ -35,7 +41,8 @@ Mtbb::SERVERS.each do |name, server|
     end
 
     it 'has a favicon' do
-      get_request(port: server.port, path: '/favicon.ico').code.must_equal '200'
+      get_request(port: server.port, path: '/favicon.ico')
+        .code.must_equal '200'
     end
   end
 end

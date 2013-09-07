@@ -1,3 +1,6 @@
+# -*- coding: utf-8 -*-
+# vim:fileencoding=utf-8
+
 require 'json'
 require 'logger'
 
@@ -18,7 +21,7 @@ module HookwormBase
     File.open(cfg_file, 'w') do |f|
       f.puts JSON.pretty_generate(@cfg)
     end
-    log.info "Configured!  Wrote config to #{cfg_file}"
+    log.info { "Configured!  Wrote config to #{cfg_file}" }
   end
 
   def cfg
@@ -26,7 +29,7 @@ module HookwormBase
   end
 
   def cfg_file
-    File.join(Dir.pwd, "#{File.basename($0)}.cfg.json")
+    File.join(Dir.pwd, "#{File.basename($PROGRAM_NAME)}.cfg.json")
   end
 
   def handle(type)
@@ -34,18 +37,28 @@ module HookwormBase
   end
 
   def log
-    @log ||= Logger.new(log_stream)
+    @log ||= build_log
   end
 
   def input_stream
-    ($hookworm_stdin || $stdin).set_encoding('UTF-8')
+    $stdin.set_encoding('UTF-8')
   end
 
   def output_stream
-    ($hookworm_stdout || $stdout).set_encoding('UTF-8')
+    $stdout.set_encoding('UTF-8')
   end
 
   def log_stream
-    ($hookworm_stderr || $stderr).set_encoding('UTF-8')
+    $stderr.set_encoding('UTF-8')
+  end
+
+  def build_log
+    logger = Logger.new(log_stream)
+    logger.level = cfg[:debug] ? Logger::DEBUG : Logger::INFO
+    log_level = cfg[:log_level]
+    if log_level && Logger.const_defined?(log_level.upcase)
+      logger.level = Logger.const_get(log_level.upcase)
+    end
+    logger
   end
 end

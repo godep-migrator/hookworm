@@ -76,3 +76,10 @@ to the handler executable as a JSON object on the standard input stream.
 Hookworm ships with the following handlers:
 
 ___HANDLER_USAGE___
+
+### Handler logging
+
+Each handler that uses the `.hookworm_base.rb` has a log that writes to
+`$stderr`, the level for which may be set via the `log_level` postfix
+argument as long as it is a valid string log level, e.g.
+`log_level=debug`.

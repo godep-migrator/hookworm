@@ -1,3 +1,6 @@
+# -*- coding: utf-8 -*-
+# vim:fileencoding=utf-8
+
 require 'open3'
 require 'tmpdir'
 
@@ -9,7 +12,9 @@ describe 'hookworm logger' do
   def base_command
     [
       'ruby',
-      File.expand_path('../../worm.d/20-hookworm-rogue-commit-handler.rb', __FILE__)
+      File.expand_path(
+        '../../worm.d/20-hookworm-rogue-commit-handler.rb', __FILE__
+      )
     ]
   end
 
@@ -36,14 +41,15 @@ describe 'hookworm logger' do
   describe 'when configuring' do
     it 'writes JSON from stdin to a config file' do
       handle(JSON.dump(@handler_config), %w(configure)).last
-      File.exists?("#{@tempdir}/20-hookworm-rogue-commit-handler.rb.cfg.json").must_equal true
+      File.exists?("#{@tempdir}/20-hookworm-rogue-commit-handler.rb.cfg.json")
+        .must_equal true
     end
   end
 
   describe 'when handling github payloads' do
     before do
       @github_payload = github_payload_hash('pull_request')
-      @github_payload[:repository].merge!({id: @fizz})
+      @github_payload[:repository].merge!({ id: @fizz })
       handle(JSON.dump(@handler_config), %w(configure))
     end
 

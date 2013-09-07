@@ -18,8 +18,12 @@ env:
       gmRf/bRJ5v95EU8s1pgGe3pX/FEEVXMrGSr1huie4/aDquSEzv0LN+YcW9B+
 
       zA5Q68KlipnZrt/eyxKrGaG3SqcllzghJqenAarQj8r65BjC65I='
-install: make build
-script: make test golden
+install:
+- make build
+- gem install rubocop -v '0.12.0'
+script:
+- rubocop
+- make test golden
 after_success:
 - if [ "$TRAVIS_GO_VERSION" == "go1.1.2" ] ; then
     mkdir -p $HOME/bin ;

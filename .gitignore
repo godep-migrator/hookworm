@@ -6,3 +6,4 @@
 /.mtbb-artifacts/
 
 *.test
+*.cfg.json
