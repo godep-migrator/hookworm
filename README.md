@@ -106,11 +106,13 @@ the `watched_branches` postfix keyword argument?
 Does the payload contain changes to a "watched" path, depending on the
 presence of the `watched_paths` postfix keyword argument?
 
+
 #### Hookworm Logger
 
 The logger is responsible for logging valid incoming requests, optionally
 logging to syslog if the `syslog=true` postfix option is provided.  Log
 verbosity is higher if the `-d` debug flag is passed.
+
 
 #### Hookworm Rogue Commit Handler
 
@@ -155,6 +157,7 @@ The `email_uri` argument should be a well-formed URI containing the SMTP
 hostname and port and potentially the username and password used for plain
 SMTP auth, e.g.:
 `email_uri='smtp://hookworm:secret@mailhost.example.com:2025'`
+
 
 
 

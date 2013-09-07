@@ -7,11 +7,11 @@ usage = `#{exe} -h 2>&1`.chomp
 handler_usage = ''
 
 Dir.glob("#{File.expand_path('../', __FILE__)}/worm.d/*.*").each do |handler|
-  handler_usage << File.read(handler).split($/).select do |l|
+  File.read(handler).split("\n").select do |l|
     l =~ %r{^(#|//)\+\s?}
-  end.map do |l|
-    l.sub(%r{^(#|//)\+\s?}, '')
-  end.join($/)
+  end.each do |l|
+    handler_usage << l.sub(%r{^(#|//)\+\s?}, '') << "\n"
+  end
   handler_usage << "\n\n"
 end
 
