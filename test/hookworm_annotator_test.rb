@@ -1,3 +1,6 @@
+# -*- coding: utf-8 -*-
+# vim:fileencoding=utf-8
+
 require_relative 'test_helper'
 
 describe 'hookworm annotator' do
@@ -37,14 +40,15 @@ describe 'hookworm annotator' do
   describe 'when configuring' do
     it 'writes JSON from stdin to a config file' do
       handle(JSON.dump(@handler_config), %w(configure))
-      File.exists?("#{@tempdir}/00-hookworm-annotator.rb.cfg.json").must_equal true
+      File.exists?("#{@tempdir}/00-hookworm-annotator.rb.cfg.json")
+        .must_equal true
     end
   end
 
   describe 'when handling github payloads' do
     before do
       @github_payload = github_payload_hash('pull_request')
-      @github_payload[:repository].merge!({id: @fizz})
+      @github_payload[:repository].merge!({ id: @fizz })
       handle(JSON.dump(@handler_config), %w(configure))
     end
 
@@ -55,7 +59,8 @@ describe 'hookworm annotator' do
 
     it 'annotates is_watched_branch' do
       out = handle(JSON.dump(@github_payload), %w(handle github))[1]
-      JSON.parse(out, symbolize_names: true)[:is_watched_branch].must_equal true
+      JSON.parse(out, symbolize_names: true)[:is_watched_branch]
+        .must_equal true
     end
 
     it 'annotates has_watched_path' do

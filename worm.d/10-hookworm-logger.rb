@@ -1,4 +1,5 @@
 #!/usr/bin/env ruby
+# -*- coding: utf-8 -*-
 # vim:fileencoding=utf-8
 #+ #### Hookworm Logger
 #+
@@ -21,26 +22,11 @@ class HookwormLogger
     payload = JSON.parse(input_stream.read, symbolize_names: true)
     re_serialized_payload = JSON.pretty_generate(payload)
 
-    log.info "Pull request merge? #{payload[:is_pr_merge]}"
-    if cfg[:debug]
-      log.info "payload=#{payload.inspect}"
-      log.info "payload json=#{re_serialized_payload.inspect}"
-    end
-
-    if (cfg[:worm_flags] || {})[:syslog]
-      Syslog.open($0, Syslog::LOG_PID | Syslog::LOG_CONS) do |syslog|
-        syslog.info(re_serialized_payload)
-      end
-    end
-
-    output_stream.puts(re_serialized_payload)
-
+    log_payload(payload, re_serialized_payload)
     return 0
   rescue => e
-    log.error "#{e.class.name} #{e.message}"
-    if cfg[:debug]
-      log.error e.backtrace.join("\n")
-    end
+    log.error { "#{e.class.name} #{e.message}" }
+    log.debug { e.backtrace.join("\n") }
     return 1
   end
 
@@ -48,29 +34,26 @@ class HookwormLogger
     payload = JSON.parse(input_stream.read, symbolize_names: true)
     re_serialized_payload = JSON.pretty_generate(payload)
 
-    if cfg[:debug]
-      log.info "payload=#{payload.inspect}"
-      log.info "payload json=#{re_serialized_payload.inspect}"
-    end
+    log_payload(payload, re_serialized_payload)
+    return 0
+  rescue => e
+    log.error { "#{e.class.name} #{e.message}" }
+    log.debug { e.backtrace.join("\n") }
+    return 1
+  end
+
+  def log_payload(payload, re_serialized_payload)
+    log.debug { "payload=#{payload.inspect}" }
+    log.debug { "payload json=#{re_serialized_payload.inspect}" }
 
     if (cfg[:worm_flags] || {})[:syslog]
-      Syslog.open($0, Syslog::LOG_PID | Syslog::LOG_CONS) do |syslog|
-        syslog.info(re_serialized_payload)
+      Syslog.open($PROGRAM_NAME, Syslog::LOG_PID | Syslog::LOG_CONS) do |sl|
+        sl.info(re_serialized_payload)
       end
     end
 
     output_stream.puts(re_serialized_payload)
-
-    return 0
-  rescue => e
-    log.error "#{e.class.name} #{e.message}"
-    if cfg[:debug]
-      log.error e.backtrace.join("\n")
-    end
-    return 1
   end
 end
 
-if $0 == __FILE__
-  exit HookwormLogger.new.run!(ARGV)
-end
+exit HookwormLogger.new.run!(ARGV) if $PROGRAM_NAME == __FILE__

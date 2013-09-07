@@ -33,6 +33,9 @@ clean:
 		find $${GOPATH%%:*}/pkg -name '*hookworm*' -exec rm -v {} \; ; \
 	fi
 
+distclean: clean
+	rm -f mtbb fakesmtpd
+
 golden:
 	./mtbb -v 2>&1 | tee tests.log
 
@@ -47,7 +50,7 @@ fakesmtpd:
 	chmod +x $@
 
 mtbb:
-	curl -s -o $@ https://raw.github.com/modcloth-labs/mtbb/v0.1.0/lib/mtbb.rb
+	curl -s -o $@ https://raw.github.com/modcloth-labs/mtbb/v0.1.1/lib/mtbb.rb
 	chmod +x $@
 
 serve:
@@ -56,4 +59,4 @@ serve:
 todo:
 	@grep -n -R TODO . | grep -v -E '^(./Makefile|./.git)'
 
-.PHONY: all build clean deps serve test fmtpolice todo golden
+.PHONY: all build clean distclean deps serve test fmtpolice todo golden

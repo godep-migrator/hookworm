@@ -92,8 +92,8 @@ The annotator is responsible for adding fields to the incoming payloads so
 that subsequent handlers do not have to duplicate decision-making logic.
 
 ##### GitHub payload annotation
-GitHub payloads are given the following additional fields dependending on the
-presence of certain options.
+GitHub payloads are given the following additional fields dependending on
+the presence of certain options.
 
 ###### `is_pr_merge`
 Is the payload the result of a pull request merge?
@@ -106,11 +106,13 @@ the `watched_branches` postfix keyword argument?
 Does the payload contain changes to a "watched" path, depending on the
 presence of the `watched_paths` postfix keyword argument?
 
+
 #### Hookworm Logger
 
 The logger is responsible for logging valid incoming requests, optionally
 logging to syslog if the `syslog=true` postfix option is provided.  Log
 verbosity is higher if the `-d` debug flag is passed.
+
 
 #### Hookworm Rogue Commit Handler
 
@@ -125,10 +127,11 @@ are again with more details about their associated behavior:
 
 ##### `watched_branches`
 The `watched_branches` argument should be a comma-delimited list of regular
-expressions, e.g.: `watched_branches='^master$,^release_[0-9]'`.  If a commit
-payload is received that was not the result of a pull request merge and the
-Hookworm Annotator handler has determined that the branch name matches any
-of the entries in `watched_branches`, then a rogue commit email will be sent.
+expressions, e.g.: `watched_branches='^master$,^release_[0-9]'`.  If a
+commit payload is received that was not the result of a pull request merge
+and the Hookworm Annotator handler has determined that the branch name
+matches any of the entries in `watched_branches`, then a rogue commit email
+will be sent.
 
 ##### `watched_paths`
 The `watched_paths` argument should be a comma-delimited list of regular
@@ -147,7 +150,7 @@ SMTP MAIL address when sending rogue commit emails, e.g.:
 The `email_recipients` argument should be a comma-delimited list of email
 addresses (without display name) used in the `To` header and SMTP RCPT
 addresses when sending rogue commit emails, e.g.:
-`email_recipients='devs@company.example.com,project-distro+hookworm@partner.example.net'`
+`email_recipients='devs@example.com,proj+hookworm@partner.example.net'`
 
 ##### `email_uri`
 The `email_uri` argument should be a well-formed URI containing the SMTP
@@ -156,3 +159,11 @@ SMTP auth, e.g.:
 `email_uri='smtp://hookworm:secret@mailhost.example.com:2025'`
 
 
+
+
+### Handler logging
+
+Each handler that uses the `.hookworm_base.rb` has a log that writes to
+`$stderr`, the level for which may be set via the `log_level` postfix
+argument as long as it is a valid string log level, e.g.
+`log_level=debug`.
