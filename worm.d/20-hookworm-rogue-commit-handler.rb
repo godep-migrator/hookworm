@@ -258,18 +258,4 @@ class Emailer
   end
 end
 
-class String
-  def commasplit
-    split(',').map(&:strip)
-  end
-
-  def to_plaintext
-    gsub(/\n/, '\n').gsub(/\t/, '\t')
-  end
-
-  def to_html
-    gsub(/\n/, '<br />').gsub(/\t/, '    ')
-  end
-end
-
 exit HookwormRogueCommitHandler.new.run!(ARGV) if $PROGRAM_NAME == __FILE__

@@ -90,7 +90,7 @@ class HookwormGithubPayloadAnnotator
   end
 
   def watched_branch_strings
-    ((cfg[:worm_flags] || {})[:watched_branches] || '').split(',')
+    ((cfg[:worm_flags] || {})[:watched_branches] || '').cleanquotes.commasplit
   end
 
   def watched_path?(payload)
@@ -111,7 +111,7 @@ class HookwormGithubPayloadAnnotator
   end
 
   def watched_path_strings
-    ((cfg[:worm_flags] || {})[:watched_paths] || '').split(',')
+    ((cfg[:worm_flags] || {})[:watched_paths] || '').cleanquotes.commasplit
   end
 
   def payload_paths(payload)
