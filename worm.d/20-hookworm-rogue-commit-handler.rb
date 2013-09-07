@@ -43,7 +43,7 @@
 #+ The `email_uri` argument should be a well-formed URI containing the SMTP
 #+ hostname and port and potentially the username and password used for plain
 #+ SMTP auth, e.g.:
-#+ `email_uri='smtp://hookworm:secret@mailhost.example.com:2025'`
+#+ `email_uri='smtp://hookworm:secret@mailhost.example.com:1587'`
 
 require 'erb'
 require 'json'

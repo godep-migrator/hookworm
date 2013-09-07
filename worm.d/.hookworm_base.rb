@@ -3,6 +3,7 @@
 
 require 'json'
 require 'logger'
+require 'uri'
 
 module HookwormBase
   def run!(argv)
@@ -78,5 +79,21 @@ class String
 
   def to_html
     gsub(/\n/, '<br />').gsub(/\t/, '    ')
+  end
+end
+
+module URI
+  unless @@schemes['SMTP']
+    class SMTP < Generic
+      DEFAULT_PORT = 587
+    end
+    @@schemes['SMTP'] = SMTP
+  end
+
+  unless @@schemes['SMTPS']
+    class SMTPS < Generic
+      DEFAULT_PORT = 587
+    end
+    @@schemes['SMTPS'] = SMTPS
   end
 end
