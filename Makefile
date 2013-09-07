@@ -14,7 +14,7 @@ ADDR := :9988
 
 all: clean test golden README.md
 
-test: build fmtpolice
+test: build fmtpolice rubocop
 	go test -race $(GOBUILD_LDFLAGS) $(GO_TAG_ARGS) -x -v $(TARGETS)
 
 build: deps
@@ -24,7 +24,9 @@ build: deps
 deps: fakesmtpd mtbb
 	if [ ! -L $${GOPATH%%:*}/src/hookworm ] ; then gvm linkthis ; fi
 	gem query --local | grep -Eq '^mail\b.*\b2\.5\.4\b'  || \
-	  gem install mail -v 2.5.4 --no-ri --no-rdoc
+		gem install mail -v '2.5.4' --no-ri --no-rdoc
+	gem query --local | grep -Eq '^rubocop\b.*\b0\.12\.0\b'  || \
+		gem install rubocop -v '0.12.0' --no-ri --no-rdoc
 
 clean:
 	rm -rf ./log ./.mtbb-artifacts/ ./tests.log
@@ -41,6 +43,9 @@ golden:
 
 fmtpolice:
 	set -e; for f in $(shell git ls-files '*.go'); do gofmt $$f | diff -u $$f - ; done
+
+rubocop:
+	rubocop -d -c .rubocop.yml -f offences
 
 README.md: README.in.md $(shell git ls-files '*.go') $(shell git ls-files 'worm.d/*.*')
 	./build-readme < $< > $@
