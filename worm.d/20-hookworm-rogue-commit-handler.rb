@@ -251,6 +251,7 @@ class Emailer
     [
       @email_uri.host,
       @email_uri.port,
+      'localhost',
       @email_uri.user,
       @email_uri.password,
       @email_uri.user ? :plain : nil
