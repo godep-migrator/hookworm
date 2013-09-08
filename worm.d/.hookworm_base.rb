@@ -37,6 +37,14 @@ module HookwormBase
     send(:"handle_#{type}")
   end
 
+  def handle_github
+    78
+  end
+
+  def handle_travis
+    78
+  end
+
   def log
     @log ||= build_log
   end

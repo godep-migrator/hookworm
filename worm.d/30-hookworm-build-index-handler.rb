@@ -11,10 +11,6 @@ class HookwormBuildIndexHandler
 
   private
 
-  def handle_github
-    78
-  end
-
   def handle_travis
     78
   end
