@@ -45,7 +45,7 @@ fmtpolice:
 	set -e; for f in $(shell git ls-files '*.go'); do gofmt $$f | diff -u $$f - ; done
 
 rubocop:
-	rubocop -d -c .rubocop.yml -f offences
+	rubocop --config .rubocop.yml --format simple
 
 README.md: README.in.md $(shell git ls-files '*.go') $(shell git ls-files 'worm.d/*.*')
 	./build-readme < $< > $@
