@@ -1,0 +1,41 @@
+{
+  "ref": "refs/heads/ensuring-watched-branches-and-paths-are-quote-free",
+  "after": "0000000000000000000000000000000000000000",
+  "before": "a1fcfc8fe4017bccb4f156ac5a786c08a6968517",
+  "created": false,
+  "deleted": true,
+  "forced": true,
+  "compare": "https://github.com/modcloth-labs/hookworm/compare/a1fcfc8fe401...000000000000",
+  "commits": [],
+  "head_commit": null,
+  "repository": {
+    "id": 10417548,
+    "name": "hookworm",
+    "url": "https://github.com/modcloth-labs/hookworm",
+    "description": "GitHub & Travis hook receiving thingydoo",
+    "homepage": "",
+    "watchers": 2,
+    "stargazers": 2,
+    "forks": 2,
+    "fork": false,
+    "size": 612,
+    "owner": {
+      "name": "modcloth-labs",
+      "email": "labs@modcloth.com"
+    },
+    "private": false,
+    "open_issues": 0,
+    "has_issues": true,
+    "has_downloads": true,
+    "has_wiki": true,
+    "language": "Ruby",
+    "created_at": 1370060266,
+    "pushed_at": 1378653604,
+    "master_branch": "master",
+    "organization": "modcloth-labs"
+  },
+  "pusher": {
+    "name": "meatballhat",
+    "email": "dan@meatballhat.com"
+  }
+}
