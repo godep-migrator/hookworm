@@ -3,6 +3,8 @@ hookworm
 
 GitHub & Travis hook receiving thingydoo.
 
+[![Build Status](https://travis-ci.org/modcloth-labs/hookworm.png?branch=master)](https://travis-ci.org/modcloth-labs/hookworm)
+
 ## Usage
 
 ```
