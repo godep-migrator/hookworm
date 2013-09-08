@@ -64,6 +64,32 @@ module HookwormBase
   end
 end
 
+class HookwormEmailer
+  def initialize(email_uri)
+    @email_uri = URI(email_uri)
+  end
+
+  def send(from, to, msg)
+    Net::SMTP.start(*smtp_args) do |smtp|
+      smtp.enable_ssl if @email_uri.scheme == 'smtps'
+      smtp.send_message(msg, from, to)
+    end
+  end
+
+  private
+
+  def smtp_args
+    [
+      @email_uri.host,
+      @email_uri.port,
+      'localhost',
+      @email_uri.user,
+      @email_uri.password,
+      @email_uri.user ? :plain : nil
+    ]
+  end
+end
+
 class String
   def commasplit
     split(',').map(&:strip)
