@@ -42,7 +42,7 @@ func (wfm *wormFlagMap) Set(value string) error {
 			case "false", "no", "off":
 				wfm.values[k] = false
 			default:
-				wfm.values[k] = v
+				wfm.values[k] = strings.Trim(v, "\"' ")
 			}
 		} else {
 			wfm.values[parts[0]] = true

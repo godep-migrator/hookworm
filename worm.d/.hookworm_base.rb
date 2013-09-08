@@ -3,6 +3,7 @@
 
 require 'json'
 require 'logger'
+require 'uri'
 
 module HookwormBase
   def run!(argv)
@@ -60,5 +61,39 @@ module HookwormBase
       logger.level = Logger.const_get(log_level.upcase)
     end
     logger
+  end
+end
+
+class String
+  def commasplit
+    split(',').map(&:strip)
+  end
+
+  def cleanquotes
+    gsub(/["']/, '')
+  end
+
+  def to_plaintext
+    gsub(/\n/, '\n').gsub(/\t/, '\t')
+  end
+
+  def to_html
+    gsub(/\n/, '<br />').gsub(/\t/, '    ')
+  end
+end
+
+module URI
+  unless @@schemes['SMTP']
+    class SMTP < Generic
+      DEFAULT_PORT = 587
+    end
+    @@schemes['SMTP'] = SMTP
+  end
+
+  unless @@schemes['SMTPS']
+    class SMTPS < Generic
+      DEFAULT_PORT = 587
+    end
+    @@schemes['SMTPS'] = SMTPS
   end
 end

@@ -43,7 +43,7 @@
 #+ The `email_uri` argument should be a well-formed URI containing the SMTP
 #+ hostname and port and potentially the username and password used for plain
 #+ SMTP auth, e.g.:
-#+ `email_uri='smtp://hookworm:secret@mailhost.example.com:2025'`
+#+ `email_uri='smtp://hookworm:secret@mailhost.example.com:1587'`
 
 require 'erb'
 require 'json'
@@ -251,24 +251,11 @@ class Emailer
     [
       @email_uri.host,
       @email_uri.port,
+      'localhost',
       @email_uri.user,
       @email_uri.password,
       @email_uri.user ? :plain : nil
     ]
-  end
-end
-
-class String
-  def commasplit
-    split(',').map(&:strip)
-  end
-
-  def to_plaintext
-    gsub(/\n/, '\n').gsub(/\t/, '\t')
-  end
-
-  def to_html
-    gsub(/\n/, '<br />').gsub(/\t/, '    ')
   end
 end
 
