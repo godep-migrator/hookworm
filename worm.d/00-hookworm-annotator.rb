@@ -130,6 +130,7 @@ class HookwormGithubPayloadAnnotator
 
   def commit_paths(commit)
     path_set = {}
+    return [] if commit.nil? || commit.empty?
 
     [commit[:added], commit[:removed], commit[:modified]].each do |path_list|
       path_list.each do |path|

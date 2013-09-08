@@ -46,8 +46,12 @@ describe 'hookworm annotator' do
   end
 
   describe 'when handling github payloads' do
+    def github_payload_name
+      'pull_request'
+    end
+
     before do
-      @github_payload = github_payload_hash('pull_request')
+      @github_payload = github_payload_hash(github_payload_name)
       @github_payload[:repository].merge!({ id: @fizz })
       handle(JSON.dump(@handler_config), %w(configure))
     end
@@ -66,6 +70,17 @@ describe 'hookworm annotator' do
     it 'annotates has_watched_path' do
       out = handle(JSON.dump(@github_payload), %w(handle github))[1]
       JSON.parse(out, symbolize_names: true)[:has_watched_path].must_equal true
+    end
+
+    describe 'when the payload is for a branch delete' do
+      def github_payload_name
+        'branch_delete'
+      end
+
+      it 'does not explode' do
+        handle(JSON.dump(@github_payload), %w(handle github)).first
+          .exitstatus.must_equal 0
+      end
     end
   end
 
