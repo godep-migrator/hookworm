@@ -2,12 +2,14 @@
 # -*- coding: utf-8 -*-
 # vim:fileencoding=utf-8
 
+require 'English'
+
 exe = "#{ENV['GOPATH'].split(':').first}/bin/hookworm-server"
 usage = `#{exe} -h 2>&1`.chomp
 handler_usage = ''
 
 Dir.glob("#{File.expand_path('../', __FILE__)}/worm.d/*.*").each do |handler|
-  File.read(handler).split("\n").select do |l|
+  File.read(handler).split($RS).select do |l|
     l =~ %r{^(#|//)\+\s?}
   end.each do |l|
     handler_usage << l.sub(%r{^(#|//)\+\s?}, '') << "\n"

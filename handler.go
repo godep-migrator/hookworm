@@ -66,6 +66,7 @@ type HandlerConfig struct {
 	GithubPath    string       `json:"github_path"`
 	ServerAddress string       `json:"server_address"`
 	ServerPidFile string       `json:"server_pid_file"`
+	StaticDir     string       `json:"static_dir"`
 	TravisPath    string       `json:"travis_path"`
 	WorkingDir    string       `json:"working_dir"`
 	WormDir       string       `json:"worm_dir"`

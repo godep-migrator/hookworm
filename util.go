@@ -47,8 +47,35 @@ func strsToRegexes(strs []string) []*regexp.Regexp {
 }
 
 func getWorkingDir(workingDir string) (string, error) {
-	if len(workingDir) > 0 {
-		fd, err := os.Create(filepath.Join(workingDir, ".write-test"))
+	wd, err := getWriteableDir(workingDir, "")
+	if err != nil {
+		return "", err
+	}
+
+	if wd != "" {
+		return wd, nil
+	}
+
+	tmpdir, err := ioutil.TempDir("", fmt.Sprintf("hookworm-%d-", os.Getpid()))
+	if err != nil {
+		return "", err
+	}
+
+	return tmpdir, nil
+}
+
+func getStaticDir(staticDir string) (string, error) {
+	wd, err := os.Getwd()
+	if err != nil {
+		wd = "."
+	}
+
+	return getWriteableDir(staticDir, filepath.Join(wd, "public"))
+}
+
+func getWriteableDir(dir, defaultDir string) (string, error) {
+	if len(dir) > 0 {
+		fd, err := os.Create(filepath.Join(dir, ".write-test"))
 		defer func() {
 			if fd != nil {
 				fd.Close()
@@ -59,8 +86,8 @@ func getWorkingDir(workingDir string) (string, error) {
 			return "", err
 		}
 
-		return workingDir, nil
+		return dir, nil
 	}
 
-	return ioutil.TempDir("", fmt.Sprintf("hookworm-%d-", os.Getpid()))
+	return defaultDir, nil
 }
