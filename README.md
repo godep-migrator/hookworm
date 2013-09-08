@@ -162,6 +162,10 @@ SMTP auth, e.g.:
 `email_uri='smtp://hookworm:secret@mailhost.example.com:1587'`
 
 
+#### Hookworm Build Index Handler
+
+
+
 
 
 ### Handler logging
