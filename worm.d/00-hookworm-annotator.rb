@@ -29,19 +29,20 @@ class HookwormAnnotator
 
   private
 
-  def handle_github
+  def handle(type)
     payload = JSON.parse(input_stream.read, symbolize_names: true)
-    annotated_payload = annotate_github_payload!(payload)
-    output_stream.puts JSON.pretty_generate(annotated_payload)
+    output_stream.puts JSON.pretty_generate(
+      send(:"annotate_#{type}_payload", payload)
+    )
     0
   end
 
-  def handle_travis
-    78
+  def annotate_github_payload(github_payload)
+    HookwormGithubPayloadAnnotator.new(cfg).annotate(github_payload)
   end
 
-  def annotate_github_payload!(github_payload)
-    HookwormGithubPayloadAnnotator.new(cfg).annotate(github_payload)
+  def annotate_travis_payload(travis_payload)
+    HookwormTravisPayloadAnnotator.new.annotate(travis_payload)
   end
 end
 
@@ -147,6 +148,28 @@ class HookwormGithubPayloadAnnotator
 
   def log_stream
     $stderr.set_encoding('UTF-8')
+  end
+end
+
+class HookwormTravisPayloadAnnotator
+  def annotate(payload)
+    annotated = payload.clone
+    add_repo_slug!(annotated)
+    annotated[:success] = success?(payload)
+    annotated
+  end
+
+  private
+
+  def add_repo_slug!(payload)
+    repo = (payload[:repository] || {})
+    if repo[:owner_name] && repo[:name]
+      repo[:slug] = "#{repo[:owner_name]}/#{repo[:name]}"
+    end
+  end
+
+  def success?(payload)
+    payload[:result] == 0 && payload[:result_message].downcase == 'passed'
   end
 end
 

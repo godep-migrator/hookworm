@@ -1,0 +1,76 @@
+{
+  "id": 10180613,
+  "repository": {
+    "id": 1111764,
+    "name": "fuzzy-octo-archer",
+    "owner_name": "meatballhat",
+    "url": "https://github.com/meatballhat/fuzzy-octo-archer",
+    "slug": "meatballhat/fuzzy-octo-archer"
+  },
+  "number": "7",
+  "config": {
+    "language": "ruby",
+    "rvm": [
+      "1.9.3"
+    ],
+    "install": "echo nerp",
+    "script": "ruby foo.rb",
+    "notifications": {
+      "webhooks": [
+        "http://meatballhat.no-ip.biz:9988/travis"
+      ]
+    },
+    ".result": "configured"
+  },
+  "status": 0,
+  "result": 0,
+  "status_message": "Passed",
+  "result_message": "Passed",
+  "started_at": "2013-08-14T02:26:25Z",
+  "finished_at": "2013-08-14T02:26:37Z",
+  "duration": 12,
+  "build_url": "https://travis-ci.org/meatballhat/fuzzy-octo-archer/builds/10180613",
+  "commit": "ad281ff8a9d7be26da84a65147b42ca7f6cf6857",
+  "branch": "master",
+  "message": "Removing the fælcon bit to speed things up",
+  "compare_url": "https://github.com/meatballhat/fuzzy-octo-archer/compare/8ebf80abc39b...ad281ff8a9d7",
+  "committed_at": "2013-08-13T23:11:23Z",
+  "author_name": "Dan Buch",
+  "author_email": "dan@meatballhat.com",
+  "committer_name": "Dan Buch",
+  "committer_email": "dan@meatballhat.com",
+  "matrix": [
+    {
+      "id": 10180614,
+      "repository_id": 1111764,
+      "parent_id": 10180613,
+      "number": "7.1",
+      "state": "finished",
+      "config": {
+        "language": "ruby",
+        "rvm": "1.9.3",
+        "install": "echo nerp",
+        "script": "ruby foo.rb",
+        "notifications": {
+          "webhooks": [
+            "http://meatballhat.no-ip.biz:9988/travis"
+          ]
+        },
+        ".result": "configured"
+      },
+      "status": null,
+      "result": null,
+      "commit": "ad281ff8a9d7be26da84a65147b42ca7f6cf6857",
+      "branch": "master",
+      "message": "Removing the falcon bit to speed things up",
+      "compare_url": "https://github.com/meatballhat/fuzzy-octo-archer/compare/8ebf80abc39b...ad281ff8a9d7",
+      "committed_at": "2013-08-13T23:11:23Z",
+      "author_name": "Dan Buch",
+      "author_email": "dan@meatballhat.com",
+      "committer_name": "Dan Buch",
+      "committer_email": "dan@meatballhat.com",
+      "finished_at": "2013-08-14T02:26:37Z"
+    }
+  ],
+  "success": true
+}

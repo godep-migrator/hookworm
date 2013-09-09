@@ -20,6 +20,7 @@ var (
 	wormTimeoutFlag = flag.Int("T", 30, "Timeout for handler executables (in seconds)")
 	workingDirFlag  = flag.String("D", "", "Working directory (scratch pad)")
 	wormDirFlag     = flag.String("W", "", "Worm directory that contains handler executables")
+	staticDirFlag   = flag.String("S", "", "Public static directory (default $PWD/public)")
 	pidFileFlag     = flag.String("P", "", "PID file (only written if flag given)")
 	debugFlag       = flag.Bool("d", false, "Show debug output")
 
@@ -117,9 +118,11 @@ func init() {
 // handler pipeline
 type Server struct {
 	pipeline   Handler
+	cfg        *HandlerConfig
 	debug      bool
 	githubPath string
 	travisPath string
+	fileServer http.Handler
 }
 
 // ServerMain is the `main` entry point used by the `hookworm-server`
@@ -167,16 +170,30 @@ func ServerMain() int {
 
 	defer os.RemoveAll(workingDir)
 
+	staticDir, err := getStaticDir(*staticDirFlag)
+	if err != nil {
+		log.Printf("ERROR: %v\n", err)
+		return 1
+	}
+
+	log.Println("Using static directory", staticDir)
+	if err := os.Setenv("HOOKWORM_STATIC_DIR", staticDir); err != nil {
+		log.Printf("ERROR: %v\n", err)
+		return 1
+	}
+
 	cfg := &HandlerConfig{
 		Debug:         *debugFlag,
 		GithubPath:    *githubPathFlag,
 		ServerAddress: *addrFlag,
 		ServerPidFile: *pidFileFlag,
+		StaticDir:     staticDir,
 		TravisPath:    *travisPathFlag,
 		WorkingDir:    workingDir,
 		WormDir:       *wormDirFlag,
 		WormTimeout:   *wormTimeoutFlag,
 		WormFlags:     wormFlags,
+		Version:       progVersion(),
 	}
 
 	if cfg.Debug {
@@ -220,9 +237,11 @@ func NewServer(cfg *HandlerConfig) (*Server, error) {
 
 	server := &Server{
 		pipeline:   pipeline,
+		cfg:        cfg,
 		debug:      cfg.Debug,
 		githubPath: cfg.GithubPath,
 		travisPath: cfg.TravisPath,
+		fileServer: http.FileServer(http.Dir(cfg.StaticDir)),
 	}
 	return server, nil
 }
@@ -231,11 +250,14 @@ func (srv *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	status := http.StatusBadRequest
 	body := ""
 	contentType := ctypeJSON
+	forwarded := false
 
 	defer func() {
-		w.Header().Set("Content-Type", contentType)
-		w.WriteHeader(status)
-		fmt.Fprintf(w, "%s", body)
+		if !forwarded {
+			w.Header().Set("Content-Type", contentType)
+			w.WriteHeader(status)
+			fmt.Fprintf(w, "%s", body)
+		}
 		fmt.Fprintf(os.Stderr, "%s - - [%s] \"%s %s %s\" %d -\n",
 			r.RemoteAddr, time.Now().UTC().Format(logTimeFmt),
 			r.Method, r.URL.Path, r.Proto, status)
@@ -263,6 +285,10 @@ func (srv *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		status = http.StatusNoContent
 		contentType = ctypeText
 		return
+	case "/config":
+		log.Printf("Handling config request at %s", r.URL.Path)
+		status, body = srv.handleConfig(w, r)
+		return
 	case "/favicon.ico":
 		log.Printf("Handling favicon request at %s", r.URL.Path)
 		status = http.StatusOK
@@ -287,10 +313,10 @@ func (srv *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	default:
-		log.Printf("Handling 404 at %s", r.URL.Path)
-		status = http.StatusNotFound
-		contentType = ctypeText
-		body = "Nothing here.\n"
+		log.Printf("Forwarding request to file server: %s", r.URL.Path)
+		forwarded = true
+		srv.fileServer.ServeHTTP(w, r)
+		return
 	}
 }
 
@@ -317,6 +343,15 @@ func (srv *Server) handleTestPage(w http.ResponseWriter, r *http.Request) (int, 
 	}
 
 	return status, body, contentType
+}
+
+func (srv *Server) handleConfig(w http.ResponseWriter, r *http.Request) (int, string) {
+	bodyJSON, err := json.MarshalIndent(srv.cfg, "", "  ")
+	if err != nil {
+		return http.StatusInternalServerError, fmt.Sprintf("%v", err)
+	}
+
+	return http.StatusOK, string(bodyJSON) + "\n"
 }
 
 func (srv *Server) handleGithubPayload(w http.ResponseWriter, r *http.Request) (int, string) {

@@ -1,8 +1,11 @@
 # -*- coding: utf-8 -*-
 # vim:fileencoding=utf-8
 
+require 'English'
 require 'fileutils'
 require 'time'
+
+now = Time.now.utc
 
 fakesmtpd_port = rand(13100..13109)
 fakesmtpd_message_dir = File.expand_path(
@@ -19,11 +22,15 @@ Mtbb.register(
     '-l', File.expand_path('../../../.mtbb-artifacts/fakesmtpd.log', __FILE__)
   ],
   port: fakesmtpd_port,
-  start: Time.now.utc,
+  start: now,
 )
 
 null_working_dir = File.expand_path(
-  "../../../.mtbb-artifacts/hookworm-null-#{Time.now.utc.to_i}-#{$PID}",
+  "../../../.mtbb-artifacts/hookworm-null-#{now.to_i}-#{$PID}",
+  __FILE__
+)
+null_static_dir = File.expand_path(
+  "../../../.mtbb-artifacts/hookworm-null-public-#{now.to_i}-#{$PID}",
   __FILE__
 )
 null_port = rand(12100..12109)
@@ -36,14 +43,19 @@ Mtbb.register(
     '-P', File.expand_path(
       '../../../.mtbb-artifacts/hookworm-server-null.pid', __FILE__
     ),
+    '-S', null_static_dir,
     '-D', null_working_dir,
   ],
   port: null_port,
-  start: Time.now.utc,
+  start: now,
 )
 
 debug_working_dir = File.expand_path(
-  "../../../.mtbb-artifacts/hookworm-debug-#{Time.now.utc.to_i}-#{$PID}",
+  "../../../.mtbb-artifacts/hookworm-debug-#{now.to_i}-#{$PID}",
+  __FILE__
+)
+debug_static_dir = File.expand_path(
+  "../../../.mtbb-artifacts/hookworm-debug-public-#{now.to_i}-#{$PID}",
   __FILE__
 )
 debug_port = rand(12110..12119)
@@ -57,6 +69,7 @@ Mtbb.register(
     '-P', File.expand_path(
       '../../../.mtbb-artifacts/hookworm-server-debug.pid', __FILE__
     ),
+    '-S', debug_static_dir,
     '-D', debug_working_dir,
     '-T', '5',
     '-W', File.expand_path('../../../worm.d', __FILE__),
@@ -67,15 +80,23 @@ Mtbb.register(
     'email_recipients=hookworm-self@testing.local',
   ],
   port: debug_port,
-  start: Time.now.utc,
+  start: now,
 )
 
-[fakesmtpd_message_dir, null_working_dir, debug_working_dir].each do |dir|
+generated_dirs = [
+  fakesmtpd_message_dir,
+  null_working_dir,
+  null_static_dir,
+  debug_working_dir,
+  debug_static_dir
+]
+
+generated_dirs.each do |dir|
   FileUtils.mkdir_p(dir)
 end
 
 at_exit do
-  [fakesmtpd_message_dir, null_working_dir, debug_working_dir].each do |dir|
+  generated_dirs.each do |dir|
     FileUtils.rm_rf(dir)
   end
 end

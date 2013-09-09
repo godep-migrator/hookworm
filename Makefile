@@ -21,7 +21,7 @@ build: deps
 	go install $(GOBUILD_LDFLAGS) $(GO_TAG_ARGS) -x $(TARGETS)
 	go build -o $${GOPATH%%:*}/bin/hookworm-server $(GOBUILD_LDFLAGS) $(GO_TAG_ARGS) ./hookworm-server
 
-deps: fakesmtpd mtbb
+deps: fakesmtpd mtbb public
 	if [ ! -L $${GOPATH%%:*}/src/hookworm ] ; then gvm linkthis ; fi
 	gem query --local | grep -Eq '^mail\b.*\b2\.5\.4\b'  || \
 		gem install mail -v '2.5.4' --no-ri --no-rdoc
@@ -46,6 +46,9 @@ fmtpolice:
 
 rubocop:
 	rubocop --config .rubocop.yml --format simple
+
+public:
+	mkdir -p $@
 
 README.md: README.in.md $(shell git ls-files '*.go') $(shell git ls-files 'worm.d/*.*')
 	./build-readme < $< > $@

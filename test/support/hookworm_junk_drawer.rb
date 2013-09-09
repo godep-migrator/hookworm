@@ -24,6 +24,14 @@ module HookwormJunkDrawer
     execute_command_in_tmpdir(command, stdin_string)
   end
 
+  def handler_config(fizz, working_dir)
+    {
+      'fizz' => fizz,
+      'working_dir' => working_dir,
+      'static_dir' => "#{working_dir}/public",
+    }
+  end
+
   def execute_command_in_tmpdir(command, stdin_string)
     Dir.chdir(tempdir) { execute_command(command, stdin_string) }
   end
@@ -112,10 +120,13 @@ module HookwormJunkDrawer
     )
   end
 
-  def post_travis_payload(port, payload_name)
+  def post_travis_payload(port, payload_name, format)
     pre_request_messages = current_mail_messages
     response = post_request(
-      port: port, body: travis_payload(payload_name), path: '/travis'
+      port: port,
+      body: travis_payload(payload_name),
+      path: '/travis',
+      content_type: content_type(format)
     )
     [response, current_mail_messages - pre_request_messages]
   end
