@@ -11,14 +11,14 @@ Mtbb::SERVERS.each do |name, server|
 
     %w(form json).map(&:to_sym).each do |fmt|
       it "accepts #{fmt} github POSTs" do
-        post_github_payload(server.port, :valid, fmt).first.code
-        .must_equal '204'
+        post_github_payload(server.port, :valid, fmt).first
+          .code.must_equal '204'
       end
     end
 
     it 'accepts form travis POSTs' do
-      post_travis_payload(server.port, :success, :form).first.code
-        .must_equal '204'
+      post_travis_payload(server.port, :success, :form).first
+        .code.must_equal '204'
     end
   end
 
