@@ -4,8 +4,9 @@
 #+ #### Hookworm Build Index Handler
 #+
 
-require 'json'
+require 'erb'
 require 'fileutils'
+require 'json'
 require 'time'
 require_relative '.hookworm_base'
 
@@ -20,6 +21,7 @@ class HookwormBuildIndexHandler
     0
   rescue HookwormTravisPayloadBuildIndexer::InvalidPayload => e
     log.error { e }
+    1
   ensure
     output_stream.puts JSON.pretty_generate(payload)
     0
@@ -48,6 +50,7 @@ class HookwormTravisPayloadBuildIndexer
     mkdir_p(File.dirname(build_id_path))
     write_payload(payload, build_id_path)
     link_all_category_paths(payload, repo_slug, build_id_path)
+    update_all_directory_indexes(repo_slug)
   end
 
   private
@@ -98,10 +101,22 @@ class HookwormTravisPayloadBuildIndexer
 
   def link_latest_build(repo_slug)
     builds_glob = "#{index_prefix}/#{repo_slug}/builds/_by_datetime/*.json"
-    mkdir_p_ln_sf(
-      Dir.glob(builds_glob).sort.last,
-      "#{index_prefix}/#{repo_slug}/builds/_latest.json"
-    )
+    latest = ''
+    Dir.glob(builds_glob) do |f|
+      latest = f if File.basename(f) > File.basename(latest)
+    end
+    mkdir_p_ln_sf(latest, "#{index_prefix}/#{repo_slug}/builds/_latest.json")
+  end
+
+  def update_all_directory_indexes(repo_slug)
+    indexer = HookwormDirectoryIndexUpdater.new(cfg)
+    %W(
+      #{index_prefix}
+      #{index_prefix}/#{File.dirname(repo_slug)}
+    ).each do |dir|
+      indexer.update_index!(dir)
+    end
+    indexer.update_all!("#{index_prefix}/#{repo_slug}")
   end
 
   def mkdir_p_ln_sf(src, dest)
@@ -111,7 +126,7 @@ class HookwormTravisPayloadBuildIndexer
   end
 
   def index_prefix
-    @index_prefix ||= "#{@cfg[:static_dir]}/build-index"
+    @index_prefix ||= "#{cfg[:static_dir]}/build-index"
   end
 end
 

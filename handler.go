@@ -72,6 +72,7 @@ type HandlerConfig struct {
 	WormDir       string       `json:"worm_dir"`
 	WormTimeout   int          `json:"worm_timeout"`
 	WormFlags     *wormFlagMap `json:"worm_flags"`
+	Version       string       `json:"version"`
 }
 
 // Handler is the interface each pipeline handler must fulfill

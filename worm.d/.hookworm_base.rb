@@ -6,6 +6,7 @@ require 'logger'
 require 'uri'
 
 module HookwormConfig
+
   private
 
   def cfg
@@ -107,6 +108,54 @@ class HookwormEmailer
       @email_uri.password,
       @email_uri.user ? :plain : nil
     ]
+  end
+end
+
+class HookwormDirectoryIndexUpdater
+  def initialize(cfg)
+    @path_base = cfg[:static_dir]
+    @version = cfg[:version]
+  end
+
+  def update_all!(root_dir)
+    Dir.glob(%W(#{root_dir} #{root_dir}/* #{root_dir}/**/*)) do |entry|
+      update_index!(entry) if File.directory?(entry)
+    end
+  end
+
+  def update_index!(directory)
+    File.open(File.join(directory, 'index.html'), 'w:UTF-8') do |f|
+      f.write TemplateContext.new(
+        @version,
+        directory.gsub(/#{@path_base}/, ''),
+        Dir.entries(directory).sort.reject { |e| e =~ /^(\.|index\.html)$/ }
+      ).render(index_tmpl)
+    end
+  end
+
+  private
+
+  def index_tmpl
+    @index_tmpl ||= ERB.new(index_tmpl_string)
+  end
+
+  def index_tmpl_string
+    @index_tmpl_string ||= File.read(
+      File.expand_path('../.index-template.html.erb', __FILE__)
+    )
+  end
+
+  class TemplateContext
+    def initialize(version, uri_path, entries)
+      @version = version
+      @uri_path = uri_path
+      @entries = entries
+    end
+
+    def render(template)
+      @build_time = Time.now.utc
+      template.result(binding)
+    end
   end
 end
 

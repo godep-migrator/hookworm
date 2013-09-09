@@ -193,6 +193,7 @@ func ServerMain() int {
 		WormDir:       *wormDirFlag,
 		WormTimeout:   *wormTimeoutFlag,
 		WormFlags:     wormFlags,
+		Version:       progVersion(),
 	}
 
 	if cfg.Debug {
