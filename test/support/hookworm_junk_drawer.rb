@@ -24,6 +24,14 @@ module HookwormJunkDrawer
     execute_command_in_tmpdir(command, stdin_string)
   end
 
+  def handler_config(fizz, working_dir)
+    {
+      'fizz' => fizz,
+      'working_dir' => working_dir,
+      'static_dir' => "#{working_dir}/public",
+    }
+  end
+
   def execute_command_in_tmpdir(command, stdin_string)
     Dir.chdir(tempdir) { execute_command(command, stdin_string) }
   end

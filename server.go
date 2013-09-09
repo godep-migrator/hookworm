@@ -249,11 +249,14 @@ func (srv *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	status := http.StatusBadRequest
 	body := ""
 	contentType := ctypeJSON
+	forwarded := false
 
 	defer func() {
-		w.Header().Set("Content-Type", contentType)
-		w.WriteHeader(status)
-		fmt.Fprintf(w, "%s", body)
+		if !forwarded {
+			w.Header().Set("Content-Type", contentType)
+			w.WriteHeader(status)
+			fmt.Fprintf(w, "%s", body)
+		}
 		fmt.Fprintf(os.Stderr, "%s - - [%s] \"%s %s %s\" %d -\n",
 			r.RemoteAddr, time.Now().UTC().Format(logTimeFmt),
 			r.Method, r.URL.Path, r.Proto, status)
@@ -310,6 +313,7 @@ func (srv *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	default:
 		log.Printf("Forwarding request to file server: %s", r.URL.Path)
+		forwarded = true
 		srv.fileServer.ServeHTTP(w, r)
 		return
 	}
