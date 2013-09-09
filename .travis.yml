@@ -40,3 +40,10 @@ notifications:
   email:
     recipients:
     - github+hookworm@modcloth.com
+  webhooks:
+    urls:
+    - secure: ! 'G4YGOrPF8OJpGJwBny80hj1N92PDzno1y6h84pgDqDF4vSU6c09fh1Fk4c0Y
+
+        xMIUcrwhoC5hwPwkrJcYF9aX595dux7ytiROq+ca6gVkK2U5HI5+wU6OFF+w
+
+        boFsabvqGYPefMB/C59W9TQxMkAoaA5zr/kucS2feyfzTacGMR8='
