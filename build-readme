@@ -8,7 +8,7 @@ exe = "#{ENV['GOPATH'].split(':').first}/bin/hookworm-server"
 usage = `#{exe} -h 2>&1`.chomp
 handler_usage = ''
 
-Dir.glob("#{File.expand_path('../', __FILE__)}/worm.d/*.*").each do |handler|
+Dir["#{File.expand_path('../', __FILE__)}/worm.d/*.*"].sort.each do |handler|
   File.read(handler).split($RS).select do |l|
     l =~ %r{^(#|//)\+\s?}
   end.each do |l|
