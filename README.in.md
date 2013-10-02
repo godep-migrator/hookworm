@@ -33,7 +33,7 @@ hookworm-server -d \
 
 Handler executables are expected to fulfill the following contract:
 
-- has one of the following file extensions: `.js`, `.pl`, `.py`, `.rb`, `.sh`
+- has one of the following file extensions: `.js`, `.pl`, `.py`, `.rb`, `.sh`, `.bash`
 - does not begin with `.` (hidden file)
 - accepts a positional argument of `configure`
 - accepts positional arguments of `handle github`

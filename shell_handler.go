@@ -14,11 +14,12 @@ type shellHandler struct {
 
 var (
 	interpreterMap = map[string]string{
-		".js": "node",
-		".py": "python",
-		".pl": "perl",
-		".rb": "ruby",
-		".sh": "bash",
+		".js":   "node",
+		".py":   "python",
+		".pl":   "perl",
+		".rb":   "ruby",
+		".sh":   "sh",
+		".bash": "bash",
 	}
 )
 
