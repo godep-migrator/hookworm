@@ -44,7 +44,7 @@ class HookwormTravisPayloadBuildIndexer
     mkdir_p(index_prefix)
     repo_slug = (payload[:repository] || {})[:slug]
     unless repo_slug
-      raise InvalidPayload.new("Invalid repo slug #{repo_slug.inspect}")
+      fail InvalidPayload, "Invalid repo slug #{repo_slug.inspect}"
     end
     build_id_path = payload_build_id_path(repo_slug, payload)
     mkdir_p(File.dirname(build_id_path))

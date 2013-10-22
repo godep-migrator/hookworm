@@ -7,7 +7,7 @@ require 'time'
 
 now = Time.now.utc
 
-fakesmtpd_port = rand(13100..13109)
+fakesmtpd_port = rand(13_100..13_109)
 fakesmtpd_message_dir = File.expand_path(
   '../../../.mtbb-artifacts/emails', __FILE__
 )
@@ -33,7 +33,7 @@ null_static_dir = File.expand_path(
   "../../../.mtbb-artifacts/hookworm-null-public-#{now.to_i}-#{$PID}",
   __FILE__
 )
-null_port = rand(12100..12109)
+null_port = rand(12_100..12_109)
 Mtbb.register(
   :null,
   server_name: 'hookworm-null',
@@ -58,7 +58,7 @@ debug_static_dir = File.expand_path(
   "../../../.mtbb-artifacts/hookworm-debug-public-#{now.to_i}-#{$PID}",
   __FILE__
 )
-debug_port = rand(12110..12119)
+debug_port = rand(12_110..12_119)
 Mtbb.register(
   :debug,
   server_name: 'hookworm-debug',
