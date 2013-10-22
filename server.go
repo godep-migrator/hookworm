@@ -10,23 +10,30 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 	"text/template"
 	"time"
 )
 
 var (
-	addrFlag        = flag.String("a", ":9988", "Server address")
-	wormTimeoutFlag = flag.Int("T", 30, "Timeout for handler executables (in seconds)")
-	workingDirFlag  = flag.String("D", "", "Working directory (scratch pad)")
-	wormDirFlag     = flag.String("W", "", "Worm directory that contains handler executables")
-	staticDirFlag   = flag.String("S", "", "Public static directory (default $PWD/public)")
-	pidFileFlag     = flag.String("P", "", "PID file (only written if flag given)")
-	debugFlag       = flag.Bool("d", false, "Show debug output")
+	addr              = os.Getenv("HOOKWORM_ADDR")
+	wormTimeoutString = os.Getenv("HOOKWORM_HANDLER_TIMEOUT")
+	wormTimeout       = uint64(30)
+	workingDir        = os.Getenv("HOOKWORM_WORKING_DIR")
+	wormDir           = os.Getenv("HOOKWORM_WORM_DIR")
+	staticDir         = os.Getenv("HOOKWORM_STATIC_DIR")
+	pidFile           = os.Getenv("HOOKWORM_PID_FILE")
+	debugString       = os.Getenv("HOOKWORM_DEBUG")
+	debug             = false
 
-	githubPathFlag = flag.String("github.path", "/github", "Path to handle Github payloads")
-	travisPathFlag = flag.String("travis.path", "/travis", "Path to handle Travis payloads")
+	envWormFlags = os.Getenv("HOOKWORM_WORM_FLAGS")
 
+	githubPath = os.Getenv("HOOKWORM_GITHUB_PATH")
+	travisPath = os.Getenv("HOOKWORM_TRAVIS_PATH")
+)
+
+var (
 	printRevisionFlag       = flag.Bool("rev", false, "Print revision and exit")
 	printVersionFlag        = flag.Bool("version", false, "Print version and exit")
 	printVersionRevTagsFlag = flag.Bool("version+", false, "Print version, revision, and build tags")
@@ -111,7 +118,46 @@ type testFormContext struct {
 }
 
 func init() {
+	var err error
+
 	hookwormFaviconBytes, _ = base64.StdEncoding.DecodeString(hookwormFaviconBase64)
+
+	if len(wormTimeoutString) > 0 {
+		wormTimeout, err = strconv.ParseUint(wormTimeoutString, 10, 64)
+		if err != nil {
+			log.Fatalf("Invalid worm timeout string given: %q %v", wormTimeoutString, err)
+		}
+	}
+
+	if len(debugString) > 0 {
+		debug, err = strconv.ParseBool(debugString)
+		if err != nil {
+			log.Fatalf("Invalid debug string given: %q %v", debugString, err)
+		}
+	}
+
+	if githubPath == "" {
+		githubPath = "/github"
+	}
+
+	if travisPath == "" {
+		travisPath = "/travis"
+	}
+
+	if addr == "" {
+		addr = ":9988"
+	}
+
+	flag.StringVar(&addr, "a", addr, "Server address [HOOKWORM_ADDR]")
+	flag.Uint64Var(&wormTimeout, "T", wormTimeout, "Timeout for handler executables (in seconds) [HOOKWORM_HANDLER_TIMEOUT]")
+	flag.StringVar(&workingDir, "D", workingDir, "Working directory (scratch pad) [HOOKWORM_WORKING_DIR]")
+	flag.StringVar(&wormDir, "W", wormDir, "Worm directory that contains handler executables [HOOKWORM_WORM_DIR]")
+	flag.StringVar(&staticDir, "S", staticDir, "Public static directory (default $PWD/public) [HOOKWORM_STATIC_DIR]")
+	flag.StringVar(&pidFile, "P", pidFile, "PID file (only written if flag given) [HOOKWORM_PID_FILE]")
+	flag.BoolVar(&debug, "d", debug, "Show debug output [HOOKWORM_DEBUG]")
+
+	flag.StringVar(&githubPath, "github.path", githubPath, "Path to handle Github payloads [HOOKWORM_GITHUB_PATH]")
+	flag.StringVar(&travisPath, "travis.path", travisPath, "Path to handle Travis payloads [HOOKWORM_TRAVIS_PATH]")
 }
 
 // Server implements ServeHTTP, parsing payloads and handing them off to the
@@ -156,7 +202,12 @@ func ServerMain() int {
 		wormFlags.Set(flag.Arg(i))
 	}
 
-	workingDir, err := getWorkingDir(*workingDirFlag)
+	envWormFlagParts := strings.Split(envWormFlags, ";")
+	for _, flagPart := range envWormFlagParts {
+		wormFlags.Set(strings.TrimSpace(flagPart))
+	}
+
+	workingDir, err := getWorkingDir(workingDir)
 	if err != nil {
 		log.Printf("ERROR: %v\n", err)
 		return 1
@@ -170,7 +221,7 @@ func ServerMain() int {
 
 	defer os.RemoveAll(workingDir)
 
-	staticDir, err := getStaticDir(*staticDirFlag)
+	staticDir, err := getStaticDir(staticDir)
 	if err != nil {
 		log.Printf("ERROR: %v\n", err)
 		return 1
@@ -183,15 +234,15 @@ func ServerMain() int {
 	}
 
 	cfg := &HandlerConfig{
-		Debug:         *debugFlag,
-		GithubPath:    *githubPathFlag,
-		ServerAddress: *addrFlag,
-		ServerPidFile: *pidFileFlag,
+		Debug:         debug,
+		GithubPath:    githubPath,
+		ServerAddress: addr,
+		ServerPidFile: pidFile,
 		StaticDir:     staticDir,
-		TravisPath:    *travisPathFlag,
+		TravisPath:    travisPath,
 		WorkingDir:    workingDir,
-		WormDir:       *wormDirFlag,
-		WormTimeout:   *wormTimeoutFlag,
+		WormDir:       wormDir,
+		WormTimeout:   int(wormTimeout),
 		WormFlags:     wormFlags,
 		Version:       progVersion(),
 	}
