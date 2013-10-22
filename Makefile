@@ -10,6 +10,9 @@ GO_TAG_ARGS ?= -tags full
 TAGS_VAR := hookworm.BuildTags
 GOBUILD_LDFLAGS := -ldflags "-X $(VERSION_VAR) $(REPO_VERSION) -X $(REV_VAR) $(REPO_REV) -X $(TAGS_VAR) '$(GO_TAG_ARGS)' "
 
+DOCKER ?= sudo docker
+BUILD_FLAGS ?= -no-cache=true -rm=true
+
 ADDR := :9988
 
 all: clean test golden README.md
@@ -34,6 +37,9 @@ clean:
 	if [ -d $${GOPATH%%:*}/pkg ] ; then \
 		find $${GOPATH%%:*}/pkg -name '*hookworm*' -exec rm -v {} \; ; \
 	fi
+
+container:
+	$(DOCKER) build -t quay.io/modcloth/hookworm:$(REPO_VERSION) $(BUILD_FLAGS) .
 
 distclean: clean
 	rm -f mtbb fakesmtpd
@@ -67,4 +73,4 @@ serve:
 todo:
 	@grep -n -R TODO . | grep -v -E '^(./Makefile|./.git)'
 
-.PHONY: all build clean distclean deps serve test fmtpolice todo golden
+.PHONY: all build clean container distclean deps serve test fmtpolice todo golden
