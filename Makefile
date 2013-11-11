@@ -25,8 +25,8 @@ deps: fakesmtpd mtbb public
 	if [ ! -L $${GOPATH%%:*}/src/hookworm ] ; then gvm linkthis ; fi
 	gem query --local | grep -Eq '^mail\b.*\b2\.5\.4\b'  || \
 		gem install mail -v '2.5.4' --no-ri --no-rdoc
-	gem query --local | grep -Eq '^rubocop\b.*\b0\.12\.0\b'  || \
-		gem install rubocop -v '0.12.0' --no-ri --no-rdoc
+	gem query --local | grep -Eq '^rubocop\b.*\b0\.14\.1\b'  || \
+		gem install rubocop -v '~> 0.14.1' --no-ri --no-rdoc
 
 clean:
 	rm -rf ./log ./.mtbb-artifacts/ ./tests.log

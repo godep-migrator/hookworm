@@ -44,7 +44,7 @@ describe 'hookworm logger' do
   describe 'when handling github payloads' do
     before do
       @github_payload = github_payload_hash('pull_request')
-      @github_payload[:repository].merge!({ id: @fizz })
+      @github_payload[:repository].merge!(id: @fizz)
       handle(JSON.dump(@handler_config), %w(configure))
     end
 
