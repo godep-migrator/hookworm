@@ -4,6 +4,7 @@
 /mtbb
 /fakesmtpd
 /.mtbb-artifacts/
+/.vagrant/
 
 *.test
 *.cfg.json
