@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # vim:fileencoding=utf-8
 
 require 'open3'

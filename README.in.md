@@ -81,7 +81,7 @@ ___HANDLER_USAGE___
 
 ### Handler logging
 
-Each handler that uses the `.hookworm_base.rb` has a log that writes to
+Each handler that uses the `hookworm-base` gem has a log that writes to
 `$stderr`, the level for which may be set via the `log_level` postfix
 argument as long as it is a valid string log level, e.g.
 `log_level=debug`.

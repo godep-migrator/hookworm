@@ -1,13 +1,18 @@
-TARGETS := hookworm
+HOOKWORM_PACKAGE := github.com/modcloth-labs/hookworm
+TARGETS := \
+  $(HOOKWORM_PACKAGE) \
+  $(HOOKWORM_PACKAGE)/hookworm-server
 
-VERSION_VAR := hookworm.VersionString
+VERSION_VAR := $(HOOKWORM_PACKAGE).VersionString
 REPO_VERSION := $(shell git describe --always --dirty --tags)
 
-REV_VAR := hookworm.RevisionString
+REV_VAR := $(HOOKWORM_PACKAGE).RevisionString
 REPO_REV := $(shell git rev-parse --sq HEAD)
 
+GO ?= go
+GODEP ?= godep
 GO_TAG_ARGS ?= -tags full
-TAGS_VAR := hookworm.BuildTags
+TAGS_VAR := $(HOOKWORM_PACKAGE).BuildTags
 GOBUILD_LDFLAGS := -ldflags "-X $(VERSION_VAR) $(REPO_VERSION) -X $(REV_VAR) $(REPO_REV) -X $(TAGS_VAR) '$(GO_TAG_ARGS)' "
 
 DOCKER ?= sudo docker
@@ -18,25 +23,35 @@ ADDR := :9988
 all: clean test golden README.md
 
 test: build fmtpolice rubocop
-	go test -race $(GOBUILD_LDFLAGS) $(GO_TAG_ARGS) -x -v $(TARGETS)
+	$(GO) test -i $(GOBUILD_LDFLAGS) $(GO_TAG_ARGS) -x -v $(TARGETS)
+	$(GO) test -race $(GOBUILD_LDFLAGS) $(GO_TAG_ARGS) -x -v $(TARGETS)
 
 build: deps
-	go install $(GOBUILD_LDFLAGS) $(GO_TAG_ARGS) -x $(TARGETS)
-	go build -o $${GOPATH%%:*}/bin/hookworm-server $(GOBUILD_LDFLAGS) $(GO_TAG_ARGS) ./hookworm-server
+	$(GO) install $(GOBUILD_LDFLAGS) $(GO_TAG_ARGS) -x $(TARGETS)
 
 deps: fakesmtpd mtbb public
-	if [ ! -L $${GOPATH%%:*}/src/hookworm ] ; then gvm linkthis ; fi
+	if [ ! -e $${GOPATH%%:*}/src/$(HOOKWORM_PACKAGE) ] ; then \
+		mkdir -p $${GOPATH%%:*}/src/github.com/modcloth-labs ; \
+		ln -sv $(PWD) $${GOPATH%%:*}/src/$(HOOKWORM_PACKAGE) ; \
+	fi
 	gem query --local | grep -Eq '^mail\b.*\b2\.5\.4\b'  || \
 		gem install mail -v '2.5.4' --no-ri --no-rdoc
-	gem query --local | grep -Eq '^rubocop\b.*\b0\.14\.1\b'  || \
-		gem install rubocop -v '~> 0.14.1' --no-ri --no-rdoc
+	gem query --local | grep -Eq '^rubocop\b.*\b0\.17\.0\b'  || \
+		gem install rubocop -v '~> 0.17.0' --no-ri --no-rdoc
+	gem query --local | grep -Eq '^hookworm-base\b.*\b0\.1\.0\b'  || \
+		gem install hookworm-base -v '~> 0.1.0' --no-ri --no-rdoc
+	$(GO) get -x $(GOBUILD_LDFLAGS) $(GO_TAG_ARGS) -x $(TARGETS)
+	$(GODEP) restore
 
 clean:
 	rm -rf ./log ./.mtbb-artifacts/ ./tests.log
-	go clean -x $(TARGETS) || true
+	$(GO) clean -x $(TARGETS) || true
 	if [ -d $${GOPATH%%:*}/pkg ] ; then \
 		find $${GOPATH%%:*}/pkg -name '*hookworm*' -exec rm -v {} \; ; \
 	fi
+
+save:
+	$(GODEP) save -copy=false $(HOOKWORM_PACKAGE)
 
 container:
 	$(DOCKER) build -t quay.io/modcloth/hookworm:$(REPO_VERSION) $(BUILD_FLAGS) .

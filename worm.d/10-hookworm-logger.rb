@@ -1,5 +1,4 @@
 #!/usr/bin/env ruby
-# -*- coding: utf-8 -*-
 # vim:fileencoding=utf-8
 #+ #### Hookworm Logger
 #+
@@ -11,10 +10,10 @@ require 'json'
 require 'logger'
 require 'syslog'
 
-require_relative '.hookworm_base'
+require 'hookworm-base'
 
 class HookwormLogger
-  include HookwormBase
+  include Hookworm::Base
 
   private
 

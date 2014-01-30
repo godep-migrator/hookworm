@@ -9,16 +9,16 @@ GitHub & Travis hook receiving thingydoo.
 
 ```
 Usage: hookworm-server [options] [key=value...]
-  -D="": Working directory (scratch pad)
-  -P="": PID file (only written if flag given)
-  -S="": Public static directory (default $PWD/public)
-  -T=30: Timeout for handler executables (in seconds)
-  -W="": Worm directory that contains handler executables
-  -a=":9988": Server address
-  -d=false: Show debug output
-  -github.path="/github": Path to handle Github payloads
+  -D="": Working directory (scratch pad) [HOOKWORM_WORKING_DIR]
+  -P="": PID file (only written if flag given) [HOOKWORM_PID_FILE]
+  -S="": Public static directory (default $PWD/public) [HOOKWORM_STATIC_DIR]
+  -T=30: Timeout for handler executables (in seconds) [HOOKWORM_HANDLER_TIMEOUT]
+  -W="": Worm directory that contains handler executables [HOOKWORM_WORM_DIR]
+  -a=":9988": Server address [HOOKWORM_ADDR]
+  -d=false: Show debug output [HOOKWORM_DEBUG]
+  -github.path="/github": Path to handle Github payloads [HOOKWORM_GITHUB_PATH]
   -rev=false: Print revision and exit
-  -travis.path="/travis": Path to handle Travis payloads
+  -travis.path="/travis": Path to handle Travis payloads [HOOKWORM_TRAVIS_PATH]
   -version=false: Print version and exit
   -version+=false: Print version, revision, and build tags
 ```
@@ -170,7 +170,7 @@ SMTP auth, e.g.:
 
 ### Handler logging
 
-Each handler that uses the `.hookworm_base.rb` has a log that writes to
+Each handler that uses the `hookworm-base` gem has a log that writes to
 `$stderr`, the level for which may be set via the `log_level` postfix
 argument as long as it is a valid string log level, e.g.
 `log_level=debug`.

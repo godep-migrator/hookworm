@@ -1,5 +1,4 @@
 #!/usr/bin/env ruby
-# -*- coding: utf-8 -*-
 # vim:fileencoding=utf-8
 #+ #### Hookworm Annotator
 #+
@@ -22,10 +21,10 @@
 #+ presence of the `watched_paths` postfix keyword argument?
 
 require 'json'
-require_relative '.hookworm_base'
+require 'hookworm-base'
 
 class HookwormAnnotator
-  include HookwormBase
+  include Hookworm::Base
 
   private
 

@@ -1,5 +1,4 @@
 #!/usr/bin/env ruby
-# -*- coding: utf-8 -*-
 # vim:fileencoding=utf-8
 #+ #### Hookworm Rogue Commit Handler
 #+
@@ -50,10 +49,11 @@ require 'json'
 require 'net/smtp'
 require 'time'
 require 'uri'
-require_relative '.hookworm_base'
+require 'hookworm-base'
+require 'hookworm/emailer'
 
 class HookwormRogueCommitHandler
-  include HookwormBase
+  include Hookworm::Base
 
   private
 
@@ -82,22 +82,22 @@ class Judger
   end
 
   def judge_payload(payload)
-    return unless is_watched_branch?(payload)
+    return unless watched_branch?(payload)
     hcid = payload[:head_commit][:id]
-    return if is_pr_merge?(payload, hcid)
-    return unless has_watched_path?(payload, hcid)
+    return if pr_merge?(payload, hcid)
+    return unless watched_path?(payload, hcid)
     safe_send_rogue_commit_email!(payload)
   end
 
   def new_judge_payload(payload)
-    return unless is_watched_branch?(payload)
+    return unless watched_branch?(payload)
     hcid = payload[:head_commit][:id]
-    return if is_pr_merge?(payload, hcid)
-    return unless has_watched_path?(payload, hcid)
+    return if pr_merge?(payload, hcid)
+    return unless watched_path?(payload, hcid)
     safe_send_rogue_commit_email!(payload)
   end
 
-  def is_watched_branch?(payload)
+  def watched_branch?(payload)
     unless payload[:is_watched_branch]
       log.debug { "#{payload[:ref]} is not a watched branch, yay!" }
       return false
@@ -107,7 +107,7 @@ class Judger
     true
   end
 
-  def is_pr_merge?(payload, hcid)
+  def pr_merge?(payload, hcid)
     if payload[:is_pr_merge]
       log.info { "#{hcid} is a pull request merge, yay!" }
       return true
@@ -117,7 +117,7 @@ class Judger
     false
   end
 
-  def has_watched_path?(payload, hcid)
+  def watched_path?(payload, hcid)
     unless payload[:has_watched_path]
       log.debug { "#{hcid} does not contain watched paths, yay!" }
       return false
@@ -183,7 +183,7 @@ class Judger
   end
 
   def emailer
-    @emailer ||= HookwormEmailer.new(cfg[:worm_flags][:email_uri])
+    @emailer ||= Hookworm::Emailer.new(cfg[:worm_flags][:email_uri])
   end
 
   def log

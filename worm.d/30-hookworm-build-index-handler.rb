@@ -1,5 +1,4 @@
 #!/usr/bin/env ruby
-# -*- coding: utf-8 -*-
 # vim:fileencoding=utf-8
 #+ #### Hookworm Build Index Handler
 #+
@@ -8,10 +7,11 @@ require 'erb'
 require 'fileutils'
 require 'json'
 require 'time'
-require_relative '.hookworm_base'
+require 'hookworm-base'
+require 'hookworm/directory_index_updater'
 
 class HookwormBuildIndexHandler
-  include HookwormBase
+  include Hookworm::Base
 
   private
 
@@ -109,7 +109,7 @@ class HookwormTravisPayloadBuildIndexer
   end
 
   def update_all_directory_indexes(repo_slug)
-    indexer = HookwormDirectoryIndexUpdater.new(cfg)
+    indexer = Hookworm::DirectoryIndexUpdater.new(cfg)
     %W(
       #{index_prefix}
       #{index_prefix}/#{File.dirname(repo_slug)}

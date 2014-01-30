@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # vim:fileencoding=utf-8
 
 require 'json'
@@ -28,7 +27,7 @@ module HookwormJunkDrawer
     {
       'fizz' => fizz,
       'working_dir' => working_dir,
-      'static_dir' => "#{working_dir}/public",
+      'static_dir' => "#{working_dir}/public"
     }
   end
 

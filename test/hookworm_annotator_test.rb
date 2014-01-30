@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # vim:fileencoding=utf-8
 
 require_relative 'test_helper'
@@ -19,7 +18,7 @@ describe 'hookworm annotator' do
       'working_dir' => working_dir,
       'worm_flags' => {
         'watched_branches' => '^master$',
-        'watched_paths' => '.*',
+        'watched_paths' => '.*'
       }
     }
   end

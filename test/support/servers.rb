@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # vim:fileencoding=utf-8
 
 require 'English'
@@ -22,7 +21,7 @@ Mtbb.register(
     '-l', File.expand_path('../../../.mtbb-artifacts/fakesmtpd.log', __FILE__)
   ],
   port: fakesmtpd_port,
-  start: now,
+  start: now
 )
 
 null_working_dir = File.expand_path(
@@ -44,10 +43,10 @@ Mtbb.register(
       '../../../.mtbb-artifacts/hookworm-server-null.pid', __FILE__
     ),
     '-S', null_static_dir,
-    '-D', null_working_dir,
+    '-D', null_working_dir
   ],
   port: null_port,
-  start: now,
+  start: now
 )
 
 debug_working_dir = File.expand_path(
@@ -77,10 +76,10 @@ Mtbb.register(
     'watched_paths=\\.go$,\\.json$',
     "email_uri=smtp://localhost:#{fakesmtpd_port}",
     'email_from_addr=hookworm-runtests@testing.local',
-    'email_recipients=hookworm-self@testing.local',
+    'email_recipients=hookworm-self@testing.local'
   ],
   port: debug_port,
-  start: now,
+  start: now
 )
 
 generated_dirs = [

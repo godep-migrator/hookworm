@@ -1,8 +1,9 @@
 package main
 
 import (
-	"hookworm"
 	"os"
+
+	"github.com/modcloth-labs/hookworm"
 )
 
 func main() {
