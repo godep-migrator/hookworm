@@ -20,13 +20,19 @@ BUILD_FLAGS ?= -no-cache=true -rm=true
 
 ADDR := :9988
 
+WORM_D_HANDLERS := \
+  worm.d/00-hookworm-annotator.sh \
+  worm.d/10-hookworm-logger.sh \
+  worm.d/20-hookworm-rogue-commit-handler.sh \
+  worm.d/30-hookworm-build-index-handler.sh
+
 all: clean test golden README.md
 
 test: build fmtpolice rubocop
 	$(GO) test -i $(GOBUILD_LDFLAGS) $(GO_TAG_ARGS) -x -v $(TARGETS)
 	$(GO) test -race $(GOBUILD_LDFLAGS) $(GO_TAG_ARGS) -x -v $(TARGETS)
 
-build: deps
+build: deps $(WORM_D_HANDLERS)
 	$(GO) install $(GOBUILD_LDFLAGS) $(GO_TAG_ARGS) -x $(TARGETS)
 
 deps: fakesmtpd mtbb public
@@ -34,14 +40,32 @@ deps: fakesmtpd mtbb public
 		mkdir -p $${GOPATH%%:*}/src/github.com/modcloth-labs ; \
 		ln -sv $(PWD) $${GOPATH%%:*}/src/$(HOOKWORM_PACKAGE) ; \
 	fi
-	gem query --local | grep -Eq '^mail\b.*\b2\.5\.4\b'  || \
-		gem install mail -v '2.5.4' --no-ri --no-rdoc
-	gem query --local | grep -Eq '^rubocop\b.*\b0\.17\.0\b'  || \
-		gem install rubocop -v '~> 0.17.0' --no-ri --no-rdoc
-	gem query --local | grep -Eq '^hookworm-base\b.*\b0\.1\.0\b'  || \
-		gem install hookworm-base -v '~> 0.1.0' --no-ri --no-rdoc
+	bundle install
 	$(GO) get -x $(GOBUILD_LDFLAGS) $(GO_TAG_ARGS) -x $(TARGETS)
 	$(GODEP) restore
+
+worm.d/00-hookworm-annotator.sh: worm.d
+	echo '#!/bin/bash' > $@
+	echo 'exec hookworm-annotator "$$@"' >> $@
+	chmod +x $@
+
+worm.d/10-hookworm-logger.sh: worm.d
+	echo '#!/bin/bash' > $@
+	echo 'exec hookworm-logging-handler "$$@"' >> $@
+	chmod +x $@
+
+worm.d/20-hookworm-rogue-commit-handler.sh: worm.d
+	echo '#!/bin/bash' > $@
+	echo 'exec hookworm-rogue-commit-handler "$$@"' >> $@
+	chmod +x $@
+
+worm.d/30-hookworm-build-index-handler.sh: worm.d
+	echo '#!/bin/bash' > $@
+	echo 'exec hookworm-build-index-handler "$$@"' >> $@
+	chmod +x $@
+
+worm.d:
+	mkdir -p $@
 
 clean:
 	rm -rf ./log ./.mtbb-artifacts/ ./tests.log
