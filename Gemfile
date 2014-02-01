@@ -1,7 +1,11 @@
 source 'https://rubygems.org'
 
-gem 'hookworm-base', '~> 0.1'
-gem 'hookworm-handlers', '~> 0.1'
+if ENV['DEV_MODE']
+  gem 'hookworm-handlers',
+      path: File.join(ENV['HOME'], 'workspace/hookworm-handlers-ruby')
+else
+  gem 'hookworm-handlers', '~> 0.1'
+end
 
 group :development do
   gem 'mail', '~> 2.5'
