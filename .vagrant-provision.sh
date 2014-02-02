@@ -30,6 +30,7 @@ if ! docker version ; then
 fi
 
 mkdir -p /gopath
+GOPATH=/gopath go get -x code.google.com/p/go.tools/cmd/cover
 chown -R vagrant:vagrant /gopath
 
 su - vagrant -c /vagrant/.vagrant-provision-as-vagrant.sh

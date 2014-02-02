@@ -2,8 +2,9 @@
 
 test -f ~/.profile && source ~/.profile
 
-cd /gopath/src/github.com/modcloth-labs/hookworm
-
 [[ -s "$HOME/.rvm/scripts/rvm" ]] && source "$HOME/.rvm/scripts/rvm" # Load RVM into a shell session *as a function*
 
-byobu
+if [[ $PS1 ]] ; then
+  cd /vagrant
+  byobu
+fi
