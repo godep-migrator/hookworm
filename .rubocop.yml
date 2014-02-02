@@ -1,7 +1,0 @@
-AllCops:
-  Excludes:
-    - mtbb
-    - fakesmtpd
-
-Documentation:
-  Enabled: false

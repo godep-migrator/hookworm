@@ -73,12 +73,6 @@ The `handle travis` command is invoked whenever a payload is received at
 the Travis-handling path (`/travis` by default).  The payload is passed
 to the handler executable as a JSON object on the standard input stream.
 
-### Included handlers
-
-Hookworm ships with the following handlers:
-
-___HANDLER_USAGE___
-
 ### Handler logging
 
 Each handler that uses the `hookworm-base` gem has a log that writes to

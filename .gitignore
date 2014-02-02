@@ -10,3 +10,5 @@
 *.cfg.json
 
 /worm.d/
+/coverage.out
+/coverage.html

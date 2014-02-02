@@ -8,21 +8,10 @@ env:
   - PATH=$HOME/gopath/bin:$PATH
 before_install:
 - go get -x github.com/kr/godep
+- go get -x code.google.com/p/go.tools/cmd/cover
 - rvm use 2.0.0 --install --binary --fuzzy
-- ruby --version
-- rvm --version
-- gem --version
-install:
-- make build
-- which hookworm-annotator || true
-- ./worm.d/00-hookworm-annotator.sh foo || true
-- which hookworm-logging-handler || true
-- ./worm.d/10-hookworm-logger.sh foo || true
-- which hookworm-rogue-commit-handler || true
-- ./worm.d/20-hookworm-rogue-commit-handler.sh foo || true
-- which hookworm-build-index-handler || true
-- ./worm.d/30-hookworm-build-index-handler.sh foo || true
-script: make test golden
+install: make build
+script: make test
 deploy:
 - provider: s3
   access_key_id:

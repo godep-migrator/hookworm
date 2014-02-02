@@ -20,22 +20,17 @@ BUILD_FLAGS ?= -no-cache=true -rm=true
 
 ADDR := :9988
 
-WORM_D_HANDLERS := \
-  worm.d/00-hookworm-annotator.sh \
-  worm.d/10-hookworm-logger.sh \
-  worm.d/20-hookworm-rogue-commit-handler.sh \
-  worm.d/30-hookworm-build-index-handler.sh
+all: clean test README.md
 
-all: clean test golden README.md
-
-test: build fmtpolice rubocop
+test: build fmtpolice
 	$(GO) test -i $(GOBUILD_LDFLAGS) $(GO_TAG_ARGS) -x -v $(TARGETS)
-	$(GO) test -race $(GOBUILD_LDFLAGS) $(GO_TAG_ARGS) -x -v $(TARGETS)
+	$(GO) test -covermode=count -coverprofile=coverage.out $(GOBUILD_LDFLAGS) $(GO_TAG_ARGS) -x -v $(HOOKWORM_PACKAGE)
+	$(GO) tool cover -func=coverage.out
 
-build: deps $(WORM_D_HANDLERS)
+build: deps
 	$(GO) install $(GOBUILD_LDFLAGS) $(GO_TAG_ARGS) -x $(TARGETS)
 
-deps: fakesmtpd mtbb public
+deps: public
 	if [ ! -e $${GOPATH%%:*}/src/$(HOOKWORM_PACKAGE) ] ; then \
 		mkdir -p $${GOPATH%%:*}/src/github.com/modcloth-labs ; \
 		ln -sv $(PWD) $${GOPATH%%:*}/src/$(HOOKWORM_PACKAGE) ; \
@@ -44,31 +39,8 @@ deps: fakesmtpd mtbb public
 	$(GO) get -x $(GOBUILD_LDFLAGS) $(GO_TAG_ARGS) -x $(TARGETS)
 	$(GODEP) restore
 
-worm.d/00-hookworm-annotator.sh: worm.d
-	echo '#!/bin/bash' > $@
-	echo 'exec hookworm-annotator "$$@"' >> $@
-	chmod +x $@
-
-worm.d/10-hookworm-logger.sh: worm.d
-	echo '#!/bin/bash' > $@
-	echo 'exec hookworm-logging-handler "$$@"' >> $@
-	chmod +x $@
-
-worm.d/20-hookworm-rogue-commit-handler.sh: worm.d
-	echo '#!/bin/bash' > $@
-	echo 'exec hookworm-rogue-commit-handler "$$@"' >> $@
-	chmod +x $@
-
-worm.d/30-hookworm-build-index-handler.sh: worm.d
-	echo '#!/bin/bash' > $@
-	echo 'exec hookworm-build-index-handler "$$@"' >> $@
-	chmod +x $@
-
-worm.d:
-	mkdir -p $@
-
 clean:
-	rm -rf ./log ./.mtbb-artifacts/ ./tests.log
+	rm -rf ./log ./coverage.out
 	$(GO) clean -x $(TARGETS) || true
 	if [ -d $${GOPATH%%:*}/pkg ] ; then \
 		find $${GOPATH%%:*}/pkg -name '*hookworm*' -exec rm -v {} \; ; \
@@ -80,17 +52,8 @@ save:
 container:
 	$(DOCKER) build -t quay.io/modcloth/hookworm:$(REPO_VERSION) $(BUILD_FLAGS) .
 
-distclean: clean
-	rm -f mtbb fakesmtpd
-
-golden:
-	./mtbb -v 2>&1 | tee tests.log
-
 fmtpolice:
 	set -e; for f in $(shell git ls-files '*.go'); do gofmt $$f | diff -u $$f - ; done
-
-rubocop:
-	rubocop --config .rubocop.yml --format simple
 
 public:
 	mkdir -p $@
@@ -98,18 +61,10 @@ public:
 README.md: README.in.md $(shell git ls-files '*.go') $(shell git ls-files 'worm.d/*.*')
 	./build-readme < $< > $@
 
-fakesmtpd:
-	curl -s -o $@ https://raw.github.com/modcloth-labs/fakesmtpd/v0.3.1/lib/fakesmtpd/server.rb
-	chmod +x $@
-
-mtbb:
-	curl -s -o $@ https://raw.github.com/modcloth-labs/mtbb/v0.1.1/lib/mtbb.rb
-	chmod +x $@
-
 serve:
 	$${GOPATH%%:*}/bin/hookworm-server -a $(ADDR) -S
 
 todo:
 	@grep -n -R TODO . | grep -v -E '^(./Makefile|./.git)'
 
-.PHONY: all build clean container distclean deps serve test fmtpolice todo golden
+.PHONY: all build clean container deps serve test fmtpolice todo golden
