@@ -14,9 +14,13 @@ before_install:
 - gem --version
 install:
 - make build
+- which hookworm-annotator || true
 - ./worm.d/00-hookworm-annotator.sh foo || true
+- which hookworm-logging-handler || true
 - ./worm.d/10-hookworm-logger.sh foo || true
+- which hookworm-rogue-commit-handler || true
 - ./worm.d/20-hookworm-rogue-commit-handler.sh foo || true
+- which hookworm-build-index-handler || true
 - ./worm.d/30-hookworm-build-index-handler.sh foo || true
 script: make test golden
 deploy:
