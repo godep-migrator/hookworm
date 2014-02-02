@@ -22,10 +22,17 @@ ADDR := :9988
 
 all: clean test README.md
 
-test: build fmtpolice
+test: build fmtpolice testdeps coverage.html
+
+coverage.html: coverage.out
+	$(GO) tool cover -html=$^ -o $@
+
+coverage.out:
+	$(GO) test -covermode=count -coverprofile=$@ $(GOBUILD_LDFLAGS) $(GO_TAG_ARGS) -x -v $(HOOKWORM_PACKAGE)
+	$(GO) tool cover -func=$@
+
+testdeps:
 	$(GO) test -i $(GOBUILD_LDFLAGS) $(GO_TAG_ARGS) -x -v $(TARGETS)
-	$(GO) test -covermode=count -coverprofile=coverage.out $(GOBUILD_LDFLAGS) $(GO_TAG_ARGS) -x -v $(HOOKWORM_PACKAGE)
-	$(GO) tool cover -func=coverage.out
 
 build: deps
 	$(GO) install $(GOBUILD_LDFLAGS) $(GO_TAG_ARGS) -x $(TARGETS)
