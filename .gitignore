@@ -9,6 +9,4 @@
 *.test
 *.cfg.json
 
-/Gemfile.lock
-
 /worm.d/
