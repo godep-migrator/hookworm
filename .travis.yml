@@ -12,7 +12,12 @@ before_install:
 - ruby --version
 - rvm --version
 - gem --version
-install: make build
+install:
+- make build
+- ./worm.d/00-hookworm-annotator.sh foo || true
+- ./worm.d/10-hookworm-logger.sh foo || true
+- ./worm.d/20-hookworm-rogue-commit-handler.sh foo || true
+- ./worm.d/30-hookworm-build-index-handler.sh foo || true
 script: make test golden
 deploy:
 - provider: s3
