@@ -13,7 +13,9 @@ import (
 	"strconv"
 	"strings"
 	"text/template"
-	"time"
+
+	"github.com/codegangsta/martini"
+	"github.com/codegangsta/martini-contrib/render"
 )
 
 var (
@@ -160,17 +162,6 @@ func init() {
 	flag.StringVar(&travisPath, "travis.path", travisPath, "Path to handle Travis payloads [HOOKWORM_TRAVIS_PATH]")
 }
 
-// Server implements ServeHTTP, parsing payloads and handing them off to the
-// handler pipeline
-type Server struct {
-	pipeline   Handler
-	cfg        *HandlerConfig
-	debug      bool
-	githubPath string
-	travisPath string
-	fileServer http.Handler
-}
-
 // ServerMain is the `main` entry point used by the `hookworm-server`
 // executable
 func ServerMain() int {
@@ -256,11 +247,11 @@ func ServerMain() int {
 	}
 
 	server, err := NewServer(cfg)
+
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	http.Handle("/", server)
 	log.Printf("Listening on %v\n", cfg.ServerAddress)
 
 	if len(cfg.ServerPidFile) > 0 {
@@ -275,138 +266,78 @@ func ServerMain() int {
 		}
 	}
 
-	log.Fatal(http.ListenAndServe(cfg.ServerAddress, nil))
+	log.Fatal(http.ListenAndServe(cfg.ServerAddress, server))
 	return 0 // <-- never reached, but necessary to appease compiler
 }
 
-// NewServer builds a Server instance given a HandlerConfig
-func NewServer(cfg *HandlerConfig) (*Server, error) {
+// NewServer builds a martini.ClassicMartini instance given a HandlerConfig
+func NewServer(cfg *HandlerConfig) (*martini.ClassicMartini, error) {
 	pipeline, err := NewHandlerPipeline(cfg)
 	if err != nil {
 		return nil, err
 	}
 
-	server := &Server{
-		pipeline:   pipeline,
-		cfg:        cfg,
-		debug:      cfg.Debug,
-		githubPath: cfg.GithubPath,
-		travisPath: cfg.TravisPath,
-		fileServer: http.FileServer(http.Dir(cfg.StaticDir)),
+	m := martini.Classic()
+
+	m.Use(martini.Static(cfg.StaticDir))
+	m.Use(render.Renderer())
+
+	m.MapTo(pipeline, (*Handler)(nil))
+	m.Map(cfg)
+
+	m.Post(cfg.GithubPath, handleGithubPayload)
+	m.Post(cfg.TravisPath, handleTravisPayload)
+	m.Get("/blank", func() int {
+		return http.StatusNoContent
+	})
+	m.Get("/config", handleConfig)
+	m.Get("/favicon.ico", func() (int, string) {
+		return http.StatusOK, string(hookwormFaviconBytes)
+	})
+	m.Get("/", handleIndex)
+	m.Get("/index", handleIndex)
+	m.Get("/index.txt", handleIndex)
+	if cfg.Debug {
+		m.Get("/debug/test", handleTestPage)
 	}
-	return server, nil
+
+	return m, nil
 }
 
-func (srv *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	status := http.StatusBadRequest
-	body := ""
-	contentType := ctypeJSON
-	forwarded := false
-
-	defer func() {
-		if !forwarded {
-			w.Header().Set("Content-Type", contentType)
-			w.WriteHeader(status)
-			fmt.Fprintf(w, "%s", body)
-		}
-		fmt.Fprintf(os.Stderr, "%s - - [%s] \"%s %s %s\" %d -\n",
-			r.RemoteAddr, time.Now().UTC().Format(logTimeFmt),
-			r.Method, r.URL.Path, r.Proto, status)
-	}()
-
-	switch r.URL.Path {
-	case srv.githubPath:
-		log.Printf("Handling github request at %s", r.URL.Path)
-		if r.Method != "POST" {
-			status = http.StatusMethodNotAllowed
-			return
-		}
-		status, body = srv.handleGithubPayload(w, r)
-		return
-	case srv.travisPath:
-		log.Printf("Handling travis request at %s", r.URL.Path)
-		if r.Method != "POST" {
-			status = http.StatusMethodNotAllowed
-			return
-		}
-		status, body = srv.handleTravisPayload(w, r)
-		return
-	case "/blank":
-		log.Printf("Handling blank request at %s", r.URL.Path)
-		status = http.StatusNoContent
-		contentType = ctypeText
-		return
-	case "/config":
-		log.Printf("Handling config request at %s", r.URL.Path)
-		status, body = srv.handleConfig(w, r)
-		return
-	case "/favicon.ico":
-		log.Printf("Handling favicon request at %s", r.URL.Path)
-		status = http.StatusOK
-		contentType = ctypeIcon
-		body = string(hookwormFaviconBytes)
-		return
-	case "/", "/index", "/index.txt":
-		log.Printf("Handling index page request at %s", r.URL.Path)
-		status = http.StatusOK
-		contentType = ctypeText
-		body = fmt.Sprintf("%s\n%s\n", hookwormIndex, progVersion())
-		return
-	case "/debug/test":
-		if srv.debug {
-			log.Printf("Handling test page request at %s", r.URL.Path)
-			status, body, contentType = srv.handleTestPage(w, r)
-		} else {
-			log.Printf("Debug not enabled, so returning 404 for %s", r.URL.Path)
-			status = http.StatusNotFound
-			contentType = ctypeText
-			body = "Nothing here.\n"
-		}
-		return
-	default:
-		log.Printf("Forwarding request to file server: %s", r.URL.Path)
-		forwarded = true
-		srv.fileServer.ServeHTTP(w, r)
-		return
-	}
+func handleIndex() string {
+	return fmt.Sprintf("%s\n%s\n", hookwormIndex, progVersion())
 }
 
-func (srv *Server) handleTestPage(w http.ResponseWriter, r *http.Request) (int, string, string) {
+func handleTestPage(cfg *HandlerConfig, w http.ResponseWriter) (int, string) {
 	status := http.StatusOK
 	body := ""
-	contentType := ctypeText
 
 	var bodyBuf bytes.Buffer
 
 	err := testFormHTML.Execute(&bodyBuf, &testFormContext{
-		GithubPath:  strings.TrimLeft(srv.githubPath, "/"),
-		TravisPath:  strings.TrimLeft(srv.travisPath, "/"),
+		GithubPath:  strings.TrimLeft(cfg.GithubPath, "/"),
+		TravisPath:  strings.TrimLeft(cfg.TravisPath, "/"),
 		ProgVersion: progVersion(),
-		Debug:       srv.debug,
+		Debug:       cfg.Debug,
 	})
 	if err != nil {
 		status = http.StatusInternalServerError
-		body = fmt.Sprintf("%+v", err)
-		contentType = ctypeText
+		body = fmt.Sprintf("<!DOCTYPE html><html><head></head><body><h1>%+v</h1></body></html>", err)
 	} else {
 		body = string(bodyBuf.Bytes())
-		contentType = ctypeHTML
 	}
 
-	return status, body, contentType
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+
+	return status, body
 }
 
-func (srv *Server) handleConfig(w http.ResponseWriter, r *http.Request) (int, string) {
-	bodyJSON, err := json.MarshalIndent(srv.cfg, "", "  ")
-	if err != nil {
-		return http.StatusInternalServerError, fmt.Sprintf("%v", err)
-	}
-
-	return http.StatusOK, string(bodyJSON) + "\n"
+func handleConfig(cfg *HandlerConfig, r render.Render) {
+	r.JSON(http.StatusOK, cfg)
 }
 
-func (srv *Server) handleGithubPayload(w http.ResponseWriter, r *http.Request) (int, string) {
-	payload, err := srv.extractPayload(r)
+func handleGithubPayload(pipeline Handler, cfg *HandlerConfig, r *http.Request) (int, string) {
+	payload, err := extractPayload(cfg, r)
 	if err != nil {
 		log.Printf("Error extracting payload: %v\n", err)
 		errJSON, err := json.Marshal(err)
@@ -416,18 +347,18 @@ func (srv *Server) handleGithubPayload(w http.ResponseWriter, r *http.Request) (
 		return http.StatusBadRequest, boomExplosionsJSON
 	}
 
-	if srv.pipeline == nil {
-		if srv.debug {
+	if pipeline == nil {
+		if cfg.Debug {
 			log.Println("No pipeline present, so doing nothing.")
 		}
 		return http.StatusNoContent, ""
 	}
 
-	if srv.debug {
+	if cfg.Debug {
 		log.Printf("Sending payload down pipeline: %+v", payload)
 	}
 
-	_, err = srv.pipeline.HandleGithubPayload(payload)
+	_, err = pipeline.HandleGithubPayload(payload)
 	if err != nil {
 		errJSON, err := json.Marshal(err)
 		if err != nil {
@@ -439,8 +370,8 @@ func (srv *Server) handleGithubPayload(w http.ResponseWriter, r *http.Request) (
 	return http.StatusNoContent, ""
 }
 
-func (srv *Server) handleTravisPayload(w http.ResponseWriter, r *http.Request) (int, string) {
-	payload, err := srv.extractPayload(r)
+func handleTravisPayload(pipeline Handler, cfg *HandlerConfig, r *http.Request) (int, string) {
+	payload, err := extractPayload(cfg, r)
 	if err != nil {
 		log.Printf("Error extracting payload: %v\n", err)
 
@@ -451,18 +382,18 @@ func (srv *Server) handleTravisPayload(w http.ResponseWriter, r *http.Request) (
 		return http.StatusInternalServerError, boomExplosionsJSON
 	}
 
-	if srv.pipeline == nil {
-		if srv.debug {
+	if pipeline == nil {
+		if cfg.Debug {
 			log.Println("No pipeline present, so doing nothing.")
 		}
 		return http.StatusNoContent, ""
 	}
 
-	if srv.debug {
+	if cfg.Debug {
 		log.Printf("Sending payload down pipeline: %+v", payload)
 	}
 
-	_, err = srv.pipeline.HandleTravisPayload(payload)
+	_, err = pipeline.HandleTravisPayload(payload)
 	if err != nil {
 		errJSON, err := json.Marshal(err)
 		if err != nil {
@@ -474,7 +405,7 @@ func (srv *Server) handleTravisPayload(w http.ResponseWriter, r *http.Request) (
 	return http.StatusNoContent, ""
 }
 
-func (srv *Server) extractPayload(r *http.Request) (string, error) {
+func extractPayload(cfg *HandlerConfig, r *http.Request) (string, error) {
 	rawPayload := ""
 	ctype := abbrCtype(r.Header.Get("Content-Type"))
 
@@ -494,7 +425,7 @@ func (srv *Server) extractPayload(r *http.Request) (string, error) {
 		return "", fmt.Errorf("empty payload")
 	}
 
-	if srv.debug {
+	if cfg.Debug {
 		log.Println("Raw payload: ", rawPayload)
 	}
 	return rawPayload, nil
