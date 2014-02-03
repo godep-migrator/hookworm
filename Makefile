@@ -69,7 +69,7 @@ README.md: README.in.md $(shell git ls-files '*.go') $(shell git ls-files 'worm.
 	./build-readme < $< > $@
 
 serve:
-	$${GOPATH%%:*}/bin/hookworm-server -a $(ADDR) -S
+	$${GOPATH%%:*}/bin/hookworm-server -a $(ADDR)
 
 todo:
 	@grep -n -R TODO . | grep -v -E '^(./Makefile|./.git)'
