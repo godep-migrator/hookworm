@@ -1,7 +1,6 @@
 package hookworm
 
 import (
-	"log"
 	"os"
 	"path"
 	"sort"
@@ -59,13 +58,13 @@ func loadShellHandlersFromWormDir(pipeline Handler, cfg *HandlerConfig) error {
 	)
 
 	if directory, err = os.Open(cfg.WormDir); err != nil {
-		log.Printf("The worm dir was not able to be opened: %v", err)
-		log.Printf("This should be the abs path to the worm dir: %v", cfg.WormDir)
+		logger.Printf("The worm dir was not able to be opened: %v", err)
+		logger.Printf("This should be the abs path to the worm dir: %v", cfg.WormDir)
 		return err
 	}
 
 	if collection, err = directory.Readdirnames(-1); err != nil {
-		log.Printf("Could not read the file names from the directory: %v", err)
+		logger.Printf("Could not read the file names from the directory: %v", err)
 		return err
 	}
 
@@ -75,7 +74,7 @@ func loadShellHandlersFromWormDir(pipeline Handler, cfg *HandlerConfig) error {
 
 	for _, name := range collection {
 		if strings.HasPrefix(name, ".") {
-			log.Printf("Ignoring hidden file %q\n", name)
+			logger.Printf("Ignoring hidden file %q\n", name)
 			continue
 		}
 
@@ -83,25 +82,21 @@ func loadShellHandlersFromWormDir(pipeline Handler, cfg *HandlerConfig) error {
 		sh, err := newShellHandler(fullpath, cfg)
 
 		if err != nil {
-			log.Printf("Failed to build shell handler for %v, skipping.: %v\n",
+			logger.Printf("Failed to build shell handler for %v, skipping.: %v\n",
 				fullpath, err)
 			continue
 		}
 
-		if cfg.Debug {
-			log.Printf("Adding shell handler for %v\n", fullpath)
-		}
+		logger.Debugf("Adding shell handler for %v\n", fullpath)
 
 		curHandler.SetNextHandler(sh)
 		curHandler = sh
 	}
 
-	if cfg.Debug {
-		log.Printf("Current pipeline: %#v\n", pipeline)
+	logger.Debugf("Current pipeline: %#v\n", pipeline)
 
-		for nh := pipeline.NextHandler(); nh != nil; nh = nh.NextHandler() {
-			log.Printf("   ---> %#v\n", nh)
-		}
+	for nh := pipeline.NextHandler(); nh != nil; nh = nh.NextHandler() {
+		logger.Debugf("   ---> %#v\n", nh)
 	}
 
 	return nil

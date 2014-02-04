@@ -24,7 +24,7 @@ var (
 )
 
 func init() {
-	f, err := os.Create(path.Join(os.TempDir(), "noop-handler.py"))
+	f, err := os.Create(path.Join(os.TempDir(), "hookworm-test-noop-handler.py"))
 	if err != nil {
 		panic(err)
 	}

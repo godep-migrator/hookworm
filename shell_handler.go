@@ -2,7 +2,6 @@ package hookworm
 
 import (
 	"encoding/json"
-	"log"
 	"path"
 )
 
@@ -44,7 +43,7 @@ func newShellHandler(filePath string, cfg *HandlerConfig) (*shellHandler, error)
 func (sh *shellHandler) configure() error {
 	configJSON, err := json.Marshal(sh.cfg)
 	if err != nil {
-		log.Printf("Error JSON-marshalling config: %v", err)
+		logger.Printf("Error JSON-marshalling config: %v", err)
 	}
 
 	_, err = sh.command.configure(string(configJSON))
@@ -52,9 +51,7 @@ func (sh *shellHandler) configure() error {
 }
 
 func (sh *shellHandler) HandleGithubPayload(payload string) (string, error) {
-	if sh.cfg.Debug {
-		log.Printf("Sending github payload to %+v\n", sh)
-	}
+	logger.Debugf("Sending github payload to %+v\n", sh)
 
 	noop := false
 	outBytes, err := sh.command.handleGithubPayload(payload)
@@ -76,9 +73,7 @@ func (sh *shellHandler) HandleGithubPayload(payload string) (string, error) {
 }
 
 func (sh *shellHandler) HandleTravisPayload(payload string) (string, error) {
-	if sh.cfg.Debug {
-		log.Printf("Sending travis payload to %+v\n", sh)
-	}
+	logger.Debugf("Sending travis payload to %+v\n", sh)
 	noop := false
 	outBytes, err := sh.command.handleTravisPayload(payload)
 	out := string(outBytes)
