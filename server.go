@@ -1,7 +1,6 @@
 package hookworm
 
 import (
-	"encoding/base64"
 	"flag"
 	"fmt"
 	"log"
@@ -39,8 +38,6 @@ var (
 
 func init() {
 	var err error
-
-	hookwormFaviconBytes, _ = base64.StdEncoding.DecodeString(hookwormFaviconBase64)
 
 	if len(wormTimeoutString) > 0 {
 		wormTimeout, err = strconv.ParseUint(wormTimeoutString, 10, 64)

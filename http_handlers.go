@@ -2,9 +2,9 @@ package hookworm
 
 import (
 	"bytes"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"strings"
 	"text/template"
@@ -90,6 +90,10 @@ type testFormContext struct {
 	TravisPath  string
 	ProgVersion string
 	Debug       bool
+}
+
+func init() {
+	hookwormFaviconBytes, _ = base64.StdEncoding.DecodeString(hookwormFaviconBase64)
 }
 
 func handleIndex() string {
@@ -183,33 +187,4 @@ func handleTravisPayload(pipeline Handler, l *hookwormLogger, r *http.Request) (
 	}
 
 	return http.StatusNoContent, ""
-}
-
-func extractPayload(l *hookwormLogger, r *http.Request) (string, error) {
-	rawPayload := ""
-	ctype := abbrCtype(r.Header.Get("Content-Type"))
-
-	switch ctype {
-	case "application/json", "text/javascript", "text/plain":
-		rawPayloadBytes, err := ioutil.ReadAll(r.Body)
-		if err != nil {
-			return "", err
-		}
-		rawPayload = string(rawPayloadBytes)
-	case "application/x-www-form-urlencoded":
-		rawPayload = r.FormValue("payload")
-	}
-
-	if len(rawPayload) < 1 {
-		l.Println("Empty payload!")
-		return "", fmt.Errorf("empty payload")
-	}
-
-	l.Debugf("Raw payload: %+v\n", rawPayload)
-	return rawPayload, nil
-}
-
-func abbrCtype(ctype string) string {
-	s := strings.Split(ctype, ";")[0]
-	return strings.ToLower(strings.TrimSpace(s))
 }
