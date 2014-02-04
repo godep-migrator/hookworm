@@ -129,24 +129,49 @@ func handleConfig(cfg *HandlerConfig, r render.Render) {
 }
 
 func handleGithubPayload(pipeline Handler, l *hookwormLogger, r *http.Request) (int, string) {
+	return handlePayload("github", pipeline, l, r)
+}
+
+func handleTravisPayload(pipeline Handler, l *hookwormLogger, r *http.Request) (int, string) {
+	return handlePayload("travis", pipeline, l, r)
+}
+
+func handlePayload(which string, pipeline Handler, l *hookwormLogger, r *http.Request) (int, string) {
+	status, payload, err := prepPayloadForPipeline(l, r)
+	if err != nil {
+		return status, payload
+	}
+
+	if pipeline == nil {
+		status, payload := reportNoPipeline(l)
+		return status, payload
+	}
+
+	l.Debugf("Sending %s payload down pipeline: %+v\n", which, payload)
+
+	if which == "github" {
+		_, err = pipeline.HandleTravisPayload(payload)
+	} else if which == "travis" {
+		_, err = pipeline.HandleGithubPayload(payload)
+	}
+
+	return handlePayloadErrors(err)
+}
+
+func prepPayloadForPipeline(l *hookwormLogger, r *http.Request) (int, string, error) {
 	payload, err := extractPayload(l, r)
 	if err != nil {
 		l.Printf("Error extracting payload: %v\n", err)
 		errJSON, err := json.Marshal(err)
 		if err != nil {
-			return http.StatusBadRequest, string(errJSON)
+			return http.StatusBadRequest, string(errJSON), err
 		}
-		return http.StatusBadRequest, boomExplosionsJSON
+		return http.StatusBadRequest, boomExplosionsJSON, err
 	}
+	return 200, payload, nil
+}
 
-	if pipeline == nil {
-		l.Debugf("No pipeline present, so doing nothing.\n")
-		return http.StatusNoContent, ""
-	}
-
-	l.Debugf("Sending payload down pipeline: %+v\n", payload)
-
-	_, err = pipeline.HandleGithubPayload(payload)
+func handlePayloadErrors(err error) (int, string) {
 	if err != nil {
 		errJSON, err := json.Marshal(err)
 		if err != nil {
@@ -158,33 +183,7 @@ func handleGithubPayload(pipeline Handler, l *hookwormLogger, r *http.Request) (
 	return http.StatusNoContent, ""
 }
 
-func handleTravisPayload(pipeline Handler, l *hookwormLogger, r *http.Request) (int, string) {
-	payload, err := extractPayload(l, r)
-	if err != nil {
-		l.Printf("Error extracting payload: %v\n", err)
-
-		errJSON, err := json.Marshal(err)
-		if err != nil {
-			return http.StatusInternalServerError, string(errJSON)
-		}
-		return http.StatusInternalServerError, boomExplosionsJSON
-	}
-
-	if pipeline == nil {
-		l.Debugf("No pipeline present, so doing nothing.\n")
-		return http.StatusNoContent, ""
-	}
-
-	l.Debugf("Sending payload down pipeline: %+v\n", payload)
-
-	_, err = pipeline.HandleTravisPayload(payload)
-	if err != nil {
-		errJSON, err := json.Marshal(err)
-		if err != nil {
-			return http.StatusInternalServerError, string(errJSON)
-		}
-		return http.StatusInternalServerError, boomExplosionsJSON
-	}
-
+func reportNoPipeline(l *hookwormLogger) (int, string) {
+	l.Debugf("No pipeline present, so doing nothing.\n")
 	return http.StatusNoContent, ""
 }

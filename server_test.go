@@ -70,6 +70,7 @@ sys.exit(1)
 )
 
 func init() {
+	debug = true
 	setHere()
 	createServerTestWormDir()
 	fillInServerTestHandlers()
@@ -135,62 +136,58 @@ func setupServer() (*httptest.ResponseRecorder, *martini.ClassicMartini) {
 	return hr, m
 }
 
-func TestServerRespondsToGithubJSON(t *testing.T) {
+func getResponse(verb, path, ctype string, body io.Reader) *httptest.ResponseRecorder {
 	hr, m := setupServer()
 
-	req, err := http.NewRequest("POST", "/github-test", getPayloadJSONReader("github", "valid"))
-	req.Header.Set("Content-Type", "application/json")
-
+	req, err := http.NewRequest(verb, path, body)
 	if err != nil {
-		t.Error(err)
+		panic(err)
 	}
+
+	if ctype != "" {
+		req.Header.Set("Content-Type", ctype)
+	}
+
 	m.ServeHTTP(hr, req)
-	if hr.Code != 204 {
+	return hr
+}
+
+func TestServerRespondsToIndex(t *testing.T) {
+	if getResponse("GET", "/", "", nil).Code != 200 {
+		t.Fail()
+	}
+}
+
+func TestServerRespondsToTestPage(t *testing.T) {
+	if getResponse("GET", "/debug/test", "", nil).Code != 200 {
+		t.Fail()
+	}
+}
+
+func TestServerRespondsToGithubJSON(t *testing.T) {
+	if getResponse("POST", "/github-test", "application/json",
+		getPayloadJSONReader("github", "valid")).Code != 204 {
 		t.Fail()
 	}
 }
 
 func TestServerRespondsToGithubForm(t *testing.T) {
-	hr, m := setupServer()
-
-	req, err := http.NewRequest("POST", "/github-test", getPayloadFormReader("github", "valid"))
-	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-
-	if err != nil {
-		t.Error(err)
-	}
-	m.ServeHTTP(hr, req)
-	if hr.Code != 204 {
+	if getResponse("POST", "/github-test", "application/x-www-form-urlencoded",
+		getPayloadFormReader("github", "valid")).Code != 204 {
 		t.Fail()
 	}
 }
 
 func TestServerRespondsToTravisJSON(t *testing.T) {
-	hr, m := setupServer()
-
-	req, err := http.NewRequest("POST", "/travis-test", getPayloadJSONReader("travis", "valid"))
-	req.Header.Set("Content-Type", "application/json")
-
-	if err != nil {
-		t.Error(err)
-	}
-	m.ServeHTTP(hr, req)
-	if hr.Code != 204 {
+	if getResponse("POST", "/travis-test", "application/json",
+		getPayloadJSONReader("travis", "valid")).Code != 204 {
 		t.Fail()
 	}
 }
 
 func TestServerRespondsToTravisForm(t *testing.T) {
-	hr, m := setupServer()
-
-	req, err := http.NewRequest("POST", "/travis-test", getPayloadFormReader("travis", "valid"))
-	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-
-	if err != nil {
-		t.Error(err)
-	}
-	m.ServeHTTP(hr, req)
-	if hr.Code != 204 {
+	if getResponse("POST", "/travis-test", "application/x-www-form-urlencoded",
+		getPayloadFormReader("travis", "valid")).Code != 204 {
 		t.Fail()
 	}
 }
