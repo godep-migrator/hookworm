@@ -1,0 +1,12 @@
+GEM
+  remote: https://rubygems.org/
+  specs:
+    hookworm-base (0.1.1)
+    hookworm-handlers (0.1.1)
+      hookworm-base (~> 0.1)
+
+PLATFORMS
+  ruby
+
+DEPENDENCIES
+  hookworm-handlers (~> 0.1)

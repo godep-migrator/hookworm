@@ -1,0 +1,15 @@
+#!/bin/bash
+HOOKWORM_WORM_FLAGS="
+watched_branches='^master\$';
+watched_paths='\.(rb|json),Rakefile';
+email_from_addr=hookworm@example.com;
+email_recipients=devs@example.com;
+email_uri=smtp://mail.example.com:25;
+"
+HOOKWORM_WORM_DIR="$PWD/worm.d"
+HOOKWORM_DEBUG=true
+
+echo -en "HOOKWORM_WORM_FLAGS: "
+echo $HOOKWORM_WORM_FLAGS
+echo "HOOKWORM_WORM_DIR: $HOOKWORM_WORM_DIR"
+echo "HOOKWORM_DEBUG: $HOOKWORM_DEBUG"

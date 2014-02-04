@@ -1,49 +1,65 @@
 ---
 language: go
 go:
-- 1.1.2
+- 1.2
 - tip
 env:
   global:
-  - PATH=$HOME/bin:$PATH
-  - ARTIFACTS_AWS_REGION=us-east-1
-  - ARTIFACTS_S3_BUCKET=modcloth-public-travis-artifacts
-  - secure: ! 'Tr8IJkujk98weB3iHmxwpFXZdUt0QlzYNrrP3h7TDpTs2VuXh+RM4m8TYsj4
-
-      uM87QO4a/IuY2pV9LaJmJBaWhNW+q+AHDrLfl5/gcQY5LsSNIxaCMSw7H42U
-
-      kVGRl90+GYw8bJeTgobAu25qvL3EZ65+kdDATO8yLmiUNi38qF0='
-  - secure: ! 'kCfvqAib4Y/U82PzDvZ1/YYx//qy0JMeUbt/C7pC2cuoC0XctUuY2FfFGOQG
-
-      gmRf/bRJ5v95EU8s1pgGe3pX/FEEVXMrGSr1huie4/aDquSEzv0LN+YcW9B+
-
-      zA5Q68KlipnZrt/eyxKrGaG3SqcllzghJqenAarQj8r65BjC65I='
+  - PATH=$HOME/gopath/bin:$PATH
+before_install:
+- go get -x github.com/kr/godep
+- go get -x code.google.com/p/go.tools/cmd/cover
+- rvm use 2.0.0 --install --binary --fuzzy
 install: make build
-script: make test golden
+script: make test
+deploy:
+- provider: s3
+  access_key_id:
+    secure: "fWjfLbztWev7WYMDlaugu2LDMUL9K3rgM76n5VHzr5lbt/TRpjvxes4yqGMqNXyzsw4I2ogc2yWBc3bHMxlkeaEYxITGnWq6XdPtICqY0OYCVTmysp5tShTMj8bivUoTyKAMiQyhDNZ+HF3zZZllXpdoIjVIOZEh2XdxvXX4bUY="
+  secret_access_key:
+    secure: "YVen0yrhXh5LiGJGJoMdzE7rgpCExvDAdq36ndZPwWfziTF0nHwify7oK4mlEHS9pJJbnFdLmO7jwLgf0eY6Ft64xJ4+8G9aSN+wtAKpFl6WPhC5w/Q1zjkZly2BAF5bAkL2r/ZfnOyNgQ30cpdQ4rvLTmSZyn+cx9gUcSnPpDE="
+  bucket: modcloth-public-travis-artifacts
+  skip_cleanup: true
+  local-dir: $TRAVIS_BUILD_DIR/build/.tarball/
+  upload-dir: artifacts/binaries/$(go env GOOS)/$(go env GOARCH)/hookworm/$TRAVIS_COMMIT
+  on:
+    all_branches: true
+    go: 1.2
+- provider: s3
+  access_key_id:
+    secure: "fWjfLbztWev7WYMDlaugu2LDMUL9K3rgM76n5VHzr5lbt/TRpjvxes4yqGMqNXyzsw4I2ogc2yWBc3bHMxlkeaEYxITGnWq6XdPtICqY0OYCVTmysp5tShTMj8bivUoTyKAMiQyhDNZ+HF3zZZllXpdoIjVIOZEh2XdxvXX4bUY="
+  secret_access_key:
+    secure: "YVen0yrhXh5LiGJGJoMdzE7rgpCExvDAdq36ndZPwWfziTF0nHwify7oK4mlEHS9pJJbnFdLmO7jwLgf0eY6Ft64xJ4+8G9aSN+wtAKpFl6WPhC5w/Q1zjkZly2BAF5bAkL2r/ZfnOyNgQ30cpdQ4rvLTmSZyn+cx9gUcSnPpDE="
+  bucket: modcloth-public-travis-artifacts
+  skip_cleanup: true
+  local-dir: $TRAVIS_BUILD_DIR/build/.tarball/
+  upload-dir: artifacts/binaries/$(go env GOOS)/$(go env GOARCH)/hookworm/$TRAVIS_BRANCH
+  on:
+    all_branches: true
+    go: 1.2
+- provider: s3
+  access_key_id:
+    secure: "fWjfLbztWev7WYMDlaugu2LDMUL9K3rgM76n5VHzr5lbt/TRpjvxes4yqGMqNXyzsw4I2ogc2yWBc3bHMxlkeaEYxITGnWq6XdPtICqY0OYCVTmysp5tShTMj8bivUoTyKAMiQyhDNZ+HF3zZZllXpdoIjVIOZEh2XdxvXX4bUY="
+  secret_access_key:
+    secure: "YVen0yrhXh5LiGJGJoMdzE7rgpCExvDAdq36ndZPwWfziTF0nHwify7oK4mlEHS9pJJbnFdLmO7jwLgf0eY6Ft64xJ4+8G9aSN+wtAKpFl6WPhC5w/Q1zjkZly2BAF5bAkL2r/ZfnOyNgQ30cpdQ4rvLTmSZyn+cx9gUcSnPpDE="
+  bucket: modcloth-public-travis-artifacts
+  skip_cleanup: true
+  local-dir: $TRAVIS_BUILD_DIR/build/.tarball/
+  upload-dir: artifacts/binaries/$(go env GOOS)/$(go env GOARCH)/hookworm/$(git describe --always --tags)
+  on:
+    all_branches: true
+    go: 1.2
 after_success:
-- if [ "$TRAVIS_GO_VERSION" == "go1.1.2" ] ; then
-    mkdir -p $HOME/bin ;
-    pushd $HOME/bin ;
-    curl -s -O https://raw.github.com/modcloth-labs/travis-buddy/master/tb ;
-    chmod +x tb ;
-    popd ;
-    if tb nopr ; then
-      mkdir -p $TRAVIS_BUILD_DIR/build/hookworm ;
-      cd $TRAVIS_BUILD_DIR ;
-      git archive HEAD | bzip2 > $TRAVIS_BUILD_DIR/build/hookworm/hookworm-src.tar.bz2 ;
-      tb setup-aws ;
-      tb install-travis-artifacts ;
-      tb upload-go-artifacts --public ;
-    fi ;
-  fi
+- mkdir -p $TRAVIS_BUILD_DIR/build/hookworm
+           $TRAVIS_BUILD_DIR/build/.tarball &&
+  cd $TRAVIS_BUILD_DIR &&
+  cp $HOME/gopath/bin/hookworm-server $TRAVIS_BUILD_DIR/build/hookworm/ &&
+  git archive HEAD | bzip2 >
+    $TRAVIS_BUILD_DIR/build/.tarball/hookworm.src.tar.bz2 &&
+  cd $TRAVIS_BUILD_DIR/build &&
+  tar cjvf hookworm.tar.bz2 hookworm &&
+  mv -v hookworm.tar.bz2 .tarball/ &&
+  cd .tarball/ &&
+  sha256sum hookworm.tar.bz2 hookworm.src.tar.bz2 > SHA256SUMS
 notifications:
-  email:
-    recipients:
-    - github+hookworm@modcloth.com
-  webhooks:
-    urls:
-    - secure: ! 'G4YGOrPF8OJpGJwBny80hj1N92PDzno1y6h84pgDqDF4vSU6c09fh1Fk4c0Y
-
-        xMIUcrwhoC5hwPwkrJcYF9aX595dux7ytiROq+ca6gVkK2U5HI5+wU6OFF+w
-
-        boFsabvqGYPefMB/C59W9TQxMkAoaA5zr/kucS2feyfzTacGMR8='
+  email: github+hookworm@modcloth.com

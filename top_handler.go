@@ -1,9 +1,5 @@
 package hookworm
 
-import (
-	"log"
-)
-
 type topHandler struct {
 	next Handler
 }
@@ -17,7 +13,7 @@ func (th *topHandler) HandleGithubPayload(payload string) (string, error) {
 		return th.next.HandleGithubPayload(payload)
 	}
 
-	log.Println("WARNING: no next handler?")
+	logger.Println("WARNING: no next handler?")
 	return "", nil
 }
 
@@ -26,7 +22,7 @@ func (th *topHandler) HandleTravisPayload(payload string) (string, error) {
 		return th.next.HandleTravisPayload(payload)
 	}
 
-	log.Println("WARNING: no next handler?")
+	logger.Println("WARNING: no next handler?")
 	return "", nil
 }
 

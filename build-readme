@@ -1,21 +1,5 @@
 #!/usr/bin/env ruby
 # vim:fileencoding=utf-8
 
-require 'English'
-
 exe = "#{ENV['GOPATH'].split(':').first}/bin/hookworm-server"
-usage = `#{exe} -h 2>&1`.chomp
-handler_usage = ''
-
-Dir["#{File.expand_path('../', __FILE__)}/worm.d/*.*"].sort.each do |handler|
-  doclines = File.read(handler).split($RS).select do |l|
-    l =~ %r{^(#|//)\+\s?}
-  end
-  doclines.each do |l|
-    handler_usage << l.sub(%r{^(#|//)\+\s?}, '') << "\n"
-  end
-  handler_usage << "\n\n"
-end
-
-$stdout.puts $stdin.read.sub(/___USAGE___/, usage)
-                        .sub(/___HANDLER_USAGE___/, handler_usage)
+$stdout.puts $stdin.read.sub(/___USAGE___/, `#{exe} -h 2>&1`.chomp)

@@ -3,6 +3,7 @@ package hookworm
 import (
 	"fmt"
 	"io/ioutil"
+	"net/http"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -90,4 +91,33 @@ func getWriteableDir(dir, defaultDir string) (string, error) {
 	}
 
 	return defaultDir, nil
+}
+
+func extractPayload(l *hookwormLogger, r *http.Request) (string, error) {
+	rawPayload := ""
+	ctype := abbrCtype(r.Header.Get("Content-Type"))
+
+	switch ctype {
+	case "application/json", "text/javascript", "text/plain":
+		rawPayloadBytes, err := ioutil.ReadAll(r.Body)
+		if err != nil {
+			return "", err
+		}
+		rawPayload = string(rawPayloadBytes)
+	case "application/x-www-form-urlencoded":
+		rawPayload = r.FormValue("payload")
+	}
+
+	if len(rawPayload) < 1 {
+		l.Println("Empty payload!")
+		return "", fmt.Errorf("empty payload")
+	}
+
+	l.Debugf("Raw payload: %+v\n", rawPayload)
+	return rawPayload, nil
+}
+
+func abbrCtype(ctype string) string {
+	s := strings.Split(ctype, ";")[0]
+	return strings.ToLower(strings.TrimSpace(s))
 }
