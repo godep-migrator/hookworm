@@ -1,4 +1,4 @@
-FROM ubuntu:13.10
+FROM stackbrew/ubuntu:13.10
 MAINTAINER Dan Buch <d.buch@modcloth.com>
 
 ENV DEBIAN_FRONTEND noninteractive
