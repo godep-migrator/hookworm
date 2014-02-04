@@ -33,13 +33,12 @@ var (
 
 	githubPath = os.Getenv("HOOKWORM_GITHUB_PATH")
 	travisPath = os.Getenv("HOOKWORM_TRAVIS_PATH")
-)
 
-var (
 	printRevisionFlag       = flag.Bool("rev", false, "Print revision and exit")
 	printVersionFlag        = flag.Bool("version", false, "Print version and exit")
 	printVersionRevTagsFlag = flag.Bool("version+", false, "Print version, revision, and build tags")
 
+	logger       = &hookwormLogger{log.New(os.Stderr, "[hookworm] ", log.LstdFlags)}
 	logTimeFmt   = "2/Jan/2006:15:04:05 -0700" // "%d/%b/%Y:%H:%M:%S %z"
 	testFormHTML = template.Must(template.New("test_form").Parse(`
 <!DOCTYPE html>
@@ -127,14 +126,14 @@ func init() {
 	if len(wormTimeoutString) > 0 {
 		wormTimeout, err = strconv.ParseUint(wormTimeoutString, 10, 64)
 		if err != nil {
-			log.Fatalf("Invalid worm timeout string given: %q %v", wormTimeoutString, err)
+			logger.Fatalf("Invalid worm timeout string given: %q %v", wormTimeoutString, err)
 		}
 	}
 
 	if len(debugString) > 0 {
 		debug, err = strconv.ParseBool(debugString)
 		if err != nil {
-			log.Fatalf("Invalid debug string given: %q %v", debugString, err)
+			logger.Fatalf("Invalid debug string given: %q %v", debugString, err)
 		}
 	}
 
@@ -186,7 +185,7 @@ func ServerMain() int {
 		return 0
 	}
 
-	log.Println("Starting", progVersion())
+	logger.Println("Starting", progVersion())
 
 	wormFlags := newWormFlagMap()
 	for i := 0; i < flag.NArg(); i++ {
@@ -200,13 +199,13 @@ func ServerMain() int {
 
 	workingDir, err := getWorkingDir(workingDir)
 	if err != nil {
-		log.Printf("ERROR: %v\n", err)
+		logger.Printf("ERROR: %v\n", err)
 		return 1
 	}
 
-	log.Println("Using working directory", workingDir)
+	logger.Println("Using working directory", workingDir)
 	if err := os.Setenv("HOOKWORM_WORKING_DIR", workingDir); err != nil {
-		log.Printf("ERROR: %v\n", err)
+		logger.Printf("ERROR: %v\n", err)
 		return 1
 	}
 
@@ -214,13 +213,13 @@ func ServerMain() int {
 
 	staticDir, err := getStaticDir(staticDir)
 	if err != nil {
-		log.Printf("ERROR: %v\n", err)
+		logger.Printf("ERROR: %v\n", err)
 		return 1
 	}
 
-	log.Println("Using static directory", staticDir)
+	logger.Println("Using static directory", staticDir)
 	if err := os.Setenv("HOOKWORM_STATIC_DIR", staticDir); err != nil {
-		log.Printf("ERROR: %v\n", err)
+		logger.Printf("ERROR: %v\n", err)
 		return 1
 	}
 
@@ -238,35 +237,33 @@ func ServerMain() int {
 		Version:       progVersion(),
 	}
 
-	if cfg.Debug {
-		log.Printf("Using handler config: %+v\n", cfg)
-	}
+	logger.Debugf("Using handler config: %+v\n", cfg)
 
 	if err := os.Chdir(cfg.WorkingDir); err != nil {
-		log.Fatalf("Failed to move into working directory %v\n", cfg.WorkingDir)
+		logger.Fatalf("Failed to move into working directory %v\n", cfg.WorkingDir)
 	}
 
 	server, err := NewServer(cfg)
 
 	if err != nil {
-		log.Fatal(err)
+		logger.Fatal(err)
 	}
 
-	log.Printf("Listening on %v\n", cfg.ServerAddress)
+	logger.Printf("Listening on %v\n", cfg.ServerAddress)
 
 	if len(cfg.ServerPidFile) > 0 {
 		pidFile, err := os.Create(cfg.ServerPidFile)
 		if err != nil {
-			log.Fatal("Failed to open PID file:", err)
+			logger.Fatal("Failed to open PID file:", err)
 		}
 		fmt.Fprintf(pidFile, "%d\n", os.Getpid())
 		err = pidFile.Close()
 		if err != nil {
-			log.Fatal("Failed to close PID file:", err)
+			logger.Fatal("Failed to close PID file:", err)
 		}
 	}
 
-	log.Fatal(http.ListenAndServe(cfg.ServerAddress, server))
+	logger.Fatal(http.ListenAndServe(cfg.ServerAddress, server))
 	return 0 // <-- never reached, but necessary to appease compiler
 }
 
@@ -281,6 +278,7 @@ func NewServer(cfg *HandlerConfig) (*martini.ClassicMartini, error) {
 
 	m.Use(martini.Static(cfg.StaticDir))
 	m.Use(render.Renderer())
+	m.Map(logger)
 
 	m.MapTo(pipeline, (*Handler)(nil))
 	m.Map(cfg)
@@ -336,10 +334,10 @@ func handleConfig(cfg *HandlerConfig, r render.Render) {
 	r.JSON(http.StatusOK, cfg)
 }
 
-func handleGithubPayload(pipeline Handler, cfg *HandlerConfig, r *http.Request) (int, string) {
-	payload, err := extractPayload(cfg, r)
+func handleGithubPayload(pipeline Handler, cfg *HandlerConfig, l *hookwormLogger, r *http.Request) (int, string) {
+	payload, err := extractPayload(cfg, l, r)
 	if err != nil {
-		log.Printf("Error extracting payload: %v\n", err)
+		l.Printf("Error extracting payload: %v\n", err)
 		errJSON, err := json.Marshal(err)
 		if err != nil {
 			return http.StatusBadRequest, string(errJSON)
@@ -348,15 +346,11 @@ func handleGithubPayload(pipeline Handler, cfg *HandlerConfig, r *http.Request) 
 	}
 
 	if pipeline == nil {
-		if cfg.Debug {
-			log.Println("No pipeline present, so doing nothing.")
-		}
+		l.Debugf("No pipeline present, so doing nothing.\n")
 		return http.StatusNoContent, ""
 	}
 
-	if cfg.Debug {
-		log.Printf("Sending payload down pipeline: %+v", payload)
-	}
+	l.Debugf("Sending payload down pipeline: %+v\n", payload)
 
 	_, err = pipeline.HandleGithubPayload(payload)
 	if err != nil {
@@ -370,10 +364,10 @@ func handleGithubPayload(pipeline Handler, cfg *HandlerConfig, r *http.Request) 
 	return http.StatusNoContent, ""
 }
 
-func handleTravisPayload(pipeline Handler, cfg *HandlerConfig, r *http.Request) (int, string) {
-	payload, err := extractPayload(cfg, r)
+func handleTravisPayload(pipeline Handler, cfg *HandlerConfig, l *hookwormLogger, r *http.Request) (int, string) {
+	payload, err := extractPayload(cfg, l, r)
 	if err != nil {
-		log.Printf("Error extracting payload: %v\n", err)
+		l.Printf("Error extracting payload: %v\n", err)
 
 		errJSON, err := json.Marshal(err)
 		if err != nil {
@@ -383,15 +377,11 @@ func handleTravisPayload(pipeline Handler, cfg *HandlerConfig, r *http.Request) 
 	}
 
 	if pipeline == nil {
-		if cfg.Debug {
-			log.Println("No pipeline present, so doing nothing.")
-		}
+		l.Debugf("No pipeline present, so doing nothing.\n")
 		return http.StatusNoContent, ""
 	}
 
-	if cfg.Debug {
-		log.Printf("Sending payload down pipeline: %+v", payload)
-	}
+	l.Debugf("Sending payload down pipeline: %+v\n", payload)
 
 	_, err = pipeline.HandleTravisPayload(payload)
 	if err != nil {
@@ -405,7 +395,7 @@ func handleTravisPayload(pipeline Handler, cfg *HandlerConfig, r *http.Request) 
 	return http.StatusNoContent, ""
 }
 
-func extractPayload(cfg *HandlerConfig, r *http.Request) (string, error) {
+func extractPayload(cfg *HandlerConfig, l *hookwormLogger, r *http.Request) (string, error) {
 	rawPayload := ""
 	ctype := abbrCtype(r.Header.Get("Content-Type"))
 
@@ -421,13 +411,11 @@ func extractPayload(cfg *HandlerConfig, r *http.Request) (string, error) {
 	}
 
 	if len(rawPayload) < 1 {
-		log.Println("Empty payload!")
+		l.Println("Empty payload!")
 		return "", fmt.Errorf("empty payload")
 	}
 
-	if cfg.Debug {
-		log.Println("Raw payload: ", rawPayload)
-	}
+	l.Debugf("Raw payload: %+v\n", rawPayload)
 	return rawPayload, nil
 }
 
