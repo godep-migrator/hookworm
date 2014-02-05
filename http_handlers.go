@@ -150,9 +150,9 @@ func handlePayload(which string, pipeline Handler, l *hookwormLogger, r *http.Re
 	l.Debugf("Sending %s payload down pipeline: %+v\n", which, payload)
 
 	if which == "github" {
-		_, err = pipeline.HandleTravisPayload(payload)
-	} else if which == "travis" {
 		_, err = pipeline.HandleGithubPayload(payload)
+	} else if which == "travis" {
+		_, err = pipeline.HandleTravisPayload(payload)
 	}
 
 	return handlePayloadErrors(err)
