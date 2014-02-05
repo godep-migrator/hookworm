@@ -1,6 +1,7 @@
 package hookworm
 
 import (
+	"flag"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -22,7 +23,15 @@ var (
 		TravisPath: "/travis-test",
 		Debug:      true,
 	}
-	here               = ""
+	serverTestContext = &serverSetupContext{
+		noop:  true,
+		debug: true,
+		fl:    flag.NewFlagSet("hookworm-test", flag.ContinueOnError),
+		args:  []string{"-a", ":9989"},
+	}
+
+	here = ""
+
 	serverTestHandlers = map[string]string{
 		"00-echo.py": `#!/usr/bin/env python
 import sys
@@ -201,6 +210,12 @@ func TestServerRespondsToTravisForm(t *testing.T) {
 		getPayloadFormReader("travis", "valid"))
 	if resp.Code != 204 {
 		fmt.Println(resp.Body.String())
+		t.Fail()
+	}
+}
+
+func TestServerMainDoesNotExplode(t *testing.T) {
+	if ServerMain(serverTestContext) != 0 {
 		t.Fail()
 	}
 }
