@@ -7,5 +7,5 @@ import (
 )
 
 func main() {
-	os.Exit(hookworm.ServerMain())
+	os.Exit(hookworm.ServerMain(nil))
 }

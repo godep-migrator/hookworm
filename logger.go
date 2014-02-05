@@ -6,10 +6,11 @@ import (
 
 type hookwormLogger struct {
 	*log.Logger
+	debug bool
 }
 
 func (l *hookwormLogger) Debugf(format string, v ...interface{}) {
-	if !debug {
+	if !l.debug {
 		return
 	}
 
