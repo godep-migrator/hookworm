@@ -15,6 +15,7 @@ Usage: hookworm-server [options] [key=value...]
   -T=30: Timeout for handler executables (in seconds) [HOOKWORM_HANDLER_TIMEOUT]
   -W="": Worm directory that contains handler executables [HOOKWORM_WORM_DIR]
   -a=":9988": Server address [HOOKWORM_ADDR]
+  -b="": Basic auth username:password [HOOKWORM_BASIC_AUTH]
   -d=false: Show debug output [HOOKWORM_DEBUG]
   -github.path="/github": Path to handle Github payloads [HOOKWORM_GITHUB_PATH]
   -rev=false: Print revision and exit

@@ -137,7 +137,7 @@ func getPayloadFormReader(kind, name string) io.Reader {
 }
 
 func setupServer() (*httptest.ResponseRecorder, *martini.ClassicMartini) {
-	m, err := NewServer(serverTestConfig)
+	m, err := NewServer("", serverTestConfig)
 	if err != nil {
 		panic(err)
 	}
