@@ -16,25 +16,25 @@ import (
 
 type serverSetupContext struct {
 	addr                string
+	args                []string
 	basicAuth           string
-	wormTimeoutString   string
-	wormTimeout         uint64
-	workingDir          string
-	wormDir             string
-	staticDir           string
-	pidFile             string
-	debugString         string
 	debug               bool
+	debugString         string
+	env                 []string
 	envWormFlags        string
+	fl                  *flag.FlagSet
 	githubPath          string
-	travisPath          string
+	noop                bool
+	pidFile             string
 	printRevision       bool
 	printVersion        bool
 	printVersionRevTags bool
-	fl                  *flag.FlagSet
-	args                []string
-	env                 []string
-	noop                bool
+	staticDir           string
+	travisPath          string
+	workingDir          string
+	wormDir             string
+	wormTimeout         uint64
+	wormTimeoutString   string
 }
 
 var (
@@ -48,20 +48,20 @@ func ServerMain(c *serverSetupContext) int {
 	if c == nil {
 		c = &serverSetupContext{
 			addr:              os.Getenv("HOOKWORM_ADDR"),
+			args:              os.Args[1:],
 			basicAuth:         os.Getenv("HOOKWORM_BASIC_AUTH"),
-			wormTimeoutString: os.Getenv("HOOKWORM_HANDLER_TIMEOUT"),
-			wormTimeout:       uint64(30),
+			debugString:       os.Getenv("HOOKWORM_DEBUG"),
+			env:               os.Environ(),
+			envWormFlags:      os.Getenv("HOOKWORM_WORM_FLAGS"),
+			fl:                flag.NewFlagSet("hookworm", flag.ExitOnError),
+			githubPath:        os.Getenv("HOOKWORM_GITHUB_PATH"),
+			pidFile:           os.Getenv("HOOKWORM_PID_FILE"),
+			staticDir:         os.Getenv("HOOKWORM_STATIC_DIR"),
+			travisPath:        os.Getenv("HOOKWORM_TRAVIS_PATH"),
 			workingDir:        os.Getenv("HOOKWORM_WORKING_DIR"),
 			wormDir:           os.Getenv("HOOKWORM_WORM_DIR"),
-			staticDir:         os.Getenv("HOOKWORM_STATIC_DIR"),
-			pidFile:           os.Getenv("HOOKWORM_PID_FILE"),
-			debugString:       os.Getenv("HOOKWORM_DEBUG"),
-			envWormFlags:      os.Getenv("HOOKWORM_WORM_FLAGS"),
-			githubPath:        os.Getenv("HOOKWORM_GITHUB_PATH"),
-			travisPath:        os.Getenv("HOOKWORM_TRAVIS_PATH"),
-			fl:                flag.NewFlagSet("hookworm", flag.ExitOnError),
-			args:              os.Args[1:],
-			env:               os.Environ(),
+			wormTimeout:       uint64(30),
+			wormTimeoutString: os.Getenv("HOOKWORM_HANDLER_TIMEOUT"),
 		}
 	}
 
@@ -247,6 +247,7 @@ func NewServer(basicAuthStr string, cfg *HandlerConfig) (*martini.ClassicMartini
 	if basicAuthStr != "" {
 		authParts := strings.SplitN(basicAuthStr, ":", 2)
 		if len(authParts) == 2 {
+			logger.Debugf("Adding basic auth middleware\n")
 			m.Use(auth.Basic(authParts[0], authParts[1]))
 		}
 	}

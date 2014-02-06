@@ -19,15 +19,15 @@ import (
 
 var (
 	serverTestConfig = &HandlerConfig{
+		Debug:      true,
 		GithubPath: "/github-test",
 		TravisPath: "/travis-test",
-		Debug:      true,
 	}
 	serverTestContext = &serverSetupContext{
-		noop:  true,
+		args:  []string{"-a", ":9989"},
 		debug: true,
 		fl:    flag.NewFlagSet("hookworm-test", flag.ContinueOnError),
-		args:  []string{"-a", ":9989"},
+		noop:  true,
 	}
 
 	here = ""
