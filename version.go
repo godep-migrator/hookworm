@@ -19,10 +19,10 @@ var (
 func init() {
 	progName = path.Base(os.Args[0])
 	if RevisionString == "" {
-		RevisionString = "<unknown>"
+		RevisionString = os.Getenv("HOOKWORM_REVISION")
 	}
 	if VersionString == "" {
-		VersionString = "<unknown>"
+		VersionString = os.Getenv("HOOKWORM_VERSION")
 	}
 }
 

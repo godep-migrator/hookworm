@@ -47,7 +47,7 @@ deps: public
 	$(GODEP) restore
 
 clean:
-	rm -rf ./log ./coverage.out
+	rm -rf ./log ./coverage.out $${GOPATH%%:*}/bin/hookworm-server
 	$(GO) clean -x $(TARGETS) || true
 	if [ -d $${GOPATH%%:*}/pkg ] ; then \
 		find $${GOPATH%%:*}/pkg -name '*hookworm*' -exec rm -v {} \; ; \
