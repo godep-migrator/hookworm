@@ -1,6 +1,8 @@
 package hookworm
 
 import (
+	"flag"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -21,7 +23,15 @@ var (
 		TravisPath: "/travis-test",
 		Debug:      true,
 	}
-	here               = ""
+	serverTestContext = &serverSetupContext{
+		noop:  true,
+		debug: true,
+		fl:    flag.NewFlagSet("hookworm-test", flag.ContinueOnError),
+		args:  []string{"-a", ":9989"},
+	}
+
+	here = ""
+
 	serverTestHandlers = map[string]string{
 		"00-echo.py": `#!/usr/bin/env python
 import sys
@@ -39,8 +49,6 @@ if sys.argv[1] != 'configure':
     json.dump(payload, sys.stdout)
 sys.exit(0)
 `,
-		"15-skipped.sh": `#!/bin/bash
-exit 1`,
 		"20-github-only.py": `#!/usr/bin/env python
 import sys
 
@@ -70,7 +78,9 @@ sys.exit(1)
 )
 
 func init() {
-	debug = true
+	if os.Getenv("DEBUG") != "" {
+		logger.debug = true
+	}
 	setHere()
 	createServerTestWormDir()
 	fillInServerTestHandlers()
@@ -153,41 +163,59 @@ func getResponse(verb, path, ctype string, body io.Reader) *httptest.ResponseRec
 }
 
 func TestServerRespondsToIndex(t *testing.T) {
-	if getResponse("GET", "/", "", nil).Code != 200 {
+	resp := getResponse("GET", "/", "", nil)
+	if resp.Code != 200 {
+		fmt.Println(resp.Body.String())
 		t.Fail()
 	}
 }
 
 func TestServerRespondsToTestPage(t *testing.T) {
-	if getResponse("GET", "/debug/test", "", nil).Code != 200 {
+	resp := getResponse("GET", "/debug/test", "", nil)
+	if resp.Code != 200 {
+		fmt.Println(resp.Body.String())
 		t.Fail()
 	}
 }
 
 func TestServerRespondsToGithubJSON(t *testing.T) {
-	if getResponse("POST", "/github-test", "application/json",
-		getPayloadJSONReader("github", "valid")).Code != 204 {
+	resp := getResponse("POST", "/github-test", "application/json",
+		getPayloadJSONReader("github", "valid"))
+	if resp.Code != 204 {
+		fmt.Println(resp.Body.String())
 		t.Fail()
 	}
 }
 
 func TestServerRespondsToGithubForm(t *testing.T) {
-	if getResponse("POST", "/github-test", "application/x-www-form-urlencoded",
-		getPayloadFormReader("github", "valid")).Code != 204 {
+	resp := getResponse("POST", "/github-test", "application/x-www-form-urlencoded",
+		getPayloadFormReader("github", "valid"))
+	if resp.Code != 204 {
+		fmt.Println(resp.Body.String())
 		t.Fail()
 	}
 }
 
 func TestServerRespondsToTravisJSON(t *testing.T) {
-	if getResponse("POST", "/travis-test", "application/json",
-		getPayloadJSONReader("travis", "valid")).Code != 204 {
+	resp := getResponse("POST", "/travis-test", "application/json",
+		getPayloadJSONReader("travis", "valid"))
+	if resp.Code != 204 {
+		fmt.Println(resp.Body.String())
 		t.Fail()
 	}
 }
 
 func TestServerRespondsToTravisForm(t *testing.T) {
-	if getResponse("POST", "/travis-test", "application/x-www-form-urlencoded",
-		getPayloadFormReader("travis", "valid")).Code != 204 {
+	resp := getResponse("POST", "/travis-test", "application/x-www-form-urlencoded",
+		getPayloadFormReader("travis", "valid"))
+	if resp.Code != 204 {
+		fmt.Println(resp.Body.String())
+		t.Fail()
+	}
+}
+
+func TestServerMainDoesNotExplode(t *testing.T) {
+	if ServerMain(serverTestContext) != 0 {
 		t.Fail()
 	}
 }
