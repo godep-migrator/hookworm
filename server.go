@@ -33,6 +33,7 @@ type serverSetupContext struct {
 	printVersionRevTags bool
 	fl                  *flag.FlagSet
 	args                []string
+	env                 []string
 	noop                bool
 }
 
@@ -60,6 +61,7 @@ func ServerMain(c *serverSetupContext) int {
 			travisPath:        os.Getenv("HOOKWORM_TRAVIS_PATH"),
 			fl:                flag.NewFlagSet("hookworm", flag.ExitOnError),
 			args:              os.Args[1:],
+			env:               os.Environ(),
 		}
 	}
 
@@ -98,6 +100,13 @@ func ServerMain(c *serverSetupContext) int {
 	envWormFlagParts := strings.Split(c.envWormFlags, ";")
 	for _, flagPart := range envWormFlagParts {
 		wormFlags.Set(strings.TrimSpace(flagPart))
+	}
+
+	for _, pair := range c.env {
+		if !strings.HasPrefix(pair, "HOOKWORM_WORM_FLAG_") {
+			continue
+		}
+		wormFlags.Set(strings.Replace(pair, "HOOKWORM_WORM_FLAG_", "", 1))
 	}
 
 	c.workingDir, err = getWorkingDir(c.workingDir)
