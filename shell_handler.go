@@ -6,9 +6,10 @@ import (
 )
 
 type shellHandler struct {
-	command shellCommand
-	cfg     *HandlerConfig
-	next    Handler
+	command    shellCommand
+	cfg        *HandlerConfig
+	next       Handler
+	configured bool
 }
 
 var (
@@ -33,24 +34,27 @@ func newShellHandler(filePath string, cfg *HandlerConfig) (*shellHandler, error)
 		handler.command = newShellCommand(interpreter, filePath, cfg.WormTimeout)
 	}
 
-	if err := handler.configure(); err != nil {
-		return nil, err
-	}
-
 	return handler, nil
 }
 
 func (sh *shellHandler) configure() error {
 	configJSON, err := json.Marshal(sh.cfg)
 	if err != nil {
-		logger.Printf("Error JSON-marshalling config: %v", err)
+		logger.Printf("Error JSON-marshalling config: %v\n", err)
 	}
 
 	_, err = sh.command.configure(string(configJSON))
+	if err == nil {
+		logger.Debugf("Configured %+v\n", sh)
+		sh.configured = true
+	}
 	return err
 }
 
 func (sh *shellHandler) HandleGithubPayload(payload string) (string, error) {
+	if !sh.configured {
+		sh.configure()
+	}
 	logger.Debugf("Sending github payload to %+v\n", sh)
 
 	noop := false
@@ -73,7 +77,11 @@ func (sh *shellHandler) HandleGithubPayload(payload string) (string, error) {
 }
 
 func (sh *shellHandler) HandleTravisPayload(payload string) (string, error) {
+	if !sh.configured {
+		sh.configure()
+	}
 	logger.Debugf("Sending travis payload to %+v\n", sh)
+
 	noop := false
 	outBytes, err := sh.command.handleTravisPayload(payload)
 	out := string(outBytes)
