@@ -10,11 +10,13 @@ import (
 	"strings"
 
 	"github.com/codegangsta/martini"
+	"github.com/codegangsta/martini-contrib/auth"
 	"github.com/codegangsta/martini-contrib/render"
 )
 
 type serverSetupContext struct {
 	addr                string
+	basicAuth           string
 	wormTimeoutString   string
 	wormTimeout         uint64
 	workingDir          string
@@ -45,6 +47,7 @@ func ServerMain(c *serverSetupContext) int {
 	if c == nil {
 		c = &serverSetupContext{
 			addr:              os.Getenv("HOOKWORM_ADDR"),
+			basicAuth:         os.Getenv("HOOKWORM_BASIC_AUTH"),
 			wormTimeoutString: os.Getenv("HOOKWORM_HANDLER_TIMEOUT"),
 			wormTimeout:       uint64(30),
 			workingDir:        os.Getenv("HOOKWORM_WORKING_DIR"),
@@ -143,7 +146,7 @@ func ServerMain(c *serverSetupContext) int {
 		logger.Fatalf("Failed to move into working directory %v\n", cfg.WorkingDir)
 	}
 
-	server, err := NewServer(cfg)
+	server, err := NewServer(c.basicAuth, cfg)
 
 	if err != nil {
 		logger.Fatal(err)
@@ -217,10 +220,11 @@ func serverSetup(c *serverSetupContext) {
 
 	fl.StringVar(&c.githubPath, "github.path", c.githubPath, "Path to handle Github payloads [HOOKWORM_GITHUB_PATH]")
 	fl.StringVar(&c.travisPath, "travis.path", c.travisPath, "Path to handle Travis payloads [HOOKWORM_TRAVIS_PATH]")
+	fl.StringVar(&c.basicAuth, "b", c.basicAuth, "Basic auth username:password [HOOKWORM_BASIC_AUTH]")
 }
 
 // NewServer builds a martini.ClassicMartini instance given a HandlerConfig
-func NewServer(cfg *HandlerConfig) (*martini.ClassicMartini, error) {
+func NewServer(basicAuthStr string, cfg *HandlerConfig) (*martini.ClassicMartini, error) {
 	pipeline, err := NewHandlerPipeline(cfg)
 	if err != nil {
 		return nil, err
@@ -230,6 +234,14 @@ func NewServer(cfg *HandlerConfig) (*martini.ClassicMartini, error) {
 
 	m.Use(martini.Static(cfg.StaticDir))
 	m.Use(render.Renderer())
+
+	if basicAuthStr != "" {
+		authParts := strings.SplitN(basicAuthStr, ":", 2)
+		if len(authParts) == 2 {
+			m.Use(auth.Basic(authParts[0], authParts[1]))
+		}
+	}
+
 	m.Map(logger)
 
 	m.MapTo(pipeline, (*Handler)(nil))
