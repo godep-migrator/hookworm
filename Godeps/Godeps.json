@@ -1,5 +1,5 @@
 {
-	"ImportPath": "_/vagrant",
+	"ImportPath": "github.com/modcloth-labs/hookworm",
 	"GoVersion": "go1.2",
 	"Packages": [
 		"github.com/modcloth-labs/hookworm"
